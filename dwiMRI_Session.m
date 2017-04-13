@@ -20,12 +20,12 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
     
     properties
         sessionname = '';
-%         rootlocation = '';
+        %         rootlocation = '';
         rawfiles = '';
-%         collectiondate = '';
-%         modality = '';
-%         type = '';
-%         proj='';
+        %         collectiondate = '';
+        %         modality = '';
+        %         type = '';
+        %         proj='';
         
         dosave = false;
         wasLoaded = false;
@@ -36,30 +36,31 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         fsdir = '';
         fsubj = '';
         
-        surfRend = [];
-%         vbmdir = '';
-        
-        interporder = 5;
-        
+        %         surfRend = [];
+        %         vbmdir = '';
+        %
+        %         interporder = 5;
+        %
         objectHome = '';
-        
+        %
         history = [];
-        
-        TR = [];
-        nVols = [];
-        nRuns = [];
-        
+        %
+        %         TR = [];
+        %         nVols = [];
+        %         nRuns = [];
+        %
         pth = [];
         dbentry = [];
-        
-        bb = [-78 -112 -70; 78 76 90];
-        vox = [3 3 3];
+        %
+        %         bb = [-78 -112 -70; 78 76 90];
+        %         bb = [];
+        vox = [];
         lastFN = [];
-        
+        %
         Params = [];
-        
-        RunInfo = [];
-        Behavior = [];
+        %
+        %         RunInfo = [];
+%         Behavior = [];
     end
     
     methods 
@@ -171,39 +172,6 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             obj.Params.SurfRend = a;
         end
         
-        function obj = set.TR(obj,val)
-            % Can use this style of call back to configure other things at
-            % the same time.
-            obj.TR=val;
-            % obj.P_SliceTime.timing = [(obj.TR/numel(obj.P_SliceTime.sliceorder)) (obj.TR/numel(obj.P_SliceTime.sliceorder))-((obj.TR/numel(obj.P_SliceTime.sliceorder))/numel(obj.P_SliceTime.sliceorder))];
-        end
-        
-        function obj = set.bb(obj,val)
-            obj.bb = val;
-            
-            
-            obj.Params.ApplyNormOld.in.pars.bb = val;
-            obj.Params.ApplyNormNew.in.pars.comp{2}.idbbvox.bb = val;
-            
-            obj.Params.spmT1_Proc.in.rflags.bb = val;
-            obj.Params.spmT1_Proc.in.defs.comp{2}.idbbvox.bb = val;
-        end
-        
-        function obj = set.vox(obj,val)
-            obj.vox = val;
-            obj.Params.ApplyNormOld.in.pars.vox = val;
-            obj.Params.ApplyNormNew.in.pars.comp{2}.idbbvox.vox = val;
-        end
-        
-        function obj = set.interporder(obj,val)
-            obj.interporder = val;
-            obj.Params.ApplyNormOld.in.pars.interp = val;
-            obj.Params.ApplyNormNew.in.pars.out{1}.pull.interp = val;
-            obj.Params.ApplyReverseNormNew.in.pars.out{1}.pull.interp = val;
-            obj.Params.spmT1_Proc.in.defs.out{1}.pull.interp = val;
-            obj.Params.spmT1_Proc.in.rflags.interp = val;    
-        end
-        
         function checkProc(obj,stem)
             [fn1 fn2] = dir_wfp2([obj.pth.restingdir filesep obj.sessionname filesep 'Rest*' filesep '' filesep stem]);
             disp(fn2);
@@ -225,12 +193,20 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             try
                 type([obj.pth.funcdir filesep obj.sessionname filesep 'LogFiles' filesep 'config']);
             catch
-                disp('config file was nto found');
+                disp('config file was not found');
             end
         end
         
         function obj = setDefaultParams(obj)
-
+            %%%%%%%PARAMETERS SET BASED ON EACH STEP OF THE DWI PIPELINE%%%
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %For proc_dcm2nii:
+            obj.Params.DCM2NII.in.first_dcmfiles = [];
+            obj.Params.DCM2NII.scanlog = '';
+            obj.Params.DCM2NII.in.prefix = [];
+            obj.Params.DCM2NII.out.location = [];
+            obj.Params.DCM2NII.out.filename = [];
+            
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             obj.Params.DropVols.in.dropVols = [];
             obj.Params.DropVols.in.prefix = 'dv_';
@@ -238,395 +214,102 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             obj.Params.DropVols.in.fn = [];
             obj.Params.DropVols.out.fn = [];
             
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            obj.Params.SliceTime.in.movefiles = '';
-            obj.Params.SliceTime.in.prefix = 'st_';
-            obj.Params.SliceTime.in.sliceorder = [];
-            obj.Params.SliceTime.in.refslice = [];
-            obj.Params.SliceTime.in.timing = [];
-            obj.Params.SliceTime.in.fn = [];
-            obj.Params.SliceTime.out.fn = [];
-
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            obj.Params.Smooth.in.movefiles = '';
-            obj.Params.Smooth.in.prefix = 'ss_';
-            obj.Params.Smooth.in.fn = [];
-            obj.Params.Smooth.in.kernel = [6 6 6];
-            obj.Params.Smooth.out.fn = [];
+            
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            obj.Params.Realign.in.movefiles          = '';
-            obj.Params.Realign.in.fn                 = [];
-            obj.Params.Realign.in.pars.quality       = .9;
-            obj.Params.Realign.in.pars.fwhm          = 5;
-            obj.Params.Realign.in.pars.sep           = 4;
-            obj.Params.Realign.in.pars.interp        = 3;
-            obj.Params.Realign.in.pars.wrap          = [0 0 0];
-            obj.Params.Realign.in.pars.rtm           = 1;
-            obj.Params.Realign.in.pars.PW            = '';
-            obj.Params.Realign.out.realigpars        = [];        
-       
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            obj.Params.Reslice.in.movefiles = [];
-            obj.Params.Reslice.in.fn = [];
-            obj.Params.Reslice.in.pars.prefix = 'rr_';
-            obj.Params.Reslice.in.pars.mask = 1; % if one time point is missing data set all data for that voxel equal to 0
-            obj.Params.Reslice.in.pars.mean = 1;
-            obj.Params.Reslice.in.pars.interp = 3;
-            obj.Params.Reslice.in.pars.which = 2;  % 0 = only a mean image;  2 = reslice the data.
-            obj.Params.Reslice.out.fn = [];
-            obj.Params.Reslice.out.meanimage = [];
-
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            obj.Params.Smooth.in.movefiles = '';
-            obj.Params.Smooth.in.prefix = 'ss_';
-            obj.Params.Smooth.in.fn = '';
-            obj.Params.Smooth.in.kernel = [6 6 6];
-            obj.Params.Smooth.out.fn = '';
+            %For gradient non-linearity correction
+            obj.Params.GradNonlinCorrect.in.movefiles = '../04_GradCorrect/';
+            obj.Params.GradNonlinCorrect.in.prefix = 'gnc_';
+            obj.Params.GradNonlinCorrect.in.gradfile = '';
+            obj.Params.GradNonlinCorrect.in.fn = '';
+            obj.Params.GradNonlinCorrect.out.b0='';
+            obj.Params.GradNonlinCorrect.in.target = '';
             
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            obj.Params.ZScore.in.movefiles = '';
-            obj.Params.ZScore.in.prefix = 'zz_';
-            obj.Params.ZScore.in.fn = [];
-            obj.Params.ZScore.out.fn = [];
-
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            obj.Params.NormOld.in.movefiles = [];
-            obj.Params.NormOld.in.template = [fileparts(which('spm')) filesep 'toolbox' filesep 'OldNorm' filesep 'EPI.nii'];
-            obj.Params.NormOld.in.source = [];
-            obj.Params.NormOld.in.pars.smosrc = 8;
-            obj.Params.NormOld.in.pars.smoref = 0;
-            obj.Params.NormOld.in.pars.regtype = 'mni';
-            obj.Params.NormOld.in.pars.cutoff = 25;
-            obj.Params.NormOld.in.pars.nits = 16;
-            obj.Params.NormOld.in.pars.reg = .1;
-            obj.Params.NormOld.out.regfile = '';
+            obj.Params.GradNonlinCorrect.in.fslroi= [0 1];
             
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            obj.Params.ApplyNormOld.in.movefiles = '';
-            obj.Params.ApplyNormOld.in.fn = [];
-            obj.Params.ApplyNormOld.in.pars.prefix = 'nn_';
-            obj.Params.ApplyNormOld.in.pars.preserve=0;
-            obj.Params.ApplyNormOld.in.pars.bb = obj.bb;
-            obj.Params.ApplyNormOld.in.pars.vox = obj.vox;
-            obj.Params.ApplyNormOld.in.pars.interp = 5;
-            obj.Params.ApplyNormOld.in.pars.wrap = [0 0 0];
-            obj.Params.ApplyNormOld.out.fn = [];
-        
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            obj.Params.NormNew.in.movefiles = '';
-            obj.Params.NormNew.in.source = '';
-            obj.Params.NormNew.in.tpm = [fileparts(which('spm')) '/tpm/TPM.nii'];
-            obj.Params.NormNew.in.nn.channel.vols = {};
-            obj.Params.NormNew.in.nn.channel.biasreg = 0;%0.0001;
-            obj.Params.NormNew.in.nn.channel.biasfwhm = 60;
-            obj.Params.NormNew.in.nn.channel.write = [0 0];
-            for ii = 1:6
-                obj.Params.NormNew.in.nn.tissue(ii).tpm = {[obj.Params.NormNew.in.tpm ',' num2str(ii)]};
-                obj.Params.NormNew.in.nn.tissue(ii).ngaus = Inf;
-                obj.Params.NormNew.in.nn.tissue(ii).native = [1 0];
-                obj.Params.NormNew.in.nn.tissue(ii).warped = [0 0];
-            end
+            obj.Params.GradNonlinCorrect.out.b0='';
+            obj.Params.GradNonlinCorrect.out.warpfile = [];
+            obj.Params.GradNonlinCorrect.out.meannii = [];
+            obj.Params.GradNonlinCorrect.out.fn = [];
+         
+%             %%%%%%%%%%%%%%%%%%%%
+%             %%%%%%%%%%%%%%%%%%%%
+%             %%%%%%%%%%%%%%%%%%%%
+%             %%ALL THESE BELOW ARE INSTANCES OF A PREVIOUS CLASS (USED FOR
+%             %%CODE RECYLING...)
+%             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%             obj.Params.CleanData.in.movefiles = '';
+%             obj.Params.CleanData.in.prefix = 'cl_';
+%             obj.Params.CleanData.in.fn = [];
+%             obj.Params.CleanData.in.filter = true;
+%             obj.Params.CleanData.in.motion = true;
+%             obj.Params.CleanData.in.physio = true;
+%             obj.Params.CleanData.in.other = false;
+%             obj.Params.CleanData.in.otherFiles = [];
+%             obj.Params.CleanData.in.deriv = true;
+%             obj.Params.CleanData.in.square = true;
+%             obj.Params.CleanData.in.reduce = true;
+%             obj.Params.CleanData.out.fn = [];
+%             obj.Params.CleanData.out.REGS = [];
+%             obj.Params.CleanData.out.indices = [];
+%             
+%             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%             obj.Params.SNR.in.movefiles = 'SNR_Images';
+%             obj.Params.SNR.in.fn = [];
+%             obj.Params.SNR.in.thresh = 115;
+%             
+%             obj.Params.SNR.out.mean = [];
+%             obj.Params.SNR.out.sd = [];
+%             obj.Params.SNR.out.snr = [];
+%             obj.Params.SNR.out.report = [];
+%             
+%             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%             obj.Params.QA.in.movefiles = '';
+%             obj.Params.QA.in.logname = 'QA_Log';
+%             obj.Params.QA.in.thinga = [];
+%             obj.Params.QA.in.checksnr = true;
+%             obj.Params.QA.in.SNRthresh = 98; %changed from 115 - Fdu 170224
+%             obj.Params.QA.in.GlobalSigThresh = 2.5;
+%             obj.Params.QA.in.MeanMovementThresh = 0.5; %changed from 0.75 - Fdu 170224
+%             obj.Params.QA.in.TotalMovementThresh = 5;
+%             obj.Params.QA.in.TotalRotationThresh = 5;
+%             obj.Params.QA.in.MoveThresh = .75;
+%             obj.Params.QA.in.RotThresh = 1.5;
+%             obj.Params.QA.in.BadVolThresh = 20;
+%             
+%             obj.Params.QA.out.SNR = [];
+%             obj.Params.QA.out.meanBold = [];
+%             obj.Params.QA.out.badVols = [];
+%             obj.Params.QA.out.meanMV = [];
+%             obj.Params.QA.out.sdMV = [];
+%             obj.Params.QA.out.reasons = [];
+%             obj.Params.QA.out.badruns = [];
+%             
+%             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%             obj.Params.Map_To_Surface.in.movefiles = '';
+%             obj.Params.Map_To_Surface.in.fn = [];
+%             
+%             obj.Params.Map_To_Surface.out.fn = [];
+%             
+%             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%             obj.Params.SurfRend.fsubj = obj.fsubj;
+%             obj.Params.SurfRend.fsdir = obj.fsdir;
+%             
+%             obj.Params.SurfRend.figno = 101;
+%             obj.Params.SurfRend.newfig = 1;
+%             obj.Params.SurfRend.input_lh = [];
+%             obj.Params.SurfRend.input_rh = [];
+%             obj.Params.SurfRend.overlaythresh = [0 0];
+%             obj.Params.SurfRend.colorlims = [0 Inf];
+%             obj.Params.SurfRend.colomap = 'jet';
+%             obj.Params.SurfRend.direction =  '+';
+%             obj.Params.SurfRend.reverse = 0;
+%             obj.Params.SurfRend.round = 0;
+%             obj.Params.SurfRend.surface = 'pi';
+%             obj.Params.SurfRend.shading =  'mixed';
+%             obj.Params.SurfRend.shadingrange = [-2 2];
+%             obj.Params.SurfRend.Nsurfs = 2;
             
-            obj.Params.NormNew.in.nn.warp.mrf = 0;
-            obj.Params.NormNew.in.nn.warp.reg = [0 0.001 0.5000 0.0500 0.2000];
-            obj.Params.NormNew.in.nn.warp.affreg ='mni';
-            obj.Params.NormNew.in.nn.warp.fwhm = 0;
-            obj.Params.NormNew.in.nn.warp.samp = 3;
-            obj.Params.NormNew.in.nn.warp.write = [1 1];
-            obj.Params.NormNew.in.nn.savemat=1;
-             
-            obj.Params.NormNew.out.regfile = '';
-            obj.Params.NormNew.out.iregfile = '';
-            obj.Params.NormNew.out.estTPM = '';
-
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %%% Apply New Norm Params
-            obj.Params.ApplyNormNew.in.movefiles = '';
-            obj.Params.ApplyNormNew.in.fn = [];
-            obj.Params.ApplyNormNew.in.prefix = 'nn2_';
-            obj.Params.ApplyNormNew.in.regfile = [];
-            obj.Params.ApplyNormNew.in.pars.comp{1}.def = []; % Normalization file in cell
-            obj.Params.ApplyNormNew.in.pars.comp{2}.idbbvox.vox = obj.vox;
-            obj.Params.ApplyNormNew.in.pars.comp{2}.idbbvox.bb = obj.bb;
-            obj.Params.ApplyNormNew.in.pars.out{1}.pull.fnames  = []; % files to normalize
-            obj.Params.ApplyNormNew.in.pars.out{1}.pull.savedir.savesrc = 1;
-            obj.Params.ApplyNormNew.in.pars.out{1}.pull.interp=obj.interporder;
-            obj.Params.ApplyNormNew.in.pars.out{1}.pull.mask=1;
-            obj.Params.ApplyNormNew.in.pars.out{1}.pull.fwhm=[0 0 0];
-            obj.Params.ApplyNormNew.out.fn = [];
-            obj.Params.ApplyNormNew.out.normmean = [];
-
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            obj.Params.ApplyReverseNormNew.in.movefiles = '';
-            obj.Params.ApplyReverseNormNew.in.fn = [];
-            obj.Params.ApplyReverseNormNew.in.prefix = 'in_';
-            obj.Params.ApplyReverseNormNew.in.targ = [];
-            obj.Params.ApplyReverseNormNew.in.regfile = [];
-            obj.Params.ApplyReverseNormNew.in.pars.comp{1}.def = []; % Normalization file in cell
-            obj.Params.ApplyReverseNormNew.in.pars.comp{2}.idbbvox.vox = [];
-            obj.Params.ApplyReverseNormNew.in.pars.comp{2}.idbbvox.bb = [];
-            obj.Params.ApplyReverseNormNew.in.pars.out{1}.pull.fnames  = []; % files to normalize
-            obj.Params.ApplyReverseNormNew.in.pars.out{1}.pull.savedir.savesrc = 1;
-            obj.Params.ApplyReverseNormNew.in.pars.out{1}.pull.interp=obj.interporder;
-            obj.Params.ApplyReverseNormNew.in.pars.out{1}.pull.mask=1;
-            obj.Params.ApplyReverseNormNew.in.pars.out{1}.pull.fwhm=[0 0 0];
-            obj.Params.ApplyReverseNormNew.out.fn = [];
-            
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            obj.Params.Implicit_Unwarp.in.movefiles = '';
-            obj.Params.Implicit_Unwarp.in.prefix = 'uw_';
-            obj.Params.Implicit_Unwarp.in.fn = [];
-            obj.Params.Implicit_Unwarp.in.tpmSmooth = 2;
-            obj.Params.Implicit_Unwarp.in.source = '';
-            
-            obj.Params.Implicit_Unwarp.out.fn = [];
-            obj.Params.Implicit_Unwarp.out.newmean = [];
-            obj.Params.Implicit_Unwarp.out.regfile = [];
-            obj.Params.Implicit_Unwarp.out.iregfile = [];
-        
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            obj.Params.Coreg.in.movefiles = '';
-            obj.Params.Coreg.in.movecrfiles = '';
-            obj.Params.Coreg.in.prefix = 'cr_';
-            obj.Params.Coreg.in.source = '';
-            obj.Params.Coreg.in.target = '';
-            obj.Params.Coreg.in.style = ''; % spm, bbreg, or iuw
-            obj.Params.Coreg.in.apply = 1;
-            obj.Params.Coreg.in.reslice = 0;
-            obj.Params.Coreg.in.resampopt = [3 0];
-            obj.Params.Coreg.in.getLabels = 1; % also fetch the FS labels
-            obj.Params.Coreg.in.bbreg.vfmaps = [];
-            obj.Params.Coreg.in.spm.sep = [4 2];
-            obj.Params.Coreg.in.spm.params = [0 0 0  0 0 0];
-            obj.Params.Coreg.in.spm.cost_fun = 'nmi'; % default; options are: 'mi'  - Mutual Information 'nmi' - Normalised Mutual Information 'ecc' - Entropy Correlation Coefficient  'ncc' - Normalised Cross Correlation
-            obj.Params.Coreg.in.spm.tol = [0.02 0.02 0.02 0.001 0.001 0.001 0.01 0.01 0.01 0.001 0.001 0.001];
-            obj.Params.Coreg.in.spm.fwhm = [7 7];
-            obj.Params.Coreg.in.spm.graphics = ~spm('CmdLine');
-
-            obj.Params.Coreg.out.regfile = '';
-            obj.Params.Coreg.out.labels = '';
-            obj.Params.Coreg.out.regimage = '';
-            obj.Params.Coreg.out.otherin = [];
-            obj.Params.Coreg.out.otherout = [];
-
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-            obj.Params.FS_Params.fsaverage = 'fsaverage';
-            obj.Params.FS_Params.surf_ss = '6';
-            obj.Params.FS_Params.projfrac = '.5';
-            obj.Params.FS_Params.proj_frac =  '0 1 .1';
-            obj.Params.FS_Params.fillthresh = '0.3';
-            obj.Params.FS_Params.bbreg = 'fsl';
-            obj.Params.FS_Params.conweight = 't2';
-            obj.Params.FS_Params.surf_labels = 'aparc';
-            obj.Params.FS_Params.vol_labels = 'aseg.mgz';
-            obj.Params.FS_Params.surf_out = 'labels';
-            obj.Params.FS_Params.vol_out = 'VolumeLabels';
-            obj.Params.FS_Params.regopt = 'header';
-            obj.Params.FS_Params.regfile = [];
-            
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            obj.Params.spmT1_Proc.in.outdir = '';
-            obj.Params.spmT1_Proc.in.t1 = '';
-            obj.Params.spmT1_Proc.in.tpm = [fileparts(which('spm')) '/tpm/TPM.nii'];
-            
-            obj.Params.spmT1_Proc.in.pars.P = [];
-            obj.Params.spmT1_Proc.in.pars.samp = 2;
-            obj.Params.spmT1_Proc.in.pars.fwhm1 = 16;
-            obj.Params.spmT1_Proc.in.pars.fwhm2 = 0;
-            obj.Params.spmT1_Proc.in.pars.tpm = [];
-            obj.Params.spmT1_Proc.in.pars.M = [];
-            obj.Params.spmT1_Proc.in.pars.regtype='mni';
-            
-            
-            obj.Params.spmT1_Proc.in.NormPars.image = [];
-            obj.Params.spmT1_Proc.in.NormPars.fwhm = 0;
-            obj.Params.spmT1_Proc.in.NormPars.biasreg = 0.0001;
-            obj.Params.spmT1_Proc.in.NormPars.biasfwhm = 60;
-            obj.Params.spmT1_Proc.in.NormPars.tpm = [];
-            obj.Params.spmT1_Proc.in.NormPars.lkp = [];
-            obj.Params.spmT1_Proc.in.NormPars.reg = [0 0.001 0.5 0.05 0.2];
-            obj.Params.spmT1_Proc.in.NormPars.samp = 2;
-            obj.Params.spmT1_Proc.in.NormPars.Affine = [];
-            
-            obj.Params.spmT1_Proc.in.rflags.bb = obj.bb;
-            obj.Params.spmT1_Proc.in.rflags.vox = 1;
-            obj.Params.spmT1_Proc.in.rflags.interp = 5;
-            obj.Params.spmT1_Proc.in.rflags.writeopts = ones(6,4);
-            
-            obj.Params.spmT1_Proc.in.defs.comp{1}.def = [];
-            obj.Params.spmT1_Proc.in.defs.comp{2}.idbbvox.vox = [1 1 1];
-            obj.Params.spmT1_Proc.in.defs.comp{2}.idbbvox.bb = obj.bb;
-            obj.Params.spmT1_Proc.in.defs.out{1}.pull.fnames = [];
-            obj.Params.spmT1_Proc.in.defs.out{1}.pull.savedir.savesrc = 1;
-            obj.Params.spmT1_Proc.in.defs.out{1}.pull.interp=5;
-            obj.Params.spmT1_Proc.in.defs.out{1}.pull.mask=1;
-            obj.Params.spmT1_Proc.in.defs.out{1}.pull.fwhm=[0 0 0];        
-            
-            obj.Params.spmT1_Proc.out.regfile = [];
-            obj.Params.spmT1_Proc.out.iregfile = [];
-            obj.Params.spmT1_Proc.out.estTPM = [];
-            obj.Params.spmT1_Proc.out.normT1 = [];
-            
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            obj.Params.Filter.in.movefiles = '';
-            obj.Params.Filter.in.prefix = 'ff_';
-            obj.Params.Filter.in.fn = [];
-            obj.Params.Filter.in.detrend = 0;
-            obj.Params.Filter.in.lowcut =  0.01;
-            obj.Params.Filter.in.highcut = 0.10;
-            obj.Params.Filter.in.filterorder = 4;
-            obj.Params.Filter.out.ampscale = 0;
-            
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            obj.Params.ComputePhysioRegs.in.movefiles = '';
-            obj.Params.ComputePhysioRegs.in.fn = '';
-            obj.Params.ComputePhysioRegs.in.type = ''; % DirectTPM IndirectTPM fsVF masks
-            obj.Params.ComputePhysioRegs.in.whichparts = [1 2 3 4 5 6];
-            obj.Params.ComputePhysioRegs.in.weighted = true;
-            obj.Params.ComputePhysioRegs.in.threshold = NaN;
-            obj.Params.ComputePhysioRegs.in.prinComps = true;
-            obj.Params.ComputePhysioRegs.in.nPC = 10;
-            obj.Params.ComputePhysioRegs.in.resample = [0 0];
-            obj.Params.ComputePhysioRegs.in.masks = [];
-            obj.Params.ComputePhysioRegs.in.filename = 'PhysioRegs.txt';
-            % obj.Params.ComputePhysioRegs.in
-            
-            obj.Params.ComputePhysioRegs.out.regs = [];
-            obj.Params.ComputePhysioRegs.out.resfiles = [];
-            
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            obj.Params.CleanData.in.movefiles = '';
-            obj.Params.CleanData.in.prefix = 'cl_';
-            obj.Params.CleanData.in.fn = [];
-            obj.Params.CleanData.in.filter = true;
-            obj.Params.CleanData.in.motion = true;
-            obj.Params.CleanData.in.physio = true;
-            obj.Params.CleanData.in.other = false;
-            obj.Params.CleanData.in.otherFiles = [];
-            obj.Params.CleanData.in.deriv = true;
-            obj.Params.CleanData.in.square = true;
-            obj.Params.CleanData.in.reduce = true;
-            obj.Params.CleanData.out.fn = [];
-            obj.Params.CleanData.out.REGS = [];
-            obj.Params.CleanData.out.indices = [];
-            
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            obj.Params.SNR.in.movefiles = 'SNR_Images';
-            obj.Params.SNR.in.fn = [];
-            obj.Params.SNR.in.thresh = 115;
-            
-            obj.Params.SNR.out.mean = [];
-            obj.Params.SNR.out.sd = [];
-            obj.Params.SNR.out.snr = [];
-            obj.Params.SNR.out.report = [];
-            
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            obj.Params.QA.in.movefiles = '';
-            obj.Params.QA.in.logname = 'QA_Log';
-            obj.Params.QA.in.thinga = [];
-            obj.Params.QA.in.checksnr = true;
-            obj.Params.QA.in.SNRthresh = 98; %changed from 115 - Fdu 170224
-            obj.Params.QA.in.GlobalSigThresh = 2.5;
-            obj.Params.QA.in.MeanMovementThresh = 0.5; %changed from 0.75 - Fdu 170224
-            obj.Params.QA.in.TotalMovementThresh = 5;
-            obj.Params.QA.in.TotalRotationThresh = 5;
-            obj.Params.QA.in.MoveThresh = .75;
-            obj.Params.QA.in.RotThresh = 1.5;
-            obj.Params.QA.in.BadVolThresh = 20;
-            
-            obj.Params.QA.out.SNR = [];
-            obj.Params.QA.out.meanBold = [];
-            obj.Params.QA.out.badVols = [];
-            obj.Params.QA.out.meanMV = [];
-            obj.Params.QA.out.sdMV = [];
-            obj.Params.QA.out.reasons = [];
-            obj.Params.QA.out.badruns = [];
-            
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            obj.Params.Map_To_Surface.in.movefiles = '';
-            obj.Params.Map_To_Surface.in.fn = [];
-            
-            obj.Params.Map_To_Surface.out.fn = [];
-            
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            obj.Params.SurfRend.fsubj = obj.fsubj;
-            obj.Params.SurfRend.fsdir = obj.fsdir;
-            
-            obj.Params.SurfRend.figno = 101;
-            obj.Params.SurfRend.newfig = 1;
-            obj.Params.SurfRend.input_lh = [];
-            obj.Params.SurfRend.input_rh = [];
-            obj.Params.SurfRend.overlaythresh = [0 0];
-            obj.Params.SurfRend.colorlims = [0 Inf];
-            obj.Params.SurfRend.colomap = 'jet';
-            obj.Params.SurfRend.direction =  '+';
-            obj.Params.SurfRend.reverse = 0;
-            obj.Params.SurfRend.round = 0;
-            obj.Params.SurfRend.surface = 'pi';
-            obj.Params.SurfRend.shading =  'mixed';
-            obj.Params.SurfRend.shadingrange = [-2 2];
-            obj.Params.SurfRend.Nsurfs = 2;
-            
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            obj.Params.FirsLevelMod.in.movespmfiles = [];
-            obj.Params.FirsLevelMod.in.modelname =  'Model1';
-            obj.Params.FirsLevelMod.in.fn = [];
-            obj.Params.FirsLevelMod.in.RunIDs = [];
-            obj.Params.FirsLevelMod.in.minRuns = 2;            
-            
-            obj.Params.FirsLevelMod.in.mp.Units = 'secs';
-            obj.Params.FirsLevelMod.in.mp.MicrotimeRes = [];    %% Changed this from 16 to 30 after fMRI course in Abq. new value = number of slices
-            obj.Params.FirsLevelMod.in.mp.MicrotimeOnset = [];  %% Changed this from 1 to 15 after fMRI course in Abq. new value = middle slice;
-            obj.Params.FirsLevelMod.in.mp.basis_func = 'hrf';   %% Other options include 'hrf (with time derivative)' and 'hrf (with time and dispersion derivatives)'
-            
-            obj.Params.FirsLevelMod.in.mp.Volterra = 1;  %% 1 is not modeling volterra interactions
-            
-            %%% Put together SPM.xGX (This has to do with global normalization which we are not using).
-            obj.Params.FirsLevelMod.in.mp.iGXcalc = 'None';
-            obj.Params.FirsLevelMod.in.mp.sGXcalc = 'mean voxel value';
-            obj.Params.FirsLevelMod.in.mp.sGMsca = 'session specific';
-            
-            %%% Put together SPM.xVi This has to do with using and AR(1) process to remove serial correlations.  We are not using this.
-            obj.Params.FirsLevelMod.in.mp.AR = 'none';
-            % P.cm.AR = 'AR(1)';
-            
-            %%% Put together SPM.xX.  This is the specification of the high pass filter. 128 is the reccomended default value.
-            %%% We use 260 since the experiment is also set up as a block design with
-            %%% 130 seconds between blocks of the same kind.  This requires a higher HPF.
-            obj.Params.FirsLevelMod.in.mp.HP_filt = 260;
-            
-            %%% This has to do with temporal modulation.  We are not using this.
-            obj.Params.FirsLevelMod.in.mp.TempMod = 'none';
-
-            obj.Params.FirsLevelMod.in.mp.DisableThresholdMasking = 1;
-            
-            obj.Params.FirsLevelMod.in.mp.ExplicitMask(1) = spm_vol('/autofs/space/schopenhauer_002/users/MATLAB_Scripts/spm8/apriori/brainmask.nii');
-            %obj.Params.FirsLevelMod.in.mp.ExplicitMask = [];
-            
-            obj.Params.FirsLevelMod.in.mp.addBadVolRegs = 1;
-            obj.Params.FirsLevelMod.in.mp.addMotionRegressors = 0;
-            
-            obj.Params.FirsLevelMod.in.mp.ScreenTaskCorrMot = 0;
-            obj.Params.FirsLevelMod.in.mp.TaskCorrThresh = .25;  %%% R^2 values for cutoff;
-            
-            obj.Params.FirsLevelMod.out.spm = [];
-            obj.Params.FirsLevelMod.out.tcm = [];
-            obj.Params.FirsLevelMod.out.path = [];
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            obj.Params.Contrasts.in.MoveContrasts = [];
-            obj.Params.Contrasts.in.GroupConFold = [];
-            obj.Params.Contrasts.in.MinEvents = [];
-            obj.Params.Contrasts.in.con = [];
-            obj.Params.Contrasts.in.con(1).name = [];
-            obj.Params.Contrasts.in.con(1).WeightWithin = [];
-            obj.Params.Contrasts.in.con(1).BlockThresh = [];
-            obj.Params.Contrasts.in.con(1).left = [];
-            obj.Params.Contrasts.in.con(1).right = [];
-            
-            obj.Params.Contrasts.out.conInfo = [];
-            obj.Params.Contrasts.out.con = [];
         end
         
         function obj = QuickICA(obj,fn)
@@ -735,55 +418,128 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%% BEGIN Data Processing Methods %%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        function obj = proc_drop_vols(obj,fn,dest,prefix)
-            fprintf('\n\n%s\n', ['DROPPING ' num2str(length(obj.Params.DropVols.in.dropVols)) ' VOLUMES']);
+        function obj = proc_dcm2nii(obj,fn,dest,out_filename) %not sure why fn??
+            fprintf('\n\n%s\n', ['CONVERTING DCM TO NII ' num2str(numel(obj.Params.DCM2NII.in)) ' VOLUMES']);
             %%% MODULE IS COMPLETE
             wasRun = false;
             nfn = [];
-            
-            if nargin>2 && ~isempty(dest)
-                obj.Params.DropVols.in.movefiles = dest;
+            for ii=1:numel(obj.Params.DCM2NII.in)
+               if nargin>2 && ~isempty(dest)
+                    obj.Params.DCM2NII.out(ii).location = dest;
+                end
+                
+                if nargin>3 && ~isempty(out_filename)
+                    obj.Params.DCM2NII.out(rr).out_filename = out_filename;
+                end
+                
+                %Shortening naming comventions:
+                clear in_file out_file 
+                in_file=strtrim([obj.dcm_location filesep obj.Params.DCM2NII.in(ii).first_dcmfiles]);
+                out_file=strtrim([obj.Params.DCM2NII.out(ii).location obj.Params.DCM2NII.out(ii).filename ]);
+                
+                %Create out_file directory if doesnt exist:
+                if ~exist(obj.Params.DCM2NII.out(ii).location,'dir')
+                    clear exec_cmd
+                    exec_cmd = ['mkdir -p ' obj.Params.DCM2NII.out(ii).location ];
+                    system(exec_cmd);
+                end
+                
+                %Processing starts here:
+                if exist(in_file,'file') ~= 0 %check if in_file exists
+                    if exist(out_file,'file') == 0 %check if out_file exists
+                        %Check whether we get the specific number of volumes:
+                        if  obj.Params.DCM2NII.specific_vols == obj.Params.DCM2NII.in(ii).nvols
+                            %Somehow save my cmd in here...??
+                            clear exec_cmd
+                            exec_cmd=['mri_convert ' in_file ' ' out_file ];
+                            system(exec_cmd)
+                            obj.UpdateHist(obj.Params.DCM2NII,'proc_dcm2nii',out_file,wasRun);
+                        else
+                            error('==> obj.Params.DCM2NII.specific_vols  not equal to obj.Params.DCM2NII.in(ii).nvols ');
+                        end
+                    else
+                        disp([ '==> out_file: ' out_file ' exists. SKIPPING...'])
+                    end
+                else
+                    error(['Error in obj.proc_dcm2nii ==> in_file: ' in_file 'does not exist!']);
+                end
             end
-            
-            if nargin>3 && ~isempty(prefix)
-                obj.Params.DropVols.in.prefix = prefix;
-            end
-            
             %%%
-            for ii = 1:numel(fn);
-                [a b c] = fileparts(fn{ii});
-                outpath = obj.getPath(a,obj.Params.DropVols.in.movefiles);
-                
-                nfn{ii,1} = [outpath obj.Params.DropVols.in.prefix b c];
-                
-                if exist(nfn{ii},'file')>0
-                    disp('specified volumes have been dropped');
-                    continue
-                end
-                
-                wasRun = true;
-                
-                [M V] = openIMG(fn{ii});
-                vec = setdiff(1:length(V), obj.Params.DropVols.in.dropVols);
-                
-                V = V(1);
-                cc = 0;
-                for jj = vec
-                    cc = cc+1;                    
-                    V.fname = nfn{ii,1};
-                    V.n = [cc 1];
-                    spm_write_vol(V,M(:,:,:,jj));
-                end
-                disp('specified volumes have been dropped');
-            end
-            obj.Params.DropVols.in.fn = fn;
-            obj.Params.DropVols.out.fn = nfn;
-            obj.lastFN = nfn;
             
             
-            obj.UpdateHist(obj.Params.DropVols,'proc_drop_vols',nfn{end},wasRun);
             fprintf('\n');
         end
+        
+        function obj = proc_gradient_nonlin_correct(obj)
+            wasRun = false;
+            target_all = obj.Params.GradNonlinCorrect.in.target;
+            
+            fn{1}=target_all{1}; %this will take set4 in ADRC data (shouldn;t affect it. Need to double-check!)
+            [a b c ] = fileparts(fn{1});
+            outpath=obj.getPath(a,obj.Params.GradNonlinCorrect.in.movefiles);
+            
+            %first extract the first b0s (if it doesn't exist):
+            obj.Params.GradNonlinCorrect.in.b0{1}=[outpath 'firstb0_' b c ];
+            if exist(obj.Params.GradNonlinCorrect.in.b0{1},'file')==0
+                fprintf(['\nExtracting the first b0 of: ' obj.Params.GradNonlinCorrect.in.b0{1} ]);
+                exec_cmd=['fslroi ' fn{1} ' ' obj.Params.GradNonlinCorrect.in.b0{1} ...
+                    ' ' num2str(obj.Params.GradNonlinCorrect.in.fslroi) ];
+                system(exec_cmd);
+                fprintf('...done\n');
+            end
+            %now creating grad-nonlinearity in first_b0s:
+            obj.Params.GradNonlinCorrect.out.b0{1}=[outpath 'gnc_firstb0_' b c ];
+            first_b0_infile = obj.Params.GradNonlinCorrect.in.b0{1};
+            first_b0_outfile = obj.Params.GradNonlinCorrect.out.b0{1};
+            gradfile = obj.Params.GradNonlinCorrect.in.gradfile;
+            
+            %%% Compute the grdient nonlinearity correction
+            obj.Params.GradNonlinCorrect.out.warpfile{1} = strrep(first_b0_infile,'.nii','_deform_grad_rel.nii');
+            if exist(obj.Params.GradNonlinCorrect.out.warpfile{1},'file')==0
+                cmd=['sh ' obj.sh_gradfile ' '  first_b0_infile ' ' first_b0_outfile ' ' gradfile ' '];
+                system(cmd);
+                wasRun = true;
+            else
+                fprintf([ 'Gnc warp file:' first_b0_outfile ' exists. Skipping...\n'])
+            end
+            
+            %%Apply the correction to the first_b0
+            if exist(first_b0_outfile,'file')==0
+                exec_cmd=['applywarp -i ' first_b0_infile ' -r ' first_b0_infile ...
+                    ' -o ' first_b0_outfile ' -w ' obj.Params.GradNonlinCorrect.out.warpfile{1} ...
+                    ' --interp=spline' ];
+                fprintf(['\nGNC: Applying warp to first_b0_file: '  first_b0_infile]);
+                system(exec_cmd);
+                fprintf(['...done\n']);
+            end
+            
+            
+            %%% Apply the correction to all the subsequent diffusion images.
+            for ii=1:numel(target_all)
+                dwi_infile{ii}=target_all{ii};
+                [a b c ] = fileparts(dwi_infile{ii});
+                dwi_outfile{ii}=[outpath 'gnc_' b c ];
+                obj.Params.GradNonlinCorrect.in.fn{ii}=dwi_infile{ii};
+                obj.Params.GradNonlinCorrect.out.fn{ii}=dwi_outfile{ii};
+                if exist(dwi_outfile{ii},'file')==0
+                    fprintf(['\nGNC: Applying warp field to all the other images: ' dwi_infile{ii}]);
+                    exec_cmd = ['applywarp -i ' dwi_infile{ii} ' -r ' first_b0_infile ...
+                        ' -o ' dwi_outfile{ii} ' -w ' obj.Params.GradNonlinCorrect.out.warpfile{1} ' --interp=spline'];
+                    system(exec_cmd);
+                    fprintf('....done\n');
+                    wasRun = true;
+                end
+            end
+            obj.Params.GradNonlinCorrect.in.fn=obj.Params.GradNonlinCorrect.in.fn';
+            obj.Params.GradNonlinCorrect.out.fn=obj.Params.GradNonlinCorrect.out.fn';
+            
+            obj.UpdateHist(obj.Params.GradNonlinCorrect,'proc_gradient_nonlin_correct',obj.Params.GradNonlinCorrect.out.warpfile{1},wasRun);
+        end
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%AARON METHODS RECYCLED FROM fMRI_Session BELOW THIS LINE %%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
         
         function obj = proc_slice_time(obj,fn)
             fprintf('\n\n%s\n', 'PERFORMING SLICE TIME CORRECTION:');
@@ -794,7 +550,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             nfn = [];
             for ii = 1:length(fn)
                 [a b c] = fileparts(fn{ii});
-                outpath = obj.getPath(a,obj.Params.SliceTime.in.movefiles);            
+                outpath = obj.getPath(a,obj.Params.SliceTime.in.movefiles);
                 if exist(outpath,'dir')==0
                     mkdir(outpath);
                 end
@@ -819,18 +575,18 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             obj.lastFN = nfn;
             
             obj.UpdateHist(obj.Params.SliceTime,'proc_slice_time',nfn{end},wasRun);
-
+            
             fprintf('\n');
         end
         
-        function obj = proc_realign(obj,fn)
-            fprintf('\n\n%s\n', 'REALIGNING IMAGES:');            
+        function obj = proc_realigfn(obj,fn)
+            fprintf('\n\n%s\n', 'REALIGNING IMAGES:');
             %%% MODULE IS COMPLETE
             wasRun = false;
             rps = []; check = 0;
             for jj = 1:numel(fn)
                 [a b c] = fileparts(fn{jj});
-                outpath = obj.getPath(a,obj.Params.Realign.in.movefiles); 
+                outpath = obj.getPath(a,obj.Params.Realign.in.movefiles);
                 rps{jj,1} = [outpath 'rp_' b '.txt'];
                 check = check+(exist(rps{jj},'file')>0);
             end
@@ -849,7 +605,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     try movefile([a filesep 'rp_' b '.txt'],[outpath 'rp_' b '.txt']); catch; end
                     rps{jj,1} = [outpath 'rp_' b '.txt'];
                 end
-                disp('realignment is complete');                
+                disp('realignment is complete');
             end
             
             obj.Params.Realign.out.realigpars=rps;
@@ -879,7 +635,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             
             [a b c] = fileparts(fn{1});
             outpath = obj.getPath(a,obj.Params.Reslice.in.movefiles);
-
+            
             if exist([outpath 'mean' b c],'file')>0
                 %disp(['found ' outpath 'mean' b c]);
                 obj.Params.Reslice.out.meanimage = [outpath 'mean' b c];
@@ -898,7 +654,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             end
             
             obj.Params.Reslice.in.fn = fn;
-            obj.Params.Reslice.out.fn = nfn;            
+            obj.Params.Reslice.out.fn = nfn;
             obj.lastFN = nfn;
             
             obj.UpdateHist(obj.Params.Reslice,'proc_reslice',nfn{end},wasRun);
@@ -3482,6 +3238,28 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             end
             out = ['last run by ' user ' on ' datestr(clock)];
         end
+        
+       %replaced with openIMGv2.m ==> 
+%         function [ out_fn isgz ] = check_gz(obj,ext,fn)
+%             if strcmp(ext,'.gz')
+%                 fprintf(['\n Gunzipping: ' fn ]);
+%                 out_fn=cell2char(gunzip(fn));
+%                 fprintf('...done!\n');
+%                 isgz=true;
+%             else
+%                 out_fn=fn{ii};
+%                 isgz=false;
+%             end
+%         end
+        
+       %replaced with writeIMG.m  ==> 
+%         function [ out_fn ] = do_gz(fn)
+%             fprintf(['\n Gzipping: ' fn ' ...']);
+%             gzip(fn);
+%             out_fn=[fn '.gz' ] ;
+%             fprintf ('...done\n');
+%             system(['rm ' fn])
+%         end
         
     end
 end
