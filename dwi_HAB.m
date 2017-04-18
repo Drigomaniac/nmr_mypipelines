@@ -7,12 +7,27 @@ classdef dwi_HAB < dwiMRI_Session
 %%              Rodrigo Perea rpereacamargo@mgh.harvard.edu
 %%
 %%
-    
+%%      Dependencies:
+%%          -FreeSurfer v6.0
+%%          -SPM8
+%%          -Ants tools
+%%          -DSI_studio
+%%  *Only filesep wit '/' are used in the properties class declaration.
+%%   Besides these, all should be any operating system compatible (tested in CentOS Linux)
     properties
+       
        %root directoy where raw data lives:
-       root = '/cluster/sperling/HAB/Project1/DWIs_30b700/Sessions/';
+       root_location = '/cluster/sperling/HAB/Project1/DWIs_30b700/Sessions/';
        dcm_location = '/cluster/sperling/HAB/Project1/DICOM_ARCHIVE/All_DICOMS/';
        session_location='/cluster/sperling/HAB/Project1/Sessions/'
+       ref_FA = '/cluster/hab/HAB/Project1/DWIs_30b700/HABn272_MNI_Target/HABn272_mean_FA.nii.gz';
+       %sh dependencies:
+       rotatae_bvecs_sh='/cluster/sperling/HAB/Project1/Scripts/DWIs/mod_fdt_rotate_bvecs.sh ';
+       
+       %template dependencies:
+       HABn272_meanFA='/cluster/hab/HAB/Project1/DWIs_30b700/HABn272_MNI_Target/HABn272_mean_FA.nii.gz';
+       HABn272_meanFA_skel_dst='/cluster/hab/HAB/Project1/DWIs_30b700/HABn272_MNI_Target/HABn272_mean_FA_skeleton_mask_dst.nii.gz';
+       ref_region='/usr/pubsw/packages/fsl/5.0.9/data/standard/LowerCingulum_1mm.nii.gz'
     end
     methods
         function obj = dwi_HAB(sessionname,opt)
@@ -23,20 +38,16 @@ classdef dwi_HAB < dwiMRI_Session
             end
             
             obj.sessionname = sessionname;
-            obj.root = [obj.root sessionname '/DWIs/'];
+            obj.root = [obj.root_location sessionname '/DWIs/'];
             obj.dcm_location= [ obj.dcm_location sessionname filesep ];
             obj.session_location= [ obj.session_location sessionname filesep ];
-            %If the folder /DWIs/ does not exist, then create it!             
-            if exist(obj.root,'dir')==0
-                try
-                    system(['mkdir -p' obj.root ]); 
-                catch
-                    disp([ 'Trying to create /DWIs/ in:' obj.root ... 
-                        ' Maybe some permission issues?'])
-                end
-            end
-            obj.objectHome = obj.root;
             
+            %If the folder <XX>/DWIs/ does not exist, then create it!             
+            if exist(obj.root,'dir')==0
+                obj.make_root();
+            end
+            
+            obj.objectHome = obj.root ;
             if exist([obj.objectHome filesep sessionname '.mat'],'file')>0 
                 load([obj.objectHome filesep sessionname '.mat']);
                 oldroot = obj.root;
@@ -44,6 +55,14 @@ classdef dwi_HAB < dwiMRI_Session
             else
                 obj.setMyParams; 
             end
+       
+            
+            %Check if *.nii.gz files exist, if not get them from DCM2nii:
+            obj.rawfiles = dir_wfp([obj.root 'Orig/*.nii.gz' ] );
+            if isempty(obj.rawfiles)
+               obj.getDCM2nii();
+            end
+            
             
             if nargin>1
                 if ~strcmpi(oldroot,newroot)
@@ -56,175 +75,90 @@ classdef dwi_HAB < dwiMRI_Session
         function obj=setMyParams(obj)
             %Global parameters:
             obj.vox= [2 2 2 ];
-            obj.dosave=true;
-            obj.rawfiles = dir_wfp([obj.root 'Orig/*.nii.gz' ] );
-            if isempty(obj.rawfiles)
-                obj.rawfiles = dir_wfp([obj.root 'Orig/*.nii' ] );
-            end
-            
-            
-            %For proc_DCM2NII:
-            obj.Params.DCM2NII.specific_vols=35;
-            obj.Params.DCM2NII.scanlog = [ obj.session_location  filesep 'LogFiles' ...
-                filesep 'scan.log' ] ;
-            if ~exist(obj.Params.DCM2NII.scanlog,'file')
-                error(['No scanlog found in:' obj.Params.DCM2NII.scanlog '. Exiting...']);
-            end
-            dwi_setnames={ 'DIFFUSION_HighRes_30' };
-            for ii=1:1 % Only 1 set on this sequence acquisiton (for HAB1)!
-                obj.Params.DCM2NII.in(ii).prefix = dwi_setnames(ii); 
-                try
-                [ ~ , obj.Params.DCM2NII.in(ii).nvols ] = system([ 'cat ' ...
-                    obj.Params.DCM2NII.scanlog ... 
-                    ' | grep ' dwi_setnames{ii} ' | grep " 35 " | tail -1 | awk ''{ print $7 }'' ' ]);
-                catch
-                    disp('There is no DCMfile associated that contains 35 volumes .');
-                    disp(['The specific session is:' obj.sessionname ]); 
-                end
-                obj.Params.DCM2NII.in(ii).nvols=str2num(obj.Params.DCM2NII.in(ii).nvols);
-                [ ~ , obj.Params.DCM2NII.in(ii).first_dcmfiles ] = system([ 'cat ' ...
-                    obj.Params.DCM2NII.scanlog ... 
-                    ' | grep ' dwi_setnames{ii} ' | grep " 35 " | tail -1 | awk ''{ print $8 }'' ' ]);
-                            
-                obj.Params.DCM2NII.out(ii).location = [ obj.root 'Orig' filesep ];
-                obj.Params.DCM2NII.out(ii).filename = [ cell2char(dwi_setnames(ii)) '.nii.gz' ];
-            end
-            
-            %For proc_drop_vols
-            %%%%THIS IS NOT IMPLEMENTED AS PART OF THE DIFFUSION PIPELINE
-            %%%%FOR HAB1 project! (rdp20 dated 04/11/2017)
-            
-            
-            %For proc_<XYZ?>
-                      obj.fsdir='/autofs/eris/bang/ADRC/FreeSurfer6.0/';
-            obj.fsubj=obj.sessionname;
-                
-        end
+        	obj.setDefaultParams; %from dwiMRI_Session class
+       end
               
         function obj = CommonProc(obj)
-            %%%
-            obj.proc_t1_spm;
-            %%%
-            obj.Params.DropVols.in.dropVols = 1:10;
-            obj.Params.DropVols.in.movefiles = '../01_DropVols/';
-            obj.proc_drop_vols(obj.rawfiles);
-            %%%
-            obj.Params.Realign.in.movefiles = '../02_Realign/';
-            obj.proc_realign(obj.Params.DropVols.out.fn);
-            %%%
-            obj.Params.Reslice.in.movefiles = '../03_Resliced/';
-            obj.proc_reslice(obj.Params.DropVols.out.fn);
-            %%%
-            obj.Params.GradNonlinCorrect.in.movefiles = '../04_GradCorrect/';
-            obj.Params.GradNonlinCorrect.in.prefix = 'gnc_';
-            obj.Params.GradNonlinCorrect.in.gradfile = '/autofs/space/kant_004/users/ConnectomeScanner/Scripts/adrc_diff_prep/bash/gradient_nonlin_unwarp/gradient_coil_files/coeff_AS302.grad';
-            obj.Params.GradNonlinCorrect.in.fn = obj.Params.Reslice.out.fn;
-            obj.Params.GradNonlinCorrect.in.target = obj.Params.Reslice.out.meanimage;
-            
-            obj.Params.GradNonlinCorrect.out.warpfile = [];
-            obj.Params.GradNonlinCorrect.out.meannii = [];
-            obj.Params.GradNonlinCorrect.out.fn = [];
-            obj.proc_gradient_nonlin_correct;
-            %%%
-            obj.Params.Implicit_Unwarp.in.movefiles = '../05_ImpUnwarp/';
-            % obj.proc_implict_unwarping(obj.Params.GradNonlinCorrect.out.meanimage,  '/autofs/space/kant_004/users/ConnectomeScanner/Sessions/150430_8CS00315/restingState/05_ImpUnwarp/mmean.nii');
-            obj.proc_implict_unwarping(obj.Params.GradNonlinCorrect.out.meanimage,  obj.Params.GradNonlinCorrect.out.fn);
-            %%%
-            obj.Params.Coreg.in.style = 'iuw';
-            obj.Params.Coreg.in.movefiles = '../05_ImpUnwarp/';
-            obj.proc_get_fs_labels;
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            
-            obj.Params.ApplyNormNew.in.movefiles = '../06_Normed/';
-            obj.Params.ApplyNormNew.in.regfile = obj.Params.spmT1_Proc.out.regfile;
-            obj.Params.ApplyNormNew.in.prefix = 'nn2_';
-            
-            obj.Params.ApplyNormNew.in.fn = obj.Params.Implicit_Unwarp.out.newmean;
-            obj.proc_applynorm_new;
-            obj.Params.ApplyNormNew.out.normmean = obj.Params.ApplyNormNew.out.fn{1};
-            
-            obj.Params.ApplyNormNew.in.fn = obj.Params.Implicit_Unwarp.out.fn;
-            obj.proc_applynorm_new;
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            
-            obj.Params.Smooth.in.kernel = [6 6 6];
-            obj.Params.Smooth.in.prefix = 'ss6_';
-            obj.Params.Smooth.in.movefiles = '../07_Smoothed/';
-            obj.proc_smooth(obj.Params.ApplyNormNew.out.fn);
-            
-%             obj.genTBRmaps(obj.Params.Smooth.out.fn);
-            
-            
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%             obj.Params.Smooth.in.kernel = [3 3 3];
-%             obj.Params.Smooth.in.prefix = 'ss3_';
-%             obj.Params.Smooth.in.movefiles = '../08_Smoothed/';
-%             obj.proc_smooth(obj.Params.Implicit_Unwarp.out.fn);
-            
-            
-%             obj.Params.ApplyReverseNormNew.in.movefiles = [obj.root '/08_Smoothed/templates/'];
-%             obj.Params.ApplyReverseNormNew.in.fn = dir_wfp('/autofs/space/schopenhauer_002/users/MATLAB_Scripts/Atlas/fMRI/SchultzMaps/StandardTemplates/*.nii');
-%             obj.Params.ApplyReverseNormNew.in.targ = [obj.Params.Smooth.out.fn{1} ',1'];
-%             obj.Params.ApplyReverseNormNew.in.regfile = obj.Params.spmT1_Proc.out.iregfile;
-%             obj.proc_apply_reservsenorm_new;
-            
-%             obj.genTBRmaps(obj.Params.Smooth.out.fn);
-
-%             TBR(obj.Params.Smooth.out.fn,obj.Params.ApplyReverseNormNew.out.fn,[],[],'_Standard',[obj.root '/08_Smoothed/'],0);
-%             TBR(obj.Params.Implicit_Unwarp.out.fn,obj.Params.ApplyReverseNormNew.out.fn,[],[],'_Standard',[obj.root '/05_ImpUnwarp/'],0);
-    end   %COMMENTED BECAUSE ITS FMRI
-        
-        function obj = proc_gradient_nonlin_correct(obj)
-            wasRun = false;
-            target = obj.Params.GradNonlinCorrect.in.target;
-            [m h] = openIMG(target); if h.pinfo(1)~=1; h.pinfo(1)=1; spm_write_vol(h,m); end
-            [a b c] = fileparts(target);
-            outpath = obj.getPath(a,obj.Params.GradNonlinCorrect.in.movefiles);
-
-            
-            % addpath(genpath('/autofs/space/kant_002/users/rperea/DrigoScripts/adrc_diff/adrc_diff_prep/'));
-            % mris_gradient_nonlin__unwarp_volume__batchmode_HCPS_v3(target, [outpath 'gc_mean.nii'], 'coeff_AS302.grad');
-            
-            infile = target;
-            outfile = [outpath 'gnc_' b c];
-            gradfile = obj.Params.GradNonlinCorrect.in.gradfile;
-            
-            %%% Compute the grdient nonlinearity correction
-            if exist([outpath b '_deform_grad_rel.nii'],'file')==0
-                cmd=['sh /autofs/space/kant_004/users/ConnectomeScanner/Scripts/adrc_diff_prep/run_mris_gradient_nonlin__unwarp_volume__batchmode_ADRC_v3.sh ' ...
-                    '/usr/pubsw/common/matlab/8.5 ' ...
-                    infile ' ' outfile ' ' gradfile ' '];
-                system(cmd);
-                wasRun = true;
-            end
-            obj.Params.GradNonlinCorrect.out.warpfile = [outpath b '_deform_grad_rel.nii'];
-            
-            %%% Apply the correction to the mean image.
-            if exist(outfile,'file')==0
-                cmd = ['applywarp -i ' infile ' -r ' infile ' -o ' outfile ' -w ' obj.Params.GradNonlinCorrect.out.warpfile ' --interp=spline'];
-                runFS(cmd,pwd,3);
-                system(['gunzip ' outpath '*.gz']);
-                wasRun = true;
-            end
-            obj.Params.GradNonlinCorrect.out.meanimage = outfile;
-            
-            %%% Apply correction to full dataset
-            fn = obj.Params.Reslice.out.fn;
-            for ii = 1:numel(fn);
-                infile = fn{ii};
-                [a b c] = fileparts(infile);
-                outpath = obj.getPath(a,obj.Params.GradNonlinCorrect.in.movefiles);
-                outfile = [outpath 'gnc_' b c];
-                if exist(outfile,'file')==0
-                    cmd = ['applywarp -i ' infile ' -r ' infile ' -o ' outfile ' -w ' obj.Params.GradNonlinCorrect.out.warpfile ' --interp=spline'];
-                    runFS(cmd,pwd,3);
-                    system(['gunzip ' outpath '*.gz']);
-                    wasRun = true;
-                end
-                obj.Params.GradNonlinCorrect.out.fn{ii,1} = outfile;
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %Get rawfiles and locations:
+            obj.fsdir=[ '/cluster/hab/FreeSurfer/' obj.sessionname ] ;
+            if isempty(obj.rawfiles)
+              obj.rawfiles = dir_wfp([obj.root 'Orig/*.nii.gz' ] )
             end
             
-            obj.UpdateHist(obj.Params.GradNonlinCorrect,'proc_gradient_nonlin_correct',obj.Params.GradNonlinCorrect.out.warpfile,wasRun);
+            %For BET2:
+            obj.Params.Bet2.in.movefiles = ['..' filesep '01_Bet'];
+            obj.Params.Bet2.in.fracthrsh = 0.4;
+            obj.Params.Bet2.in.fn = obj.rawfiles;
+            
+            obj.proc_bet2();
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %For EDDY:
+            obj.Params.Eddy.in.movefiles = ['..' filesep '02_Eddy'];
+            obj.Params.Eddy.in.fn=obj.rawfiles;
+            obj.Params.Eddy.in.bvals=strrep(obj.rawfiles,'.nii.gz','.bvals');
+            obj.Params.Eddy.in.bvecs=strrep(obj.rawfiles,'.nii.gz','.voxel_space.bvecs');
+            obj.Params.Eddy.in.mask = obj.Params.Bet2.out.mask;
+            obj.Params.Eddy.in.index= ones(1,35) ; %for 35 volumes
+            obj.Params.Eddy.in.acqp= [ 0 -1 0 0.102]; %based on HAB diff sequence
+            
+            obj.proc_eddy();
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %For B0mean:
+            obj.Params.B0mean.in.movefiles = ['..' filesep '03_B0mean'];
+            obj.Params.B0mean.in.fn=obj.Params.Eddy.out.fn;
+            obj.Params.B0mean.in.b0_nvols=5;
+            
+            obj.proc_meanb0();
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %For DTIFIT:
+            obj.Params.Dtifit.in.movefiles = [ '..' filesep 'Recon_dtifit' ];
+            obj.Params.Dtifit.in.fn = obj.Params. Eddy.out.fn;
+            obj.Params.Dtifit.in.bvecs = obj.Params.Eddy.out.bvecs;
+            obj.Params.Dtifit.in.bvals = obj.Params.Eddy.in.bvals;
+            obj.Params.Dtifit.in.mask = obj.Params.Eddy.in.mask;
+            
+            obj.proc_dtifit();
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %For GQI:
+            obj.Params.GQI.in.movefiles = [ '..' filesep 'Recon_gqi' ];
+            obj.Params.GQI.in.fn = obj.Params. Eddy.out.fn;
+            obj.Params.GQI.in.bvecs = obj.Params.Eddy.out.bvecs;
+            obj.Params.GQI.in.bvals = obj.Params.Eddy.in.bvals;
+            obj.Params.GQI.in.mask = obj.Params.Eddy.in.mask;
+            %obj.Params.GQI.sh = '/usr/pubsw/packages/DSI-Studio/20160715/dsi_studio_run';
+            
+            obj.proc_gqi();
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %For AntsReg:
+            obj.Params.AntsReg.in.movefiles = ['..' filesep 'Ants_CoReg' ];
+            obj.Params.AntsReg.in.fn = obj.Params.Dtifit.out.FA ;
+            obj.Params.AntsReg.in.ref = obj.ref_FA;
+            obj.Params.AntsReg.in.prefix = [ obj.sessionname '_2_HABn272_' ] ;
+            
+            obj.proc_antsreg();
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %For Skeletonize:
+            obj.Params.Skeletonize.in.movefiles = ['..' filesep 'Skeletonize' ];
+            obj.Params.Skeletonize.in.fn = obj.Params.AntsReg.out.fn ;
+            obj.Params.Skeletonize.in.meanFA = obj.HABn272_meanFA;
+            obj.Params.Skeletonize.in.skel_dst = obj.HABn272_meanFA_skel_dst;
+            obj.Params.Skeletonize.in.thr = '0.3';
+            obj.Params.Skeletonize.in.ref_region = obj.ref_region;
+            
+            
+            obj.Params.Skeletonize.in.prefix = [ obj.sessionname '_skelHABn272' ] ;
+            
+            obj.proc_skeletonize();
+            
+            
+            
         end
         
         function resave(obj)
@@ -232,5 +166,36 @@ classdef dwi_HAB < dwiMRI_Session
         end
         
       
+    end
+    
+    methods ( Access = protected ) 
+        function obj = getDCM2nii(obj)
+            %For proc_DCM2NII:
+            obj.Params.DCM2NII.specific_vols=35;
+            obj.Params.DCM2NII.scanlog = [ obj.session_location  filesep 'LogFiles' ...
+                filesep 'scan.log' ] ;
+            if ~exist(obj.Params.DCM2NII.scanlog,'file')
+                error(['No scanlog found in:' obj.Params.DCM2NII.scanlog '. Exiting...']);
+            end
+            objParams.DCM2NII.seq_names='DIFFUSION_HighRes_30';
+            try
+                [ ~ , obj.Params.DCM2NII.in.nvols ] = system([ 'cat ' ...
+                    obj.Params.DCM2NII.scanlog ...
+                    ' | grep ' objParams.DCM2NII.seq_names ' | grep " 35 " | tail -1 | awk ''{ print $7 }'' ' ]);
+            catch
+                errormsg=['DCM2NII: No 35 vols. when reading scanlog located in: ' ... 
+                    obj.Params.DCM2NII.scanlog '\n' ];
+                obj.UpdateErrors(errormsg);
+            end
+            obj.Params.DCM2NII.in.nvols=str2num(obj.Params.DCM2NII.in.nvols);
+            [ ~ , obj.Params.DCM2NII.in.first_dcmfiles ] = system([ 'cat ' ...
+                obj.Params.DCM2NII.scanlog ...
+                ' | grep ' objParams.DCM2NII.seq_names ' | grep " 35 " | tail -1 | awk ''{ print $8 }'' ' ]);
+            
+            obj.Params.DCM2NII.out.location = [ obj.root 'Orig' filesep ];
+            obj.Params.DCM2NII.out.fn = [ objParams.DCM2NII.seq_names '.nii.gz' ];
+            obj.Params.DCM2NII.in.fsl2std_param = '-1 0 0 254 \n0 1 0 254 \n0 0 -1 0 \n0 0 0 1';
+            obj.proc_dcm2nii
+        end
     end
 end

@@ -10,7 +10,7 @@ classdef dwi_ADRC < dwiMRI_Session
     
     properties
        %root directoy where raw data lives:
-       root_location = '/eris/bang/ADRC/Sessions/';
+       root = '/eris/bang/ADRC/Sessions/';
        dcm_location = '/eris/bang/ADRC/DICOM_Archive/';
        session_location='/eris/bang/ADRC/Sessions/';
        gradfile='/autofs/space/kant_004/users/ConnectomeScanner/Scripts/adrc_diff_prep/bash/gradient_nonlin_unwarp/gradient_coil_files/coeff_AS302.grad';
@@ -26,22 +26,26 @@ classdef dwi_ADRC < dwiMRI_Session
             end
             
             obj.sessionname = sessionname;
-            obj.root = [obj.root_location sessionname '/DWIs/'];
+            obj.root = [obj.root sessionname '/DWIs/'];
             obj.dcm_location = [ obj.dcm_location sessionname filesep ];
             obj.session_location= [ obj.session_location sessionname filesep  ];
             %If the folder /DWIs/ does not exist, then create it!             
             if exist(obj.root,'dir')==0
-              obj.make_root();
+                try
+                    system(['mkdir ' obj.root ]); 
+                catch
+                    disp([ 'Trying to create /DWIs/ in:' obj.root ... 
+                        ' .Does the parent folder exist?'])
+                end
             end
+            obj.objectHome = obj.root;
             
-            %Check if *.nii.gz files exist, if not get them from DCM2nii:
-            obj.rawfiles = dir_wfp([obj.root 'Orig/*.nii.gz' ] );
-            if isempty(obj.rawfiles)
-               obj.getDCM2nii();
-            end
-            
-            
-            if exist([obj.objectHome filesep sessionname '.mat'],'file')>0
+            %newroot = obj.root;
+            %oldroot = obj.root;
+            %obj.setSPM12;  %No needed yet
+            %obj.dosave = true;
+
+            if exist([obj.objectHome filesep sessionname '.mat'],'file')>0 
                 load([obj.objectHome filesep sessionname '.mat']);
                 oldroot = obj.root;
                 obj.wasLoaded = true;
@@ -67,6 +71,30 @@ classdef dwi_ADRC < dwiMRI_Session
             end
             
             %%%%%%%%%%%%
+            %For proc_DCM2NII:
+            obj.Params.DCM2NII.specific_vols=68;
+            obj.Params.DCM2NII.scanlog = [ obj.session_location filesep 'LogFiles' ...
+                filesep 'scan.log' ] ;
+            if ~exist(obj.Params.DCM2NII.scanlog,'file')
+                error(['No scanlog file found in: ' obj.Params.DCM2NII.scanlog ' . Exiting...']);
+            end
+            dwi_setnames={ 'ep2d_diff_7p5k_set1E60' 'ep2d_diff_7p5k_set2E60' ...
+                'ep2d_diff_7p5k_set3E60' 'ep2d_diff_2p5k_set4E60' };
+            for ii=1:4 % 4 sets of DWIs in this project!
+                obj.Params.DCM2NII.in(ii).prefix = dwi_setnames(ii); 
+                [ ~ , obj.Params.DCM2NII.in(ii).nvols ] = system([ 'cat ' ...
+                    obj.Params.DCM2NII.scanlog ' | grep ' dwi_setnames{ii} ...
+                    ' | tail -1 | awk ''{ print $7 }'' ' ]);
+                obj.Params.DCM2NII.in(ii).nvols=str2num(obj.Params.DCM2NII.in(ii).nvols);
+                [ ~ , obj.Params.DCM2NII.in(ii).first_dcmfiles ]= system([ 'cat ' ...
+                    obj.Params.DCM2NII.scanlog ' | grep ' dwi_setnames{ii} ...
+                    ' | tail -1 | awk ''{ print $8 }'' ' ]);
+                            
+                obj.Params.DCM2NII.out(ii).location = [ obj.root 'Orig' filesep ];
+                obj.Params.DCM2NII.out(ii).filename = [  cell2char(dwi_setnames(ii)) '.nii.gz' ];
+            end
+            
+            %%%%%%%%%%%%
             %For proc_dropvols
             obj.Params.DropVols.in.dropVols=[ 1 ];
             obj.Params.DropVols.in.prefix='dv_';
@@ -88,7 +116,7 @@ classdef dwi_ADRC < dwiMRI_Session
             obj.fsubj=obj.sessionname;
                 
         end
-        
+              
         function obj = CommonProc(obj)
             
             %DICOM TO NIFTII
@@ -101,36 +129,12 @@ classdef dwi_ADRC < dwiMRI_Session
             obj.proc_gradient_nonlin_correct
         end
         
+       
+        
+        
+        
         function resave(obj)
             save([obj.objectHome filesep obj.sessionname '.mat'],'obj');
-        end
-    end
-    
-    methods ( Access = protected )
-        function obj = getDCM2nii(obj)
-            %For proc_DCM2NII:
-            obj.Params.DCM2NII.specific_vols=68;
-            obj.Params.DCM2NII.scanlog = [ obj.session_location filesep 'LogFiles' ...
-                filesep 'scan.log' ] ;
-            if ~exist(obj.Params.DCM2NII.scanlog,'file')
-                error(['No scanlog file found in: ' obj.Params.DCM2NII.scanlog ' . Exiting...']);
-            end
-            dwi_setnames={ 'ep2d_diff_7p5k_set1E60' 'ep2d_diff_7p5k_set2E60' ...
-                'ep2d_diff_7p5k_set3E60' 'ep2d_diff_2p5k_set4E60' };
-            for ii=1:4 % 4 sets of DWIs in this project!
-                obj.Params.DCM2NII.in(ii).prefix = dwi_setnames(ii);
-                [ ~ , obj.Params.DCM2NII.in(ii).nvols ] = system([ 'cat ' ...
-                    obj.Params.DCM2NII.scanlog ' | grep ' dwi_setnames{ii} ...
-                    ' | tail -1 | awk ''{ print $7 }'' ' ]);
-                obj.Params.DCM2NII.in(ii).nvols=str2num(obj.Params.DCM2NII.in(ii).nvols);
-                [ ~ , obj.Params.DCM2NII.in(ii).first_dcmfiles ]= system([ 'cat ' ...
-                    obj.Params.DCM2NII.scanlog ' | grep ' dwi_setnames{ii} ...
-                    ' | tail -1 | awk ''{ print $8 }'' ' ]);
-                
-                obj.Params.DCM2NII.out(ii).location = [ obj.root 'Orig' filesep ];
-                obj.Params.DCM2NII.out(ii).filename = [  cell2char(dwi_setnames(ii)) '.nii.gz' ];
-            end
-            obj.proc_dcm2nii
         end
     end
 end
