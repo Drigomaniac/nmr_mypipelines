@@ -78,7 +78,9 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         function obj = getDB(obj)
             R = DataCentral(['SELECT * FROM Sessions.MRI WHERE MRI_Session_Name="' obj.sessionname '"']);
             obj.dbentry = R;
-            obj.collectiondate = R.MRI_SessionDate;
+            try
+                obj.collectiondate = R.MRI_SessionDate;
+            end
         end
         
         function showUnpackedData(obj)
@@ -163,6 +165,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             obj.Params.Dtifit.in.mask='';
             obj.Params.Dtifit.out.prefix='';
             obj.Params.Dtifit.out.FA='';
+            obj.Params.Dtifit.out.RD = '';
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             obj.Params.GQI.in.movefiles = '';
@@ -178,7 +181,8 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             obj.Params.GQI.out.btable = '';
             obj.Params.GQI.out.src_fn = '';
             obj.Params.GQI.out.fibs_fn = '' ;
-            
+            obj.Params.GQI.out.fibs_GFA = '';
+            obj.Params.GQI.out.export =   'gfa,nqa0,nqa1';          
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             obj.Params.AntsReg.in.movefiles = '';
             obj.Params.AntsReg.in.fn = '';
@@ -190,6 +194,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             obj.Params.AntsReg.in.precision = 'd' ;
             obj.Params.AntsReg.in.prefix = '';
             obj.Params.AntsReg.out.fn = '';
+            obj.Params.AntsReg.out.FA = '';
            
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%            obj.Params.Skeletonize.in.movefiles = ['..' filesep 'Skeletonize' ];
             obj.Params.Skeletonize.in.movefiles = '';
@@ -200,8 +205,9 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             obj.Params.Skeletonize.in.ref_region = '';
             obj.Params.Skeletonize.in.prefix = [ obj.sessionname '_skel' ] ;
             obj.Params.Skeletonize.out.fn = '' ;
-            
-            
+            obj.Params.Skeletonize.out.fn_blind = '' ;
+            obj.Params.Skeletonize.in.FA= '' ; 
+            obj.Params.Skeletonize.out.FA = '' ;
             
 %             %%%%%%%%%%%%%%%%%%%%
 %             %%%%%%%%%%%%%%%%%%%%
@@ -616,6 +622,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             ' -b ' obj.Params.Dtifit.in.bvals{ii} ];
                         system(exec_cmd);
                         fprintf(['...done']);
+                       
                     else
                         fprintf([ obj.Params.Dtifit.out.FA{ii} ' exist.\nWas dtifit already ran? Skipping...\n'])
                     end
@@ -625,103 +632,117 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     obj.UpdateErrors(errormsg);
                     
                 end
+                %Outputting RD:
+                obj.Params.Dtifit.out.RD{ii} = strrep(obj.Params.Dtifit.out.FA{ii},'FA','RD');
+                if exist(obj.Params.Dtifit.out.RD{ii})==0
+                    
+                    exec_cmd=[ ' fslmaths ' strrep(obj.Params.Dtifit.out.FA{ii},'FA','L2') ...
+                        ' -add ' strrep(obj.Params.Dtifit.out.FA{ii},'FA','L3') ...
+                        ' -div 2 ' obj.Params.Dtifit.out.RD{ii}  ];
+                    fprintf('\nCreating RD dtifit...');
+                    system(exec_cmd);
+                    fprintf('...done \n');
+                end
             end
         end
         
         function obj = proc_gqi(obj)
             for ii=1:numel(obj.Params.GQI.in.fn)
-                clear cur_fn;
-                if iscell(obj.Params.GQI.in.fn{ii})
-                    cur_fn=cell2char(obj.Params.GQI.in.fn{ii});
-                else
-                    cur_fn=obj.Params.GQI.in.fn{ii};
-                end
-                [a b c ] = fileparts(cur_fn);
-                outpath=obj.getPath(a,obj.Params.GQI.in.movefiles);
-                clear outfile
-                %Init variable names:
-                obj.Params.GQI.out.btable{ii}= [ outpath  obj.sessionname '_btable.txt' ] ;
-                
-                %Attempting to create b_table:
-                if exist(obj.Params.GQI.out.btable{ii},'file')==0
-                    [~, nrow ]=system(['cat ' obj.Params.GQI.in.bvecs{ii} ' | wc -l | awk  '' {print $1} '' '  ] );
-                    nrow=str2num(nrow);
-                    temp_bvecs{ii}=[ outpath 'temp.txt' ];
-                    if nrow == 3 ; %then its in column form, change it...
-                        exec_cmd=[ 'drigo_col2rows.sh ' obj.Params.GQI.in.bvecs{ii} ...
-                            ' > ' temp_bvecs{ii}];
-                        system(exec_cmd);
-                    else
-                        exec_cmd=[ 'cat ' obj.Params.GQI.in.bvecs ' >> ' temp_bvecs{ii} ];
-                        system(exec_cmd);
-                    end
-                    exec_cmd=[' paste ' obj.Params.GQI.in.bvals{ii} ' ' ...
-                        temp_bvecs{ii} ' | sed ''s/\t/ /g'' >' obj.Params.GQI.out.btable{ii}  ];
-                    system(exec_cmd);
-                    exec_cmd=(['rm ' temp_bvecs{ii}]);
-                    system(exec_cmd);
-                    %                     else
-                    %                         fprintf(['\n B-table: ' obj.Params.GQI.out.btable{ii}  ' exists. Skipping creation...']);
-                end
-                
-                %Attempting to create the src.fz file:
-                if exist( obj.Params.GQI.out.src_fn{ii},'file')==0
-                    fprintf(['\nSource gz file reconstruction...']);
-                    exec_cmd=[ 'dsi_studio_run --action=src ' ...
-                        ' --source=' obj.Params.GQI.in.fn{ii} ...
-                        ' --b_table=' obj.Params.GQI.out.btable{ii} ...
-                        ' --output=' obj.Params.GQI.out.src_fn{ii} ];
-                    system(exec_cmd);
-                    fprintf('...done');
-                else
-                    fprintf(['\n The src file: ' ' exists. Skipping...\n']);
-                end
-                
                 try
-                    obj.Params.GQI.out.fibs_fn{ii} = ls([outpath '*.fib.gz' ] );
-                catch
-                    obj.Params.GQI.out.fibs_fn{ii} = '';
-                end
-                %Attempting to create the fib.fz file:
-                if exist(strtrim(obj.Params.GQI.out.fibs_fn{ii}),'file')==0
-                    fprintf(['\nFib gz file reconstruction...']);
-                    exec_cmd=[ 'dsi_studio_run --action=rec ' ...
-                        ' --source=' obj.Params.GQI.out.src_fn{ii} ...
-                        ' --method=' obj.Params.GQI.in.method ...
-                        ' --num_fiber=' obj.Params.GQI.in.num_fiber ...
-                        ' --param0=' obj.Params.GQI.in.param0 ...
-                        ' --mask=' obj.Params. GQI.in.mask{ii} ];
-                    system(exec_cmd);
-                    fprintf('...done');
+                    clear cur_fn;
+                    if iscell(obj.Params.GQI.in.fn{ii})
+                        cur_fn=cell2char(obj.Params.GQI.in.fn{ii});
+                    else
+                        cur_fn=obj.Params.GQI.in.fn{ii};
+                    end
+                    [a b c ] = fileparts(cur_fn);
+                    outpath=obj.getPath(a,obj.Params.GQI.in.movefiles);
+                    clear outfile
+                    %Init variable names:
+                    obj.Params.GQI.out.btable{ii}= [ outpath  obj.sessionname '_btable.txt' ] ;
                     
-                    %Assigning the fib_fn value again (if created)
+                    %Attempting to create b_table:
+                    if exist(obj.Params.GQI.out.btable{ii},'file')==0
+                        [~, nrow ]=system(['cat ' obj.Params.GQI.in.bvecs{ii} ' | wc -l | awk  '' {print $1} '' '  ] );
+                        nrow=str2num(nrow);
+                        temp_bvecs{ii}=[ outpath 'temp.txt' ];
+                        if nrow == 3 ; %then its in column form, change it...
+                            exec_cmd=[ 'drigo_col2rows.sh ' obj.Params.GQI.in.bvecs{ii} ...
+                                ' > ' temp_bvecs{ii}];
+                            system(exec_cmd);
+                        else
+                            exec_cmd=[ 'cat ' obj.Params.GQI.in.bvecs ' >> ' temp_bvecs{ii} ];
+                            system(exec_cmd);
+                        end
+                        exec_cmd=[' paste ' obj.Params.GQI.in.bvals{ii} ' ' ...
+                            temp_bvecs{ii} ' | sed ''s/\t/ /g'' >' obj.Params.GQI.out.btable{ii}  ];
+                        system(exec_cmd);
+                        exec_cmd=(['rm ' temp_bvecs{ii}]);
+                        system(exec_cmd);
+                        %                     else
+                        %                         fprintf(['\n B-table: ' obj.Params.GQI.out.btable{ii}  ' exists. Skipping creation...']);
+                    end
+                    
+                    %Attempting to create the src.fz file:
+                    obj.Params.GQI.out.src_fn{ii} = [outpath obj.sessionname '.src.gz' ];
+                    if exist(obj.Params.GQI.out.src_fn{ii},'file')==0
+                        fprintf(['\nSource gz file reconstruction...']);
+                        exec_cmd=[ 'dsi_studio_run --action=src ' ...
+                            ' --source=' obj.Params.GQI.in.fn{ii} ...
+                            ' --b_table=' obj.Params.GQI.out.btable{ii} ...
+                            ' --output=' obj.Params.GQI.out.src_fn{ii} ];
+                        system(exec_cmd);
+                        fprintf('...done');
+                    else
+                        fprintf(['\n The src file: ' ' exists. Skipping...\n']);
+                    end
+                    
                     try
                         obj.Params.GQI.out.fibs_fn{ii} = ls([outpath '*.fib.gz' ] );
                     catch
                         obj.Params.GQI.out.fibs_fn{ii} = '';
                     end
+                    %Attempting to create the fib.fz file:
+                    if exist(strtrim(obj.Params.GQI.out.fibs_fn{ii}),'file')==0
+                        fprintf(['\nFib gz file reconstruction...']);
+                        exec_cmd=[ 'dsi_studio_run --action=rec ' ...
+                            ' --source=' obj.Params.GQI.out.src_fn{ii} ...
+                            ' --method=' obj.Params.GQI.in.method ...
+                            ' --num_fiber=' obj.Params.GQI.in.num_fiber ...
+                            ' --param0=' obj.Params.GQI.in.param0 ...
+                            ' --mask=' obj.Params. GQI.in.mask{ii} ];
+                        system(exec_cmd);
+                        fprintf('...done');
+                        
+                        %Assigning the fib_fn value again (if created)
+                        try
+                            obj.Params.GQI.out.fibs_fn{ii} = ls([outpath '*.fib.gz' ] );
+                        catch
+                            obj.Params.GQI.out.fibs_fn{ii} = '';
+                        end
+                        
+                    else
+                        fprintf(['\n The fib.gz file: ' obj.Params.GQI.out.fibs_fn{ii}  ' exists. Skipping...']);
+                    end
+                    obj.Params.GQI.out.fibs_GFA{ii} = [ strtrim(obj.Params.GQI.out.fibs_fn{ii}) '.gfa.nii.gz' ];
                     
-                else
-                    fprintf(['\n The fib.gz file: ' obj.Params.GQI.out.fibs_fn{ii}  ' exists. Skipping...']);
+                    %Now exporting some values (GFA,...):
+                    if exist(obj.Params.GQI.out.fibs_GFA{ii},'file') == 0
+                        exec_cmd=(['dsi_studio_run --action=exp ' ...
+                            ' --source=' strtrim(obj.Params.GQI.out.fibs_fn{ii}) ...
+                            ' --export=' obj.Params.GQI.out.export ]);
+                        system(exec_cmd);
+                    end
+                    
+                catch
+                    errormsg=['PROC_GQI: Cannot complete GQI reconstruction'  ...
+                        'Please check gqi input parameters (maybe sourcing dsi_studio?)!\n' ];
+                    disp(errormsg)
+                    obj.UpdateErrors(errormsg);
+                    
                 end
-                
-                %Now exporting some values:
-                exec_cmd=(['dsi_studio_run --action=exp ' ...
-                    ' --source=' strtrim(obj.Params.GQI.out.fibs_fn{ii}) ...
-                    ' --export=gfa,nqa0,nqa1' ]);
-                system(exec_cmd);
-                
-                
-                % catch
-                errormsg=['PROC_GQI: Cannot complete GQI reconstruction'  ...
-                    'Please check gqi input parameters (maybe sourcing dsi_studio?)!\n' ];
-                disp(errormsg)
-                obj.UpdateErrors(errormsg);
-                
-                %end
             end
         end
-        
         
         function obj = proc_antsreg(obj)
             for ii=1:numel(obj.Params.AntsReg.in.fn)
@@ -753,11 +774,48 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 else
                      fprintf(['\n proc_antsreg(): ' obj.Params.AntsReg.out.fn{ii} ...
                          ' exists. Skipping...\n\n']) ;
-                     
+                end
+                for tocomment=1:1
+                    obj.Params.AntsReg.out.FA{ii} = [ outpath obj.Params.AntsReg.in.prefix 'FA.nii.gz' ];
+                    if  exist(obj.Params.AntsReg.out.FA{ii},'file')==0
+                        fprintf(['\n Warping dtifit metrics...']);
+                        %FA:
+                        exec_cmd=[ 'WarpImageMultiTransform 3 ' ...
+                            ' ' obj.Params.Dtifit.out.FA{ii}  ...
+                            ' ' obj.Params.AntsReg.out.FA{ii} ...
+                            ' -R '  obj.Params.AntsReg.in.ref ...
+                            ' ' strrep(obj.Params.AntsReg.out.fn{ii},'_Warped','_1Warp') ...
+                            ' ' strrep(obj.Params.AntsReg.out.fn{ii},'_Warped.nii.gz','_0GenericAffine.mat')];
+                        system(exec_cmd)
+                        %RD:
+                        exec_cmd=[ 'WarpImageMultiTransform 3 ' ...
+                            ' ' obj.Params.Dtifit.out.RD{ii}  ...
+                            ' ' strrep(obj.Params.AntsReg.out.FA{ii},'FA','RD') ...
+                            ' -R '  obj.Params.AntsReg.in.ref ...
+                            ' ' strrep(obj.Params.AntsReg.out.fn{ii},'_Warped','_1Warp') ...
+                            ' ' strrep(obj.Params.AntsReg.out.fn{ii},'_Warped.nii.gz','_0GenericAffine.mat') ];
+                        system(exec_cmd)
+                        %AxD:
+                        exec_cmd=[ 'WarpImageMultiTransform 3 ' ...
+                            ' ' strrep(obj.Params.Dtifit.out.FA{ii},'FA','L1') ...
+                            ' ' strrep(obj.Params.AntsReg.out.FA{ii},'FA','AxD') ...
+                            ' -R '  obj.Params.AntsReg.in.ref ...
+                            ' ' strrep(obj.Params.AntsReg.out.fn{ii},'_Warped','_1Warp') ...
+                            ' ' strrep(obj.Params.AntsReg.out.fn{ii},'_Warped.nii.gz','_0GenericAffine.mat') ];
+                        system(exec_cmd);
+                        %MD:
+                        exec_cmd=[ 'WarpImageMultiTransform 3 ' ...
+                            ' ' strrep(obj.Params.Dtifit.out.FA{ii},'FA','MD')  ...
+                            ' ' strrep(obj.Params.AntsReg.out.FA{ii},'FA','MD') ...
+                            ' -R '  obj.Params.AntsReg.in.ref ...
+                            ' ' strrep(obj.Params.AntsReg.out.fn{ii},'_Warped','_1Warp') ...
+                            ' ' strrep(obj.Params.AntsReg.out.fn{ii},'_Warped.nii.gz','_0GenericAffine.mat') ];
+                        system(exec_cmd)
+                        fprintf(['...done.\n']);
+                    end
                 end
             end 
         end
-        
         
         function obj = proc_skeletonize(obj)
              for ii=1:numel(obj.Params.Skeletonize.in.fn)
@@ -770,7 +828,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 [a b c ] = fileparts(cur_fn);
                 outpath=obj.getPath(a,obj.Params.Skeletonize.in.movefiles);
                 clear outfile
-                obj.Params.Skeletonize.out.fn{ii} = [ outpath obj.Params.Skeletonize.in.prefix '.nii.gz' ];
+                obj.Params.Skeletonize.out.fn{ii} = [ outpath obj.sessionname obj.Params.Skeletonize.in.prefix '.nii.gz' ];
                 if exist(obj.Params.Skeletonize.out.fn{ii},'file')==0
                     fprintf(['\nSkeletonizing to reference... ']);
                     tic
@@ -789,6 +847,59 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                          ' exists. Skipping...\n\n']) ;
                      
                 end
+                
+                
+                %NOW OTHER METRICS:
+                obj.Params.Skeletonize.in.FA{ii}  = obj.Params.AntsReg.out.FA{ii} ; 
+                obj.Params.Skeletonize.out.FA{ii} = [ outpath obj.sessionname obj.Params.Skeletonize.in.prefix '_FA.nii.gz' ];
+                
+                for tocomment=1:1;
+                    if exist(obj.Params.Skeletonize.out.FA{ii},'file')==0
+                        fprintf(['\nSkeletonizing  dtimetrics... ']);
+                        tic
+                        fprintf('\n in FA...');
+                        exec_cmd=[ 'tbss_skeleton ' ...
+                            ' -i '  obj.Params.Skeletonize.in.meanFA ...
+                            ' -p '  obj.Params.Skeletonize.in.thr ...
+                            ' '  obj.Params.Skeletonize.in.skel_dst ...
+                            ' '  obj.Params.Skeletonize.in.ref_region  ...
+                            ' '  obj.Params.Skeletonize.in.FA{ii} ...
+                            ' '  obj.Params.Skeletonize.out.FA{ii}];
+                        system(exec_cmd);
+                        fprintf('...done\n');
+                        %RD:
+                        fprintf('\n in RD...');
+                        exec_cmd=strrep(exec_cmd,'_FA.nii','_RD.nii')
+                        system(exec_cmd); fprintf('...done\n');
+                        %AxD:
+                        fprintf('\n in AxD...');
+                        exec_cmd=strrep(exec_cmd,'_RD.nii','_AxD.nii')
+                        system(exec_cmd); fprintf('...done\n');
+                        %MD:
+                        fprintf('\n in MD...');
+                        exec_cmd=strrep(exec_cmd,'_AxD.nii','_MD.nii')
+                        system(exec_cmd); fprintf('...done\n');
+                        toc
+                        fprintf(['...done.\n']);
+                    else
+                        fprintf(['\n proc_skeletonize(): ' obj.Params.AntsReg.out.fn{ii} ...
+                            ' exists. Skipping...\n\n']) ;
+                        
+                    end
+                end
+                %COMMENTED DUE TO UNNECESSARY USAGE (for now...):
+%                 obj.getDB;                
+%                 obj.Params.Skeletonize.out.fn_blind{ii} = [ outpath cell2char(obj.dbentry.SubjIDshort) obj.Params.Skeletonize.in.prefix '.nii.gz' ];
+%                 if exist(obj.Params.Skeletonize.out.fn_blind{ii},'file')==0
+%                     exec_cmd=[ 'cp ' obj.Params.Skeletonize.out.fn{ii} ...
+%                         ' ' obj.Params.Skeletonize.out.fn_blind{ii} ];
+%                     system(exec_cmd)
+%                     fprintf(['...done.\n']);
+%                 else
+%                      fprintf(['\n proc_skeletonize(): ' obj.Params.AntsReg.out.fn{ii} ...
+%                          ' exists. Skipping...\n\n']) ;
+%                      
+%                 end
              end
         end
             

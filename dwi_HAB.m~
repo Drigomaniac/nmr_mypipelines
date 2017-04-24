@@ -20,11 +20,12 @@ classdef dwi_HAB < dwiMRI_Session
        root_location = '/cluster/sperling/HAB/Project1/DWIs_30b700/Sessions/';
        dcm_location = '/cluster/sperling/HAB/Project1/DICOM_ARCHIVE/All_DICOMS/';
        session_location='/cluster/sperling/HAB/Project1/Sessions/'
+       ref_FA = '/cluster/hab/HAB/Project1/DWIs_30b700/HABn272_MNI_Target/HABn272_mean_FA.nii.gz';
        %sh dependencies:
        rotatae_bvecs_sh='/cluster/sperling/HAB/Project1/Scripts/DWIs/mod_fdt_rotate_bvecs.sh ';
        
        %template dependencies:
-       HABn272_meanFA='/cluster/hab/HAB/Project1/DWIs_30b700/HABn272_MNI_Target/HABn272_meanFA.nii.gz';
+       HABn272_meanFA='/cluster/hab/HAB/Project1/DWIs_30b700/HABn272_MNI_Target/HABn272_mean_FA.nii.gz';
        HABn272_meanFA_skel_dst='/cluster/hab/HAB/Project1/DWIs_30b700/HABn272_MNI_Target/HABn272_mean_FA_skeleton_mask_dst.nii.gz';
        ref_region='/usr/pubsw/packages/fsl/5.0.9/data/standard/LowerCingulum_1mm.nii.gz'
     end
@@ -139,6 +140,7 @@ classdef dwi_HAB < dwiMRI_Session
             obj.Params.GQI.in.bvecs = obj.Params.Eddy.out.bvecs;
             obj.Params.GQI.in.bvals = obj.Params.Eddy.in.bvals;
             obj.Params.GQI.in.mask = obj.Params.Eddy.in.mask;
+            obj.Params.GQI.out.export = 'gfa,nqa0,nqa1';
             %obj.Params.GQI.sh = '/usr/pubsw/packages/DSI-Studio/20160715/dsi_studio_run';
             
             obj.proc_gqi();
@@ -147,7 +149,7 @@ classdef dwi_HAB < dwiMRI_Session
             %For AntsReg:
             obj.Params.AntsReg.in.movefiles = ['..' filesep 'Ants_CoReg' ];
             obj.Params.AntsReg.in.fn = obj.Params.Dtifit.out.FA ;
-            obj.Params.AntsReg.in.ref = obj.HABn272_meanFA;
+            obj.Params.AntsReg.in.ref = obj.ref_FA;
             obj.Params.AntsReg.in.prefix = [ obj.sessionname '_2_HABn272_' ] ;
             
             obj.proc_antsreg();
