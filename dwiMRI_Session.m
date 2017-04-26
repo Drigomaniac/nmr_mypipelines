@@ -196,7 +196,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             obj.Params.AntsReg.out.fn = '';
             obj.Params.AntsReg.out.FA = '';
            
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%            obj.Params.Skeletonize.in.movefiles = ['..' filesep 'Skeletonize' ];
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%            
             obj.Params.Skeletonize.in.movefiles = '';
             obj.Params.Skeletonize.in.fn = '' ;
             obj.Params.Skeletonize.in.meanFA = '';
@@ -208,59 +208,21 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             obj.Params.Skeletonize.out.fn_blind = '' ;
             obj.Params.Skeletonize.in.FA= '' ; 
             obj.Params.Skeletonize.out.FA = '' ;
+            obj.Params.Skeletonize.out.diffmetrics={ 'FA' 'RD' 'AxD' 'MD' } ;
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            obj.Params.Skel_TOI.in.location = '' ;
+            obj.Params.Skel_TOI.in.masks = '' ;
+            obj.Params.Skel_TOI.in.ext = '.nii.gz' ;
+            obj.Params.Skel_TOI.out = [] ; %this should be populated with all the masked TOIs
+            obj.Params.Skel_TOI.in.suffix = '';
             
 %             %%%%%%%%%%%%%%%%%%%%
 %             %%%%%%%%%%%%%%%%%%%%
 %             %%%%%%%%%%%%%%%%%%%%
 %             %%ALL THESE BELOW ARE INSTANCES OF A PREVIOUS CLASS (USED FOR
 %             %%CODE RECYLING...)
-%             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%             obj.Params.CleanData.in.movefiles = '';
-%             obj.Params.CleanData.in.prefix = 'cl_';
-%             obj.Params.CleanData.in.fn = [];
-%             obj.Params.CleanData.in.filter = true;
-%             obj.Params.CleanData.in.motion = true;
-%             obj.Params.CleanData.in.physio = true;
-%             obj.Params.CleanData.in.other = false;
-%             obj.Params.CleanData.in.otherFiles = [];
-%             obj.Params.CleanData.in.deriv = true;
-%             obj.Params.CleanData.in.square = true;
-%             obj.Params.CleanData.in.reduce = true;
-%             obj.Params.CleanData.out.fn = [];
-%             obj.Params.CleanData.out.REGS = [];
-%             obj.Params.CleanData.out.indices = [];
-%             
-%             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%             obj.Params.SNR.in.movefiles = 'SNR_Images';
-%             obj.Params.SNR.in.fn = [];
-%             obj.Params.SNR.in.thresh = 115;
-%             
-%             obj.Params.SNR.out.mean = [];
-%             obj.Params.SNR.out.sd = [];
-%             obj.Params.SNR.out.snr = [];
-%             obj.Params.SNR.out.report = [];
-%             
-%             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%             obj.Params.QA.in.movefiles = '';
-%             obj.Params.QA.in.logname = 'QA_Log';
-%             obj.Params.QA.in.thinga = [];
-%             obj.Params.QA.in.checksnr = true;
-%             obj.Params.QA.in.SNRthresh = 98; %changed from 115 - Fdu 170224
-%             obj.Params.QA.in.GlobalSigThresh = 2.5;
-%             obj.Params.QA.in.MeanMovementThresh = 0.5; %changed from 0.75 - Fdu 170224
-%             obj.Params.QA.in.TotalMovementThresh = 5;
-%             obj.Params.QA.in.TotalRotationThresh = 5;
-%             obj.Params.QA.in.MoveThresh = .75;
-%             obj.Params.QA.in.RotThresh = 1.5;
-%             obj.Params.QA.in.BadVolThresh = 20;
-%             
-%             obj.Params.QA.out.SNR = [];
-%             obj.Params.QA.out.meanBold = [];
-%             obj.Params.QA.out.badVols = [];
-%             obj.Params.QA.out.meanMV = [];
-%             obj.Params.QA.out.sdMV = [];
-%             obj.Params.QA.out.reasons = [];
-%             obj.Params.QA.out.badruns = [];
+
 %             
 %             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %             obj.Params.Map_To_Surface.in.movefiles = '';
@@ -327,7 +289,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             wasRun = false;
             nfn = [];
             for ii=1:numel(obj.Params.DCM2NII.in)
-               if nargin>2 && ~isempty(dest)
+                if nargin>2 && ~isempty(dest)
                     obj.Params.DCM2NII.out(ii).location = dest;
                 end
                 
@@ -348,7 +310,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 if ~exist(obj.Params.DCM2NII.out(ii).location,'dir')
                     clear exec_cmd
                     exec_cmd = ['mkdir -p ' obj.Params.DCM2NII.out(ii).location ];
-                    system(exec_cmd);
+                    obj.RunBash(exec_cmd);
                 end
                 
                 %Processing starts here:
@@ -359,33 +321,34 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             %Somehow save my cmd in here...??
                             clear exec_cmd
                             exec_cmd=['mri_convert ' in_file ' ' out_file ];
-                            system(exec_cmd)
-                            
+                            obj.RunBash(exec_cmd);
                             %Reorient to std --> 
                             fprintf('\nFslreorienting to standard...')
                             if isempty(obj.Params.DCM2NII.in.fsl2std_param)
                                 exec_cmd=['fslreorient2std ' out_file ' > ' obj.Params.DCM2NII.in.fsl2std_matfile ];
-                                system(exec_cmd);
+                                obj.RunBash(exec_cmd);
                             else
                                 exec_cmd=['echo -e ''' obj.Params.DCM2NII.in.fsl2std_param ''' > ' obj.Params.DCM2NII.in.fsl2std_matfile ];
-                                system(exec_cmd);
+                                obj.RunBash(exec_cmd);
+                                
                             end
                             
                             exec_cmd=['fslreorient2std ' out_file ' ' out_file ];
-                            system(exec_cmd);
+                            obj.RunBash(exec_cmd);
                             
                             %Now dealing with bvecs:
                             disp('Fslreorienting the bvecs now...')
                             temp_bvec=[outpath 'temp.bvec' ] 
-                            exec_cmd=[obj.rotatae_bvecs_sh ' ' ...
+                            exec_cmd=[obj.rotate_bvecs_sh ' ' ...
                                 ' ' obj.Params.DCM2NII.out.bvecs ...
                                 ' ' obj.Params.DCM2NII.in.fsl2std_matfile ...
                                 ' ' temp_bvec  ]; 
-                            system(exec_cmd);
+                            obj.RunBash(exec_cmd);
                             
                             system(['mv ' temp_bvec ' ' obj.Params.DCM2NII.out.bvecs ]);
                             fprintf('\n....done');
                             obj.UpdateHist(obj.Params.DCM2NII,'proc_dcm2nii',out_file,wasRun);
+                            
                         else
                             error('==> obj.Params.DCM2NII.specific_vols  not equal to obj.Params.DCM2NII.in(ii).nvols ');
                         end
@@ -397,8 +360,6 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 end
             end
             %%%
-            
-            
             fprintf('\n');
         end
         
@@ -416,7 +377,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 fprintf(['\nExtracting the first b0 of: ' obj.Params.GradNonlinCorrect.in.b0{1} ]);
                 exec_cmd=['fslroi ' fn{1} ' ' obj.Params.GradNonlinCorrect.in.b0{1} ...
                     ' ' num2str(obj.Params.GradNonlinCorrect.in.fslroi) ];
-                system(exec_cmd);
+                obj.RunBash(exec_cmd);
                 fprintf('...done\n');
             end
             %now creating grad-nonlinearity in first_b0s:
@@ -428,8 +389,8 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             %%% Compute the grdient nonlinearity correction
             obj.Params.GradNonlinCorrect.out.warpfile{1} = strrep(first_b0_infile,'.nii','_deform_grad_rel.nii');
             if exist(obj.Params.GradNonlinCorrect.out.warpfile{1},'file')==0
-                cmd=['sh ' obj.sh_gradfile ' '  first_b0_infile ' ' first_b0_outfile ' ' gradfile ' '];
-                system(cmd);
+                exec_cmd=['sh ' obj.sh_gradfile ' '  first_b0_infile ' ' first_b0_outfile ' ' gradfile ' '];
+                obj.RunBash(exec_cmd);
                 wasRun = true;
             else
                 fprintf([ 'Gnc warp file:' first_b0_outfile ' exists. Skipping...\n'])
@@ -441,7 +402,8 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     ' -o ' first_b0_outfile ' -w ' obj.Params.GradNonlinCorrect.out.warpfile{1} ...
                     ' --interp=spline' ];
                 fprintf(['\nGNC: Applying warp to first_b0_file: '  first_b0_infile]);
-                system(exec_cmd);
+                obj.RunBash(exec_cmd);
+                
                 fprintf(['...done\n']);
             end
             
@@ -457,18 +419,19 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     fprintf(['\nGNC: Applying warp field to all the other images: ' dwi_infile{ii}]);
                     exec_cmd = ['applywarp -i ' dwi_infile{ii} ' -r ' first_b0_infile ...
                         ' -o ' dwi_outfile{ii} ' -w ' obj.Params.GradNonlinCorrect.out.warpfile{1} ' --interp=spline'];
-                    system(exec_cmd);
+                    obj.RunBash(exec_cmd);
+
                     fprintf('....done\n');
                     wasRun = true;
                 end
             end
             obj.Params.GradNonlinCorrect.in.fn=obj.Params.GradNonlinCorrect.in.fn';
             obj.Params.GradNonlinCorrect.out.fn=obj.Params.GradNonlinCorrect.out.fn';
-            
             obj.UpdateHist(obj.Params.GradNonlinCorrect,'proc_gradient_nonlin_correct',obj.Params.GradNonlinCorrect.out.warpfile{1},wasRun);
         end
         
         function obj = proc_bet2(obj)
+            wasRun=false;
             for ii=1:numel(obj.Params.Bet2.in.fn)
                 clear cur_fn;
                 if iscell(obj.Params.Bet2.in.fn{ii})
@@ -483,8 +446,8 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 obj.Params.Bet2.out.mask{ii} = strrep(obj.Params.Bet2.out.skull{ii},'.nii.gz','_mask.nii.gz');
                 if exist( obj.Params.Bet2.out.mask{ii},'file')==0
                     fprintf(['\nExtracting the skull using bet2 for : ' obj.Params.Bet2.in.fn{ii} ]);
-                    exec_cmd=[ 'bet2 ' obj.Params.Bet2.in.fn{ii} ' ' obj.Params.Bet2.out.skull{ii}  ' -m -f ' num2str(obj.Params.Bet2.in.fracthrsh) ]
-                    system(exec_cmd)
+                    exec_cmd = [ 'bet2 ' obj.Params.Bet2.in.fn{ii} ' ' obj.Params.Bet2.out.skull{ii}  ' -m -f ' num2str(obj.Params.Bet2.in.fracthrsh) ];
+                    obj.RunBash(exec_cmd);
                     system(['mv ' obj.Params.Bet2.out.skull{ii} '_mask.nii.gz ' obj.Params.Bet2.out.mask{ii} ] ) ;
                     wasRun=true;
                     obj.UpdateHist(obj.Params.Bet2,'proc_bet2', obj.Params.Bet2.out.mask{ii},wasRun);
@@ -492,10 +455,10 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                      fprintf(['\n proc_bet2(): ' obj.Params.Bet2.out.mask{ii} ' exists. Skipping...\n\n']) ;
                 end
             end
-            
         end
         
         function obj = proc_eddy(obj)
+            wasRun=false;
             for ii=1:numel(obj.Params.Eddy.in.fn)
                 clear cur_fn;
                 if iscell(obj.Params.Bet2.in.fn{ii})
@@ -512,7 +475,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 if exist(obj.Params.Eddy.out.fn_acqp{ii},'file')==0
                     fprintf(['\n Creating ' obj.Params.Eddy.out.fn_acqp{ii}  ]);
                     exec_cmd=['echo " ' num2str(obj.Params.Eddy.in.acqp) ' " >> ' obj.Params.Eddy.out.fn_acqp{ii}  ];
-                    system(exec_cmd);
+                    obj.RunBash(exec_cmd);
                     fprintf(' ...done\n');
                 end
                 %(dependency) Attempting to create index file:
@@ -520,7 +483,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 if exist(obj.Params.Eddy.out.fn_index{ii},'file')==0
                     fprintf(['\n Creating ' obj.Params.Eddy.out.fn_index{ii}  ]);
                     exec_cmd=['echo " ' num2str(obj.Params.Eddy.in.index) ' " >> ' obj.Params.Eddy.out.fn_index{ii}  ];
-                    system(exec_cmd);
+                    obj.RunBash(exec_cmd);
                     fprintf(' ...done\n');
                 end
                 %Attempting to run eddy_openmp now:
@@ -537,7 +500,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         ' --bvecs='  obj.Params.Eddy.in.bvecs{ii} ... 
                         ' --bvals=' obj.Params.Eddy.in.bvals{ii}  ...
                         ' --repol --out=' [ outpath obj.Params.Eddy.in.prefix strrep(b,'.nii','') ]  ];
-                    system(exec_cmd);
+                    obj.RunBash(exec_cmd);
                     fprintf(['...done \n']);
                     
                     wasRun=true;
@@ -554,6 +517,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         end
         
         function obj = proc_meanb0(obj)
+            wasRun=false;
             for ii=1:numel(obj.Params.B0mean.in.fn)
                 clear cur_fn;
                 if iscell(obj.Params.B0mean.in.fn{ii})
@@ -574,14 +538,14 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         exec_cmd=[ 'fslroi ' cur_fn ' ' ...
                             obj.Params.B0mean.out.allb0s{ii} ' 0 ' ...
                             num2str(obj.Params.B0mean.in.b0_nvols)  ];
-                        system(exec_cmd);
+                        obj.RunBash(exec_cmd);
                         fprintf(['...done']);
                     end
                     if exist( obj.Params.B0mean.out.fn{ii},'file')==0
                         fprintf(['\n Meaning all b0s from : ' cur_fn]);
                         exec_cmd=[ 'fslmaths ' obj.Params.B0mean.out.allb0s{ii} ...
                             ' -Tmean ' obj.Params.B0mean.out.fn{ii}];
-                        system(exec_cmd);
+                        obj.RunBash(exec_cmd);
                         fprintf(['...done \n']);
                         wasRun=true;
                          obj.UpdateHist(obj.Params.B0mean,'proc_b0mean', obj.Params.B0mean.out.fn{ii},wasRun);
@@ -598,6 +562,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         end
         
         function obj = proc_dtifit(obj)
+            wasRun=false;
             for ii=1:numel(obj.Params.Dtifit.in.fn)
                 clear cur_fn;
                 if iscell(obj.Params.Dtifit.in.fn{ii})
@@ -620,9 +585,10 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             ' -m ' obj.Params.Dtifit.in.mask{ii} ...
                             ' -r ' obj.Params.Dtifit.in.bvecs{ii} ... 
                             ' -b ' obj.Params.Dtifit.in.bvals{ii} ];
-                        system(exec_cmd);
+                        obj.RunBash(exec_cmd);
                         fprintf(['...done']);
-                       
+                        wasRun=true;
+                        obj.UpdateHist(obj.Params.Eddy,'proc_dtifit', obj.Params.Dtifit.out.FA{ii},wasRun);
                     else
                         fprintf([ obj.Params.Dtifit.out.FA{ii} ' exist.\nWas dtifit already ran? Skipping...\n'])
                     end
@@ -640,13 +606,14 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         ' -add ' strrep(obj.Params.Dtifit.out.FA{ii},'FA','L3') ...
                         ' -div 2 ' obj.Params.Dtifit.out.RD{ii}  ];
                     fprintf('\nCreating RD dtifit...');
-                    system(exec_cmd);
+                   obj.RunBash(exec_cmd);
                     fprintf('...done \n');
                 end
             end
         end
         
         function obj = proc_gqi(obj)
+            wasRun=false;
             for ii=1:numel(obj.Params.GQI.in.fn)
                 try
                     clear cur_fn;
@@ -669,16 +636,16 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         if nrow == 3 ; %then its in column form, change it...
                             exec_cmd=[ 'drigo_col2rows.sh ' obj.Params.GQI.in.bvecs{ii} ...
                                 ' > ' temp_bvecs{ii}];
-                            system(exec_cmd);
+                            obj.RunBash(exec_cmd);
                         else
                             exec_cmd=[ 'cat ' obj.Params.GQI.in.bvecs ' >> ' temp_bvecs{ii} ];
-                            system(exec_cmd);
+                           obj.RunBash(exec_cmd);
                         end
                         exec_cmd=[' paste ' obj.Params.GQI.in.bvals{ii} ' ' ...
                             temp_bvecs{ii} ' | sed ''s/\t/ /g'' >' obj.Params.GQI.out.btable{ii}  ];
-                        system(exec_cmd);
+                        obj.RunBash(exec_cmd);
                         exec_cmd=(['rm ' temp_bvecs{ii}]);
-                        system(exec_cmd);
+                        obj.RunBash(exec_cmd);
                         %                     else
                         %                         fprintf(['\n B-table: ' obj.Params.GQI.out.btable{ii}  ' exists. Skipping creation...']);
                     end
@@ -691,8 +658,10 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             ' --source=' obj.Params.GQI.in.fn{ii} ...
                             ' --b_table=' obj.Params.GQI.out.btable{ii} ...
                             ' --output=' obj.Params.GQI.out.src_fn{ii} ];
-                        system(exec_cmd);
+                        obj.RunBash(exec_cmd);
                         fprintf('...done');
+                        wasRun=true;
+                        obj.UpdateHist(obj.Params.GQI,'proc_gqi_src', obj.Params.GQI.out.src_fn{ii},wasRun);
                     else
                         fprintf(['\n The src file: ' ' exists. Skipping...\n']);
                     end
@@ -711,8 +680,10 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             ' --num_fiber=' obj.Params.GQI.in.num_fiber ...
                             ' --param0=' obj.Params.GQI.in.param0 ...
                             ' --mask=' obj.Params. GQI.in.mask{ii} ];
-                        system(exec_cmd);
+                        obj.RunBash(exec_cmd);
                         fprintf('...done');
+                        wasRun=true;
+                        obj.UpdateHist(obj.Params.GQI,'proc_gqi_fib', strtrim(obj.Params.GQI.out.fibs_fn{ii}),wasRun);
                         
                         %Assigning the fib_fn value again (if created)
                         try
@@ -731,7 +702,9 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         exec_cmd=(['dsi_studio_run --action=exp ' ...
                             ' --source=' strtrim(obj.Params.GQI.out.fibs_fn{ii}) ...
                             ' --export=' obj.Params.GQI.out.export ]);
-                        system(exec_cmd);
+                        obj.RunBash(exec_cmd);
+                        wasRun=true;
+                        obj.UpdateHist(obj.Params.GQI,'proc_gqi_fib', strtrim(obj.Params.GQI.out.fibs_fn{ii}),wasRun);
                     end
                     
                 catch
@@ -745,6 +718,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         end
         
         function obj = proc_antsreg(obj)
+            wasRun=false;
             for ii=1:numel(obj.Params.AntsReg.in.fn)
                 clear cur_fn;
                 if iscell(obj.Params.AntsReg.in.fn{ii})
@@ -771,6 +745,9 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     system(exec_cmd)
                     time_taken=toc;
                     fprintf(['...done.\n']);
+                    wasRun=true;
+                    obj.UpdateHist(obj.Params.GQI,'proc_antsreg', obj.Params.AntsReg.out.fn{ii},wasRun);
+
                 else
                      fprintf(['\n proc_antsreg(): ' obj.Params.AntsReg.out.fn{ii} ...
                          ' exists. Skipping...\n\n']) ;
@@ -802,7 +779,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             ' -R '  obj.Params.AntsReg.in.ref ...
                             ' ' strrep(obj.Params.AntsReg.out.fn{ii},'_Warped','_1Warp') ...
                             ' ' strrep(obj.Params.AntsReg.out.fn{ii},'_Warped.nii.gz','_0GenericAffine.mat') ];
-                        system(exec_cmd);
+                        obj.RunBash(exec_cmd);
                         %MD:
                         exec_cmd=[ 'WarpImageMultiTransform 3 ' ...
                             ' ' strrep(obj.Params.Dtifit.out.FA{ii},'FA','MD')  ...
@@ -812,13 +789,15 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             ' ' strrep(obj.Params.AntsReg.out.fn{ii},'_Warped.nii.gz','_0GenericAffine.mat') ];
                         system(exec_cmd)
                         fprintf(['...done.\n']);
+                        obj.UpdateHist(obj.Params.GQI,'proc_antsreg_diffmetrics', strrep(obj.Params.AntsReg.out.FA{ii},'FA','RD'),wasRun);
                     end
                 end
             end 
         end
         
         function obj = proc_skeletonize(obj)
-             for ii=1:numel(obj.Params.Skeletonize.in.fn)
+            wasRun=false;
+            for ii=1:numel(obj.Params.Skeletonize.in.fn)
                 clear cur_fn;
                 if iscell(obj.Params.Skeletonize.in.fn{ii})
                     cur_fn=cell2char(obj.Params.Skeletonize.in.fn{ii});
@@ -842,15 +821,17 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     system(exec_cmd)
                     time_taken=toc;
                     fprintf(['...done.\n']);
+                    wasRun=true;
+                    obj.UpdateHist(obj.Params.Skeletonize,'proc_skeletonize', obj.Params.Skeletonize.out.fn{ii},wasRun);
                 else
-                     fprintf(['\n proc_skeletonize(): ' obj.Params.AntsReg.out.fn{ii} ...
-                         ' exists. Skipping...\n\n']) ;
-                     
+                    fprintf(['\n proc_skeletonize(): ' obj.Params.AntsReg.out.fn{ii} ...
+                        ' exists. Skipping...\n\n']) ;
+                    
                 end
                 
                 
                 %NOW OTHER METRICS:
-                obj.Params.Skeletonize.in.FA{ii}  = obj.Params.AntsReg.out.FA{ii} ; 
+                obj.Params.Skeletonize.in.FA{ii}  = obj.Params.AntsReg.out.FA{ii} ;
                 obj.Params.Skeletonize.out.FA{ii} = [ outpath obj.sessionname obj.Params.Skeletonize.in.prefix '_FA.nii.gz' ];
                 
                 for tocomment=1:1;
@@ -865,20 +846,20 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             ' '  obj.Params.Skeletonize.in.ref_region  ...
                             ' '  obj.Params.Skeletonize.in.FA{ii} ...
                             ' '  obj.Params.Skeletonize.out.FA{ii}];
-                        system(exec_cmd);
+                        obj.RunBash(exec_cmd);
                         fprintf('...done\n');
                         %RD:
                         fprintf('\n in RD...');
                         exec_cmd=strrep(exec_cmd,'_FA.nii','_RD.nii')
-                        system(exec_cmd); fprintf('...done\n');
+                        obj.RunBash(exec_cmd); fprintf('...done\n');
                         %AxD:
                         fprintf('\n in AxD...');
                         exec_cmd=strrep(exec_cmd,'_RD.nii','_AxD.nii')
-                        system(exec_cmd); fprintf('...done\n');
+                        obj.RunBash(exec_cmd); fprintf('...done\n');
                         %MD:
                         fprintf('\n in MD...');
                         exec_cmd=strrep(exec_cmd,'_AxD.nii','_MD.nii')
-                        system(exec_cmd); fprintf('...done\n');
+                        obj.RunBash(exec_cmd); fprintf('...done\n');
                         toc
                         fprintf(['...done.\n']);
                     else
@@ -887,22 +868,41 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         
                     end
                 end
-                %COMMENTED DUE TO UNNECESSARY USAGE (for now...):
-%                 obj.getDB;                
-%                 obj.Params.Skeletonize.out.fn_blind{ii} = [ outpath cell2char(obj.dbentry.SubjIDshort) obj.Params.Skeletonize.in.prefix '.nii.gz' ];
-%                 if exist(obj.Params.Skeletonize.out.fn_blind{ii},'file')==0
-%                     exec_cmd=[ 'cp ' obj.Params.Skeletonize.out.fn{ii} ...
-%                         ' ' obj.Params.Skeletonize.out.fn_blind{ii} ];
-%                     system(exec_cmd)
-%                     fprintf(['...done.\n']);
-%                 else
-%                      fprintf(['\n proc_skeletonize(): ' obj.Params.AntsReg.out.fn{ii} ...
-%                          ' exists. Skipping...\n\n']) ;
-%                      
-%                 end
-             end
+                obj.Params.Skeletonize.out.diffmetrics={ 'FA' 'RD' 'AxD' 'MD' } ;
+            end
         end
-            
+        
+        function obj = proc_getskeltois(obj)
+            wasRun=false;
+            fprintf(['\n Fslstating tracts of interest...']);
+            for kk=1:numel(obj.Params.Skeletonize.out.FA)
+                for jj=1:numel( obj.Params.Skeletonize.out.diffmetrics)
+                    for ii=1:numel(obj.Params.Skel_TOI.in.masks)
+                        cur_name = [ obj.Params.Skeletonize.out.diffmetrics{jj} '_' obj.Params.Skel_TOI.in.masks{ii} obj.Params.Skel_TOI.in.suffix ] ;
+                        if ~isfield(obj.Params.Skel_TOI.out,cur_name)
+                            obj.Params.Skel_TOI.out.(cur_name) = '';
+                        end
+                        if isempty(obj.Params.Skel_TOI.out.(cur_name))
+                            cur_field=[ obj.Params.Skeletonize.out.diffmetrics{jj} ...
+                                '_' obj.Params.Skel_TOI.in.masks{ii}  obj.Params.Skel_TOI.in.suffix ];
+                            in_file=strrep(obj.Params.Skeletonize.out.FA{kk},'_FA.nii',[ '_' obj.Params.Skeletonize.out.diffmetrics{jj} '.nii' ] );
+                            mask_file=[ obj.Params.Skel_TOI.in.location obj.Params.Skel_TOI.in.masks{ii}   '.nii.gz' ] ;
+                            
+                            exec_cmd=['fslstats ' in_file ' -k ' mask_file ' -M '  ];
+                            fprintf([ ' now in ' cur_name '\n'] );
+                            [~ , obj.Params.Skel_TOI.out.(cur_name) ] =  system(exec_cmd);
+                            last_cur_name=cur_name;
+                            wasRun=true;
+                        end
+                        clear cur_field  in_file out_file mask_file cur_name ;
+                    end
+                end
+                wasRun=true;
+                obj.UpdateHist(obj.Params.Skel_TOI,'proc_getskeltois', '',wasRun);
+                clear last_cur_name;
+                fprintf('....done\n');
+            end
+        end
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%% END Data Processing Methods %%%%%%%%%%%%%%%%%%%
@@ -935,6 +935,20 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             end
         end
         
+        function obj = RunBash(obj,exec_cmd)
+            [ sys_success , sys_error ] = system(exec_cmd) ; 
+            if ~(sys_success); disp('');
+            else
+                fprintf('\n\n===================================');
+                fprintf('===================================\n\n');
+                fprintf(['\n \t\tError in exec_cmd: \n ' exec_cmd '\n\n\n' ]);
+                fprintf(['\n \t\tError output by system(exec_cmd) is:\n ' sys_error '\n'])
+                fprintf('\n\n===================================');
+                fprintf('===================================\n\n');
+                error('Stopping now....');
+            end
+        end
+        
         function obj = UpdateErrors(obj,message)
             new_msg=['\nOn: ' date() ' --> \n\t' message '\n'];
             obj.error_messages{end+1}=new_msg;
@@ -948,14 +962,6 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 [a theUser] = system(['ls -l --full-time ' checkFile ' |  awk  ''{print $3}''']);
                 [a theTime] = system(['ls -l --full-time ' checkFile ' |  awk  ''{print $6" "$7}''']);
                 theTime = datestr(theTime(1:end-11));
-                
-                %%% For Unix
-                %                 [a theUser] = system(['ls -l -T ' checkFile ' |  awk  ''{print $3}''']);
-                %                 [a theTime] = system(['ls -l -T ' checkFile ' |  awk  ''{print $6" "$7" "$8" "$9}''']);
-                %                 theTime = datestr(theTime);
-                %                 theUser = regexprep(theUser,'\n','');
-                
-                %info = [cmd ': Last run by ' theUser ' on ' theTime];
                 info = regexprep(sprintf('%-30s%s', [cmd ':'], ['Last run by (file created) ' theUser ' on ' theTime]),'\n','');
             end
                         
@@ -1018,8 +1024,51 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             end
         end
         
+        function obj = UploadData_DWI(obj)
+            id = obj.sessionname;
+            if isempty(id);
+                disp('No Session_ID.  Cannot upload data');
+                return
+            end
+            
+            if isnumeric(id)
+                id = num2str(id);
+            end
+            
+            %%Select current SessionID
+            dctl_cmd = [ 'SELECT MRI_Session_ID FROM Sessions.MRI  WHERE ' ' MRI_Session_Name = ''' id '''' ];
+            cur_DC_ID = DataCentral(dctl_cmd);
+            
+            TOI_fields=fields(obj.Params.Skel_TOI.out);
+            fprintf('\n');
+            for ii=1:numel(TOI_fields)
+                dctl_cmd = [ ' SELECT MRI_skelDWI_' TOI_fields{ii} ...
+                    ' FROM rdp20.DWI_TBSS_SKEL_VALS  WHERE MRI_Session_ID = ' num2str(cur_DC_ID.MRI_Session_ID)  ];
+                check_dctl_cmd = DataCentral(dctl_cmd);
+                
+                if isempty(check_dctl_cmd.(['MRI_skelDWI_' TOI_fields{ii}]))
+                    fprintf(['Skel TOI ==> Uploading to DataCentral: ' id ' and TOI: ' TOI_fields{ii}  ])
+                    dctl_cmd = [ 'INSERT INTO rdp20.DWI_TBSS_SKEL_VALS (MRI_Session_ID,  MRI_skelDWI_' TOI_fields{ii} ') ' ...
+                        ' values ( ' num2str(cur_DC_ID.MRI_Session_ID) ',' strtrim(obj.Params.Skel_TOI.out.(TOI_fields{ii})) ')'   ] ;
+                    DataCentral(dctl_cmd);
+                    fprintf('...done\n');
+                elseif isnan(check_dctl_cmd.(['MRI_skelDWI_' TOI_fields{ii}]))
+                    fprintf(['Skel TOI ==> Uploading to DataCentral: ' id ' and TOI: ' TOI_fields{ii}  ])
+                    dctl_cmd = [ 'UPDATE rdp20.DWI_TBSS_SKEL_VALS SET MRI_skelDWI_' TOI_fields{ii} ...
+                        ' = ''' strtrim(obj.Params.Skel_TOI.out.(TOI_fields{ii})) ''' WHERE MRI_Session_ID =  ' ...
+                        num2str(cur_DC_ID.MRI_Session_ID)   ] ;
+                    DataCentral(dctl_cmd);
+                    fprintf('...done\n');
+                end
+                % DataCentral(['UPDATE PIB.noT1_SUVR_new SET ' Q ' WHERE PIB_Session_ID = "' id '"']);
+                disp('skelTOIs values have been uploaded to DataCentral');
+                %%% upload ROI data
+                obj.resave;
+            end
+        end
     end
 end
+        
 
 
 
