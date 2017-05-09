@@ -27,7 +27,7 @@ classdef dwi_HAB < dwiMRI_Session
         ref_region='/usr/pubsw/packages/fsl/5.0.9/data/standard/LowerCingulum_1mm.nii.gz';
         
         %sh dependencies:
-        rotate_bvecs_sh='/cluster/sperling/HAB/Project1/Scripts/DWIs/mod_fdt_rotate_bvecs.sh';
+        init_rotate_bvecs_sh='/cluster/sperling/HAB/Project1/Scripts/DWIs/mod_fdt_rotate_bvecs.sh'; %For standarizing the bvecs after proc_dcm2nii
         
         %skel_TOI dependencies
         skeltoi_location='/cluster/hab/HAB/Project1/DWIs_30b700/DEPENDENCIES/edJHU_MASK_ROIs/';
@@ -42,13 +42,14 @@ classdef dwi_HAB < dwiMRI_Session
     
     methods
         function obj = dwi_HAB(sessionname,opt)
-            %%%  If opt is passed, then the root Sessions folder will be
-            %%%  replaced with this argument.
+            
             %For compiler code:
             if ~isdeployed()
                 addpath(genpath('/autofs/space/kant_004/users/rdp20/scripts/matlab'));
             end
             
+            %%%  If opt is passed, then the root Sessions folder will be
+            %%%  replaced with this argument.
             if nargin>1
                 obj.root = opt;
             end
@@ -73,7 +74,7 @@ classdef dwi_HAB < dwiMRI_Session
             %Check if *.nii.gz files exist, if not get them from DCM2nii:
             obj.rawfiles = dir_wfp([obj.root 'Orig/*.nii.gz' ] );
             if isempty(obj.rawfiles)
-                RunFlag=True;
+                RunFlag=true;
                 obj.getDCM2nii(RunFlag);
             end
             
@@ -84,7 +85,7 @@ classdef dwi_HAB < dwiMRI_Session
                 end
             end
             %Continue with CommonProc
-            obj.CommonProc;
+            obj.CommonProc();
         end
         
         function obj=setMyParams(obj)
@@ -94,7 +95,7 @@ classdef dwi_HAB < dwiMRI_Session
         end
         
         function obj = CommonProc(obj)
-            obj.dosave = 1 ; %To record MAT file
+            obj.dosave = true ; %To record process in MAT file
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %Get DCM2NII File location:
@@ -209,11 +210,7 @@ classdef dwi_HAB < dwiMRI_Session
            
             obj.proc_getskeltois();
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            
-            if obj.dosave %In case it fails when running compiler!
-                save([obj.objectHome filesep obj.sessionname '.mat'],'obj');
-            end
-            
+                        
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             if ~isdeployed() %Not compiled code, so run this!
@@ -224,6 +221,31 @@ classdef dwi_HAB < dwiMRI_Session
                     save([obj.objectHome filesep obj.sessionname '.mat'],'obj');
                 end
             end
+            
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %For FreeSurfer 
+            obj.Params.FreeSurfer.dir = [ filesep 'eris' filesep 'bang' filesep ...
+            'HAB_Project1' filesep 'FreeSurferv6.0' ] ;
+            %Retrieving a T1 scan:
+            [sys_error, obj.Params.FreeSurfer.in.T1 ] = system(['ls ' obj.session_location 'MPRAGE' filesep '*.mgz | head -1' ]);
+            if sys_error ~= 0 %No problem, we get the T1 the continue...
+                fprintf(['\nError when finding the T1:'  obj.Params.FreeSurfer.in.T1  '\n'])
+            end
+            
+            %Retrieving a T2 scan:
+            [sys_error, obj.Params.FreeSurfer.in.T2 ] = system(['ls ' obj.session_location 'other' filesep '*T2* | head -1' ]);
+            if sys_error ~= 0 %No problem, we get the T1 the continue...
+                fprintf(['\nNo T2 found:'  obj.Params.FreeSurfer.in.T2  '\n'])
+                obj.Params.FreeSurfer.in.T2exist=false;
+            else
+                obj.Params.FreeSurfer.in.T2exist=true;
+            end
+            
+            obj.Params.FreeSurfer.out.aparcaseg = [ obj.Params.FreeSurfer.dir ...
+                filesep obj.sessionname filesep 'mri' filesep 'aparc+aseg.mgz' ] 
+            
+            obj.proc_getFreeSurfer();
         end
         
         function resave(obj)
@@ -252,15 +274,17 @@ classdef dwi_HAB < dwiMRI_Session
                     obj.Params.DCM2NII.scanlog '\n' ];
                 obj.UpdateErrors(errormsg);
             end
-            
-            obj.Params.DCM2NII.in.nvols=str2double(obj.Params.DCM2NII.in.nvols);
-            %we modified grep err instead of tail -1 due to error in some subjects (e.g. 120419_4TT01420)
-            exec_cmd=[ 'cat ' obj.Params.DCM2NII.scanlog ' | grep ' obj.Params.DCM2NII.seq_names ' | grep " 35 " | grep err | awk ''{ print $8 }'' ' ];
-            [ ~ , obj.Params.DCM2NII.in.first_dcmfiles ] = system(exec_cmd);
-            
-            obj.Params.DCM2NII.out.location = [ obj.root 'Orig' filesep ];
-            obj.Params.DCM2NII.out.fn = [ obj.Params.DCM2NII.seq_names '.nii.gz' ];
             obj.Params.DCM2NII.in.fsl2std_param = '-1 0 0 254 \n0 1 0 254 \n0 0 -1 0 \n0 0 0 1';
+            for ii=1:1 %For object compatiblity with ADRC that contains 3 DWIs sequences
+                obj.Params.DCM2NII.in(ii).nvols=str2double(obj.Params.DCM2NII.in.nvols);
+                %we modified grep err instead of tail -1 due to error in some subjects (e.g. 120419_4TT01420)
+                exec_cmd=[ 'cat ' obj.Params.DCM2NII.scanlog ' | grep ' obj.Params.DCM2NII.seq_names ' | grep " 35 " | grep err | awk ''{ print $8 }'' ' ];
+                [ ~ , obj.Params.DCM2NII.in(ii).first_dcmfiles ] = system(exec_cmd);
+                
+                obj.Params.DCM2NII.out(ii).location = [ obj.root 'Orig' filesep ];
+                obj.Params.DCM2NII.out(ii).fn = [ obj.Params.DCM2NII.out(ii).location obj.Params.DCM2NII.seq_names '.nii.gz' ];
+                
+            end
             if (torun) ; obj.proc_dcm2nii ; end
         end
     end
