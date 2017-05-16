@@ -2,16 +2,16 @@ classdef dwi_HAB < dwiMRI_Session
     %%  classdef dwi_ADRC < dwiMRI_Session
     %%  This class is a subclass of its parent class dwi_MRI_Session.m
     %%  (where it will inherent other methods).
-    %%  Created by:
+    %%  Created by: Rodrigo Perea rpereacamargo@mgh.harvard.edu
     %%              Aaron Schultz aschultz@martinos.org
-    %%              Rodrigo Perea rpereacamargo@mgh.harvard.edu
+    %%              
     %%
-    %%
-    %%      Dependencies:
+    %%      Dependencies (and tested in):
     %%          -FreeSurfer v6.0
     %%          -SPM8
-    %%          -Ants tools
-    %%          -DSI_studio
+    %%          -Ants tools 1.7.1
+    %%          -DSI_studio_vApr19_2017
+    %%          -FSL 5.0.9
     %%  *Only filesep wit '/' are used in the properties class declaration.
     %%   Besides these, all should be any operating system compatible (tested in CentOS Linux)
     properties
@@ -28,6 +28,11 @@ classdef dwi_HAB < dwiMRI_Session
         
         %sh dependencies:
         init_rotate_bvecs_sh='/cluster/sperling/HAB/Project1/Scripts/DWIs/mod_fdt_rotate_bvecs.sh'; %For standarizing the bvecs after proc_dcm2nii
+        dependencies_dir='/cluster/hab/HAB/Project1/DWIs_30b700/DEPENDENCIES/';
+        %Freesurfer Dependencies:
+        init_FS = '/usr/local/freesurfer/stable6';
+
+        
         
         %skel_TOI dependencies
         skeltoi_location='/cluster/hab/HAB/Project1/DWIs_30b700/DEPENDENCIES/edJHU_MASK_ROIs/';
@@ -227,6 +232,7 @@ classdef dwi_HAB < dwiMRI_Session
             %For FreeSurfer 
             obj.Params.FreeSurfer.dir = [ filesep 'eris' filesep 'bang' filesep ...
             'HAB_Project1' filesep 'FreeSurferv6.0' ] ;
+            obj.Params.FreeSurfer.init_location = obj.init_FS; 
             %Retrieving a T1 scan:
             [sys_error, obj.Params.FreeSurfer.in.T1 ] = system(['ls ' obj.session_location 'MPRAGE' filesep '*.mgz | head -1' ]);
             if sys_error ~= 0 %No problem, we get the T1 the continue...
@@ -243,9 +249,37 @@ classdef dwi_HAB < dwiMRI_Session
             end
             
             obj.Params.FreeSurfer.out.aparcaseg = [ obj.Params.FreeSurfer.dir ...
-                filesep obj.sessionname filesep 'mri' filesep 'aparc+aseg.mgz' ] 
+                filesep obj.sessionname filesep 'mri' filesep 'aparc+aseg.mgz' ] ;
             
             obj.proc_getFreeSurfer();
+            
+            
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %FS2dwi:
+            obj.Params.FS2dwi.in.movefiles = ['..' filesep '05_FS2dwi' ];
+            obj.Params.FS2dwi.in.b0 = obj.Params.B0mean.out.fn ; 
+            obj.Params.FS2dwi.in.aparcaseg = obj.Params.FreeSurfer.out.aparcaseg ; 
+            
+            obj.Params.FS2dwi.in.tmpfile_aparcaseg = [ obj.dependencies_dir 'FS_aparc.txt' ] ; 
+            obj.Params.FS2dwi.in.tmpfile_aparcaseg2009 = [ obj.dependencies_dir 'FS_aparc2009.txt' ] ; 
+            obj.Params.FS2dwi.in.tmpfile_hippo_bil = [ obj.dependencies_dir 'FS_hippolabels_bil.txt' ] ;
+            
+            
+            
+            obj.Params.FS2dwi.in.aparcaseg2009 = ...
+                strtrim(strrep(obj.Params.FreeSurfer.out.aparcaseg,'aparc+aseg','aparc.a2009s+aseg')); 
+            
+            %A possible error is the naming convention when only a T1 was
+            %used!!
+            obj.Params.FS2dwi.in.hippofield_left = ...
+                strtrim(strrep(obj.Params.FreeSurfer.out.aparcaseg,'aparc+aseg','lh.hippoSfLabels-T1-T2.v10.FSvoxelSpace')); 
+            obj.Params.FS2dwi.in.hippofield_right = ...
+                strtrim(strrep(obj.Params.FreeSurfer.out.aparcaseg,'aparc+aseg','rh.hippoSfLabels-T1-T2.v10.FSvoxelSpace')); 
+            
+            
+            obj.proc_FS2dwi();
+            
         end
         
         function resave(obj)
