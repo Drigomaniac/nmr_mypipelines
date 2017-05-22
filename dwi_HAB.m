@@ -231,7 +231,7 @@ classdef dwi_HAB < dwiMRI_Session
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %For FreeSurfer 
             obj.Params.FreeSurfer.dir = [ filesep 'eris' filesep 'bang' filesep ...
-            'HAB_Project1' filesep 'FreeSurferv6.0' ] ;
+            'HAB_Project1' filesep 'FreeSurferv6.0' filesep ] ;
             obj.Params.FreeSurfer.init_location = obj.init_FS; 
             %Retrieving a T1 scan:
             [sys_error, obj.Params.FreeSurfer.in.T1 ] = system(['ls ' obj.session_location 'MPRAGE' filesep '*.mgz | head -1' ]);
