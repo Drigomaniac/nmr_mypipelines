@@ -68,6 +68,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         lastFN = [];
         %
         Params = [];
+        Trkland = [] ;
         %
         %         RunInfo = [];
         %         Behavior = [];
@@ -1740,13 +1741,211 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             end
         end  
         
+        
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   %%%%%%%%%%%%%%%%%%% END Data Processing Methods %%%%%%%%%%%%%%%%%%%
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        function obj = trkland_fx(obj)
+            wasRun = false; 
+            %Create fx directory (if doesn't exist)
+            exec_cmd = [ 'mkdir -p ' obj.Trkland.root ]; 
+            obj.RunBash(exec_cmd);
+            %MATFILE TRANSFORMATION SECTION:
+            %Create the matfile of the fx tranformation
+            if exist(obj.Trkland.fx.in.tmp2b0_matfile,'file') == 0 
+                %USING FLIRT, HERE WE COULD ALSO TRY SPM_COREG (not sure if
+                %I'll get/how to get the *.mat though...). Flirt does a decent job anyhow
+                fprintf('\n Coregistering TMP-B0 to image...')
+                exec_cmd = ['flirt -in ' obj.Trkland.fx.tmp.b0  ...
+                    ' -ref ' obj.Trkland.fx.in.b0 ' -omat ' obj.Trkland.fx.in.tmp2b0_matfile ...
+                    ' -out ' obj.Trkland.fx.in.fn_tmp2b0 ];
+                obj.RunBash(exec_cmd);
+                fprintf('...done \n');
+            end
+            %%%%%%%%%%%%%%%%%%%%%
+            %BILATERAL SECTION:
+            for tohide=1:1
+                %Apply the matfile to the roi:
+                if exist(obj.Trkland.fx.in.roi_bil, 'file') == 0
+                    fprintf('\n Coregistering bil_roi...')
+                    exec_cmd = ['flirt -in '  obj.Trkland.fx.tmp.roi_bil  ...
+                        ' -ref ' obj.Trkland.fx.in.b0 ' -applyxfm -init ' obj.Trkland.fx.in.tmp2b0_matfile ...
+                        ' -interp  nearestneighbour -out ' obj.Trkland.fx.in.roi_bil ];
+                    obj.RunBash(exec_cmd);
+                    fprintf('...done \n');
+                end
+                %Apply the matfile to the dilated solid fx:
+                if exist(obj.Trkland.fx.in.roa_bil_solid, 'file') == 0
+                    fprintf('\n Coregistering bil_solid...')
+                    exec_cmd = ['flirt -in ' obj.Trkland.fx.tmp.roa_solid_bil ...
+                        ' -ref ' obj.Trkland.fx.in.b0 ' -applyxfm -init ' obj.Trkland.fx.in.tmp2b0_matfile ...
+                        ' -interp  nearestneighbour -out ' obj.Trkland.fx.in.roa_bil_solid ];
+                    obj.RunBash(exec_cmd);
+                    fprintf('...done \n');
+                end
+                %Erode the solid ROA:
+                if exist(obj.Trkland.fx.in.roa_bil_ero , 'file') == 0
+                    fprintf('\n Eroding TMP_B0_fx_solid...')
+                    exec_cmd = ['fslmaths ' obj.Trkland.fx.in.roa_bil_solid ...
+                        ' -ero ' obj.Trkland.fx.in.roa_bil_ero  ];
+                    obj.RunBash(exec_cmd);
+                    fprintf('...done \n');
+                end
+                %Creating the hollow ROA:
+                if exist(obj.Trkland.fx.in.roa_bil_hollow, 'file') == 0
+                    fprintf('\n Hollowing the ROA...')
+                    exec_cmd = ['fslmaths ' obj.Trkland.fx.in.roa_bil_solid ...
+                        ' -sub ' obj.Trkland.fx.in.roa_bil_ero ' ' obj.Trkland.fx.in.roa_bil_hollow ];
+                    obj.RunBash(exec_cmd);
+                    fprintf('...done \n');
+                end
+            end
+            %%%%%%%%%%%%%%%%%%
+            %LEFT HEMISPHERE SECTION:
+            for tohide=1:1
+                %Apply the matfile to the roi:
+                if exist(obj.Trkland.fx.in.roi_lh, 'file') == 0
+                    fprintf('\n Coregistering lh_roi...')
+                    exec_cmd = ['flirt -in '  obj.Trkland.fx.tmp.roi_lh  ...
+                        ' -ref ' obj.Trkland.fx.in.b0 ' -applyxfm -init ' obj.Trkland.fx.in.tmp2b0_matfile ...
+                        ' -interp  nearestneighbour -out ' obj.Trkland.fx.in.roi_lh ];
+                    obj.RunBash(exec_cmd);
+                    fprintf('...done \n');
+                end
+                %Apply the matfile to the dilated solid fx:
+                if exist(obj.Trkland.fx.in.roa_lh_solid, 'file') == 0
+                    fprintf('\n Coregistering lh_solid...')
+                    exec_cmd = ['flirt -in ' obj.Trkland.fx.tmp.roa_solid_lh ...
+                        ' -ref ' obj.Trkland.fx.in.b0 ' -applyxfm -init ' obj.Trkland.fx.in.tmp2b0_matfile ...
+                        ' -interp  nearestneighbour -out ' obj.Trkland.fx.in.roa_lh_solid ];
+                    obj.RunBash(exec_cmd);
+                    fprintf('...done \n');
+                end
+                %Erode the solid ROA:
+                if exist(obj.Trkland.fx.in.roa_lh_ero , 'file') == 0
+                    fprintf('\n Eroding TMP_B0_fx_solid...')
+                    exec_cmd = ['fslmaths ' obj.Trkland.fx.in.roa_lh_solid ...
+                        ' -ero ' obj.Trkland.fx.in.roa_lh_ero  ];
+                    obj.RunBash(exec_cmd);
+                    fprintf('...done \n');
+                end
+                %Creating the hollow ROA:
+                if exist(obj.Trkland.fx.in.roa_lh_hollow, 'file') == 0
+                    fprintf('\n Hollowing the ROA...')
+                    exec_cmd = ['fslmaths ' obj.Trkland.fx.in.roa_lh_solid ...
+                        ' -sub ' obj.Trkland.fx.in.roa_lh_ero ' ' obj.Trkland.fx.in.roa_lh_hollow ];
+                    obj.RunBash(exec_cmd);
+                    fprintf('...done \n');
+                end
+            end
+            %%%%%%%%%%%%%%%%%%
+            %RIGHT HEMISPHERE SECTION:
+            for tohide=1:1
+                %Apply the matfile to the roi:
+                if exist(obj.Trkland.fx.in.roi_rh, 'file') == 0
+                    fprintf('\n Coregistering rh_roi...')
+                    exec_cmd = ['flirt -in '  obj.Trkland.fx.tmp.roi_rh  ...
+                        ' -ref ' obj.Trkland.fx.in.b0 ' -applyxfm -init ' obj.Trkland.fx.in.tmp2b0_matfile ...
+                        ' -interp  nearestneighbour -out ' obj.Trkland.fx.in.roi_rh ];
+                    obj.RunBash(exec_cmd);
+                    fprintf('...done \n');
+                end
+                %Apply the matfile to the dilated solid fx:
+                if exist(obj.Trkland.fx.in.roa_rh_solid, 'file') == 0
+                    fprintf('\n Coregistering rh_solid...')
+                    exec_cmd = ['flirt -in ' obj.Trkland.fx.tmp.roa_solid_rh ...
+                        ' -ref ' obj.Trkland.fx.in.b0 ' -applyxfm -init ' obj.Trkland.fx.in.tmp2b0_matfile ...
+                        ' -interp  nearestneighbour -out ' obj.Trkland.fx.in.roa_rh_solid ];
+                    obj.RunBash(exec_cmd);
+                    fprintf('...done \n');
+                end
+                %Erode the solid ROA:
+                if exist(obj.Trkland.fx.in.roa_rh_ero , 'file') == 0
+                    fprintf('\n Eroding TMP_B0_fx_solid...')
+                    exec_cmd = ['fslmaths ' obj.Trkland.fx.in.roa_rh_solid ...
+                        ' -ero ' obj.Trkland.fx.in.roa_rh_ero  ];
+                    obj.RunBash(exec_cmd);
+                    fprintf('...done \n');
+                end
+                %Creating the hollow ROA:
+                if exist(obj.Trkland.fx.in.roa_rh_hollow, 'file') == 0
+                    fprintf('\n Hollowing the ROA...')
+                    exec_cmd = ['fslmaths ' obj.Trkland.fx.in.roa_rh_solid ...
+                        ' -sub ' obj.Trkland.fx.in.roa_rh_ero ' ' obj.Trkland.fx.in.roa_rh_hollow ];
+                    obj.RunBash(exec_cmd);
+                    fprintf('...done \n');
+                end
+            end
+            
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %STARTING THE ACTUAL TRACKING NOW:
+            for tohide=1:1
+                %Init outputs:
+                obj.Trkland.fx.out.trks_lh = [ obj.Trkland.root  'trkk_fx_lh.trk.gz'];
+                obj.Trkland.fx.out.trks_rh = [ obj.Trkland.root  'trkk_fx_rh.trk.gz'];
+                %Left side trking:
+                if exist(obj.Trkland.fx.out.trks_lh,'file') == 0
+                    exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
+                        ' --seed_count=100000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
+                        ' --roi=' obj.Trkland.fx.in.roi_lh ' --roa=' obj.Trkland.fx.in.roa_lh_hollow ...
+                        ' --step_size=1 --turning_angle=40 --min_lenght=160 --max_length=250 ' ...
+                        ' --output=' obj.Trkland.fx.out.trks_lh ];
+                    obj.RunBash(exec_cmd,144);
+                    wasRun=true;
+                    obj.UpdateHist(obj.Trkland.fx,'trkland_fx', obj.Trkland.fx.out.trks_lh,wasRun);
+                end
+                %Right side trking:
+                if exist(obj.Trkland.fx.out.trks_rh,'file') == 0
+                    exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
+                        ' --seed_count=100000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
+                        ' --roi=' obj.Trkland.fx.in.roi_rh ' --roa=' obj.Trkland.fx.in.roa_rh_hollow ...
+                        ' --step_size=1 --turning_angle=40 --min_lenght=160 --max_length=250 ' ...
+                        ' --output=' obj.Trkland.fx.out.trks_rh ];
+                    obj.RunBash(exec_cmd,144);
+                    wasRun=true;
+                    obj.UpdateHist(obj.Trkland.fx,'trkland_fx', obj.Trkland.fx.out.trks_lh,wasRun);
+                end
+            end
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %CLEAN UP OF THE TRACT AND EXTRACTING CENTERLINE
+            %Init outputs:
+            obj.Trkland.fx.out.clean_trks_lh = [ obj.Trkland.root  'trkk_clean_fx_lh.trk.gz'];
+            obj.Trkland.fx.out.clean_trks_rh = [ obj.Trkland.root  'trkk_clean_fx_rh.trk.gz'];
+            obj.Trkland.fx.out.cline_lh = [ obj.Trkland.root  'cline_fx_lh.trk.gz'];
+            obj.Trkland.fx.out.cline_rh = [ obj.Trkland.root  'cline_fx_rh.trk.gz'];
+            
+            %For left side:
+            %CLEANING UP THE STREAMLINES
+            if exist(obj.Trkland.fx.out.clean_trks_lh,'file') == 0
+                temp_fx_lh = rotrk_read(obj.Trkland.fx.out.trks_lh,obj.sessionname ...
+                    ,obj.Params.Dtifit.out.FA{end}, 'fx_lh');
+                %add Scalars
+                temp_fx_lh = rotrk_add_sc(  temp_fx_lh ,obj.Params.Dtifit.out.FA{end} , 'FA')
+                %Pick centerline based on hausdorff distance:
+                temp_fx_lh_cline = rotrk_centerline(temp_fx_lh,'hausdorff');
+                %Clean up based on normality of hausdorff distance
+                clean_trk_lh = rotrk_rm_byHDorff(temp_fx_lh_cline, temp_fx_lh,temp_fx_lh);
+                %save trk:
+                rotrk_write(clean_trk_lh.header,clean_trk_lh.sstr,obj.Trkland.fx.out.clean_trks_lh)
+                wasRun=true;
+                obj.UpdateHist(obj.Trkland.fx,'trkland_fx', obj.Trkland.fx.out.cline_lh,wasRun);
+                %get volume data of unclean/cleaned tracts:
+                obj.Trkland.fx.data.vol_unclean_lh = temp_fx_lh.num_uvox;
+                obj.Trkland.fx.data.vol_clean_lh = clean_trk_lh.num_uvox;
+                
+            end
+            %GETTING THE CENTERLINE (BASED ON HIGH FA?)
+            
+            if exist(obj.Trkland.fx.out.cline_lh,'file') == 0
+                %Save the trk:
+                rotrk_write(temp_fx_lh_cline.header,temp_fx_lh_cline.sstr,obj.Trkland.fx.out.cline_lh)
+                wasRun=true;
+                obj.UpdateHist(obj.Trkland.fx,'trkland_fx', obj.Trkland.fx.out.cline_lh,wasRun);
+            end
+        end
     end
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%% END Data Processing Methods %%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-    
-    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%% BEGIN Data Post-Processing Methods %%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1786,13 +1985,22 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         end
         
         function obj = RunBash(obj,exec_cmd, exit_status)
+            %Code values:
+            %   44  --> Show output
+            %   144 --> Show output and exist_status is 1
+            
+            
             if nargin < 3 %This will allow us to pass other exit status, such as 1 for DSISTUDIO in GQI
                 exit_status = 0 ;
             end
             
-            if exit_status == 44 % 44 codes for non-comment when running system:
+            if exit_status == 44 || exit_status == 144 % 44 codes for non-comment when running system:
                 [ sys_success , sys_error ] = system(exec_cmd,'-echo') ;
-                exit_status = 0; %return exit_status to zero.
+                if exit_status == 44
+                    exit_status = 0; %return exit_status to zero.
+                else
+                    exit_status = 1; %return exit_status to zero.
+                end
             else
                 [ sys_success , sys_error ] = system(exec_cmd) ;
             end

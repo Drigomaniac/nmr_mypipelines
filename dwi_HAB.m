@@ -25,14 +25,15 @@ classdef dwi_HAB < dwiMRI_Session
         HABn272_meanFA='/cluster/hab/HAB/Project1/DWIs_30b700/DEPENDENCIES/HABn272_MNI_Target/HABn272_meanFA.nii.gz';
         HABn272_meanFA_skel_dst='/cluster/hab/HAB/Project1/DWIs_30b700/DEPENDENCIES/HABn272_MNI_Target/HABn272_meanFA_skeleton_mask_dst.nii.gz';
         ref_region='/usr/pubsw/packages/fsl/5.0.9/data/standard/LowerCingulum_1mm.nii.gz';
-        
+       
         %sh dependencies:
         init_rotate_bvecs_sh='/cluster/sperling/HAB/Project1/Scripts/DWIs/mod_fdt_rotate_bvecs.sh'; %For standarizing the bvecs after proc_dcm2nii
         dependencies_dir='/cluster/hab/HAB/Project1/DWIs_30b700/DEPENDENCIES/';
         %Freesurfer Dependencies:
         init_FS = '/usr/local/freesurfer/stable6';
 
-        
+        %DataCentral (if false, we won't upload)
+        dctl_flag = false;
         
         %skel_TOI dependencies
         skeltoi_location='/cluster/hab/HAB/Project1/DWIs_30b700/DEPENDENCIES/edJHU_MASK_ROIs/';
@@ -43,6 +44,10 @@ classdef dwi_HAB < dwiMRI_Session
             'CST_R_edJHU' 'Fma_edJHU' 'Fmi_edJHU' 'IFOF_L_edJHU' 'IFOF_R_edJHU' ...
             'ILF_L_edJHU' 'ILF_R_edJHU' 'SLF_L_edJHU' 'SLF_L_edJHU_no_temporal' ...
             'SLF_R_edJHU' 'SLF_R_edJHU_no_temporal' 'allTracts_edJHU' 'Global_skel'  };
+        
+        %trkland dependencies:
+        fx_template_dir= '/space/public_html/rdp20/fornix_ROA/FX_1.8mm_orig/';
+        
     end
     
     methods
@@ -56,7 +61,13 @@ classdef dwi_HAB < dwiMRI_Session
             %%%  If opt is passed, then the root Sessions folder will be
             %%%  replaced with this argument.
             if nargin>1
-                obj.root = opt;
+                if strcmp(opt,'DataCentral')
+                    obj.dctl_flag = true ; 
+                else
+                    obj.root = opt;
+                end
+            else
+                obj.dctl_flag = false ; 
             end
             obj.sessionname = sessionname;
             obj.root = [obj.root_location sessionname '/DWIs/'];
@@ -84,13 +95,24 @@ classdef dwi_HAB < dwiMRI_Session
             end
             
             if nargin>1
-                if ~strcmpi(oldroot,newroot)
-                    obj = replaceObjText(obj,{oldroot},{newroot});
-                    obj.resave;
+                if strcmp(opt,'DataCentral')
+                    obj.dctl_flag = true ;
+                else
+                    if ~strcmpi(oldroot,newroot)
+                        obj = replaceObjText(obj,{oldroot},{newroot});
+                        obj.resave;
+                    end
                 end
+            else
+                obj.dctl_flag = false ;
             end
-            %Continue with CommonProc
-            obj.CommonProc();
+            
+            %Continue with CommonPreProc
+            obj.CommonPreProc();
+            
+            %Continue with CommonPostProc
+            obj.CommonPostProc();
+            
         end
         
         function obj=setMyParams(obj)
@@ -99,7 +121,7 @@ classdef dwi_HAB < dwiMRI_Session
             obj.setDefaultParams; %from dwiMRI_Session class
         end
         
-        function obj = CommonProc(obj)
+        function obj = CommonPreProc(obj)
             obj.dosave = true ; %To record process in MAT file
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -218,18 +240,19 @@ classdef dwi_HAB < dwiMRI_Session
                         
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            if ~isdeployed() %Not compiled code, so run this!
-                %Uploading Skel Data into DataCentral:
-                UploadData_DWI(obj)
-                
-                if obj.dosave
-                    save([obj.objectHome filesep obj.sessionname '.mat'],'obj');
+            if obj.dctl_flag == true
+                if ~isdeployed() %Not compiled code, so run this!
+                    %Uploading Skel Data into DataCentral:
+                    UploadData_DWI(obj)
+                    
+                    if obj.dosave
+                        save([obj.objectHome filesep obj.sessionname '.mat'],'obj');
+                    end
                 end
             end
             
-            
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %For FreeSurfer 
+            %For FreeSurfer recon-all
             obj.Params.FreeSurfer.dir = [ filesep 'eris' filesep 'bang' filesep ...
             'HAB_Project1' filesep 'FreeSurferv6.0' filesep ] ;
             obj.Params.FreeSurfer.init_location = obj.init_FS; 
@@ -256,7 +279,7 @@ classdef dwi_HAB < dwiMRI_Session
             
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %FS2dwi:
+            %FS2dwi (move aparc and aparc2009 segmes to dwi space):
             obj.Params.FS2dwi.in.movefiles = ['..' filesep '05_FS2dwi' ];
             obj.Params.FS2dwi.in.b0 = obj.Params.B0mean.out.fn ; 
             obj.Params.FS2dwi.in.aparcaseg = obj.Params.FreeSurfer.out.aparcaseg ; 
@@ -279,8 +302,56 @@ classdef dwi_HAB < dwiMRI_Session
             
             
             obj.proc_FS2dwi();
+        end
+        
+        
+        function obj = CommonPostProc(obj) 
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %Creating Fornix TRKLAND 
+            obj.Trkland.root = [ obj.root  'post_TRKLAND' filesep ];
+            
+            %b0 params:
+            obj.Trkland.fx.in.b0 = obj.Params.B0mean.out.fn{end};
+            %Template parameters:
+            obj.Trkland.fx.tmp.b0 = [ obj.fx_template_dir '141210_8CS00178_b0.nii.gz' ] ;
+            obj.Trkland.fx.tmp.roa_solid_bil =[ obj.fx_template_dir 'TMP_178_bil_fx_dil9.nii.gz' ] ;
+            obj.Trkland.fx.tmp.roa_solid_lh = [ obj.fx_template_dir 'TMP_178_lh_fx_dil9.nii.gz' ] ;
+            obj.Trkland.fx.tmp.roa_solid_rh = [ obj.fx_template_dir 'TMP_178_rh_fx_dil9.nii.gz' ] ;
+            obj.Trkland.fx.tmp.roi_bil = [ obj.fx_template_dir 'TMP_178_bil_fx_dil.nii.gz' ] ;
+            obj.Trkland.fx.tmp.roi_lh = [ obj.fx_template_dir 'TMP_178_lh_fx_dil.nii.gz' ] ;
+            obj.Trkland.fx.tmp.roi_rh = [ obj.fx_template_dir 'TMP_178_rh_fx_dil.nii.gz' ] ;
+            %IN PARAMS:
+            %tmp2b0s params:
+            obj.Trkland.fx.in.fn_tmp2b0 =  [ obj.Trkland.root 'fx_tmp2b0.nii.gz' ];
+            obj.Trkland.fx.in.tmp2b0_matfile = [ obj.Trkland.root 'fx_tmp2b0.mat'];
+            %bil params:
+            obj.Trkland.fx.in.roi_bil = [ obj.Trkland.root 'fx_roi_bil.nii.gz'];
+            obj.Trkland.fx.in.roa_bil_solid = [ obj.Trkland.root 'fx_roa_bil_solid.nii.gz'];
+            obj.Trkland.fx.in.roa_bil_ero =  [ obj.Trkland.root 'fx_roa_bil_ero.nii.gz'];
+            obj.Trkland.fx.in.roa_bil_hollow = [ obj.Trkland.root 'fx_roa_bil_hollow.nii.gz'];
+            %lh params:
+            obj.Trkland.fx.in.roi_lh = [ obj.Trkland.root 'fx_roi_lh.nii.gz'];
+            obj.Trkland.fx.in.roa_lh_solid = [ obj.Trkland.root 'fx_roa_lh_solid.nii.gz'];
+            obj.Trkland.fx.in.roa_lh_ero = [ obj.Trkland.root 'fx_roa_lh_ero.nii.gz'];
+            obj.Trkland.fx.in.roa_lh_hollow = [ obj.Trkland.root 'fx_roa_lh_hollow.nii.gz'];
+            %rh params:
+            obj.Trkland.fx.in.roi_rh = [ obj.Trkland.root 'fx_roi_rh.nii.gz'];
+            obj.Trkland.fx.in.roa_rh_solid = [ obj.Trkland.root 'fx_roa_rh_solid.nii.gz'];
+            obj.Trkland.fx.in.roa_rh_ero = [ obj.Trkland.root 'fx_roa_rh_ero.nii.gz'];
+            obj.Trkland.fx.in.roa_rh_hollow = [ obj.Trkland.root 'fx_roa_rh_hollow.nii.gz'];
+            %fib params:
+            obj.Trkland.fx.in.fib =strtrim(obj.Params.GQI.out.fibs_fn{end});
+            if exist(obj.Trkland.fx.in.fib) == 0 ; error('No fib found in variable: trkland.trks.fx.in.fib. Please check!') ; end
+            
+            
+            
+            
+            
+            obj.trkland_fx();
             
         end
+        
         
         function resave(obj)
             save([obj.objectHome filesep obj.sessionname '.mat'],'obj');
