@@ -15,7 +15,8 @@ classdef dwi_HAB < dwiMRI_Session
     %%  *Only filesep wit '/' are used in the properties class declaration.
     %%   Besides these, all should be any operating system compatible (tested in CentOS Linux)
     properties
-        
+        %software used:
+        dsistudio_version='GQI_DSISv053117'
         %root directoy where raw data lives:
         root_location='/cluster/sperling/HAB/Project1/DWIs_30b700/Sessions/';
         dcm_location='/cluster/sperling/HAB/Project1/DICOM_ARCHIVE/All_DICOMS/';
@@ -115,7 +116,7 @@ classdef dwi_HAB < dwiMRI_Session
             
         end
         
-        function obj=setMyParams(obj)
+        function obj = setMyParams(obj)
             %Global parameters:
             obj.vox= [2 2 2 ];
             obj.setDefaultParams; %from dwiMRI_Session class
@@ -200,7 +201,7 @@ classdef dwi_HAB < dwiMRI_Session
             obj.Params.GQI.in.bvecs = obj.Params.Eddy.out.bvecs;
             obj.Params.GQI.in.bvals = obj.Params.Eddy.in.bvals;
             obj.Params.GQI.in.mask = obj.Params.MaskAfterEddy.out.finalmask;
-            obj.Params.GQI.in.prefix = 'GQI_DSISv041917' ; %Double check this so you prefix the version of DSISTUDIO!
+            obj.Params.GQI.in.prefix = obj.dsistudio_version ; %Double check this so you prefix the version of DSISTUDIO!
             obj.Params.GQI.out.export = 'gfa,nqa0,nqa1';
             
             obj.proc_gqi();
@@ -275,9 +276,7 @@ classdef dwi_HAB < dwiMRI_Session
                 filesep obj.sessionname filesep 'mri' filesep 'aparc+aseg.mgz' ] ;
             
             obj.proc_getFreeSurfer();
-            
-            
-            
+             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %FS2dwi (move aparc and aparc2009 segmes to dwi space):
             obj.Params.FS2dwi.in.movefiles = ['..' filesep '05_FS2dwi' ];
@@ -299,7 +298,6 @@ classdef dwi_HAB < dwiMRI_Session
                 strtrim(strrep(obj.Params.FreeSurfer.out.aparcaseg,'aparc+aseg','lh.hippoSfLabels-T1-T2.v10.FSvoxelSpace')); 
             obj.Params.FS2dwi.in.hippofield_right = ...
                 strtrim(strrep(obj.Params.FreeSurfer.out.aparcaseg,'aparc+aseg','rh.hippoSfLabels-T1-T2.v10.FSvoxelSpace')); 
-            
             
             obj.proc_FS2dwi();
         end

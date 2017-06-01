@@ -22,7 +22,7 @@ classdef dwi_ADRC < dwiMRI_Session
         col2rows_sh='/eris/bang/ADRC/Scripts/DEPENDENCIES/drigo_col2rows.sh';
         dependencies_dir='/eris/bang/ADRC/Scripts/DEPENDENCIES/';
         %FreeSurfer Dependencies
-        FS_location='/eris/bang/ADRC/FreeSurfer6.0/';
+        FS_location='/eris/bang/ADRC/FreeSurferv6.0/';
         init_FS = '/usr/local/freesurfer/stable6';
         
     end
@@ -48,11 +48,19 @@ classdef dwi_ADRC < dwiMRI_Session
                 obj.make_root();
             end
             obj.objectHome = obj.root ; 
+            %!!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            %!!!!!!!
+            %TEMPORAL VALUES TO BE REPLACED (if changed in properties)
+            tmp_FS_location = obj.FS_location
+            %!!!!!
+            %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!!
+            
             %Check to see if a *.mat file exists.
             if exist([obj.objectHome filesep sessionname '.mat'],'file')>0
                 load([obj.objectHome filesep sessionname '.mat']);
                 oldroot = obj.root;
                 obj.wasLoaded = true;
+                obj.FS_location = tmp_FS_location
             else
                 obj.setMyParams;
             end
@@ -91,6 +99,7 @@ classdef dwi_ADRC < dwiMRI_Session
             end
             
             %%%%%%%%%%%%
+            %01_DropVols
             %For proc_dropvols
             obj.Params.DropVols.in.tmin='1';
             obj.Params.DropVols.in.tsize='67';
@@ -103,6 +112,7 @@ classdef dwi_ADRC < dwiMRI_Session
             obj.proc_drop_vols();
             
             %%%%%%%%%%%%
+            %02_GradCorrect
             %For gradient non-linearity correction
             obj.Params.GradNonlinCorrect.in.movefiles = '../02_GradCorrect/';
             obj.Params.GradNonlinCorrect.in.prefix = 'gnc_';
@@ -116,8 +126,7 @@ classdef dwi_ADRC < dwiMRI_Session
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %For FreeSurfer Segmentation (needed for b0 bbreg correction)
-             obj.Params.FreeSurfer.dir = [ filesep 'eris' filesep 'bang' filesep ...
-            'ADRC' filesep 'FreeSurfer6.0' ] ;
+            obj.Params.FreeSurfer.dir = obj.FS_location;
             obj.Params.FreeSurfer.init_location = obj.init_FS;
             
         

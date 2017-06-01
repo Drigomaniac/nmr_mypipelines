@@ -1,0 +1,1 @@
+dsi_studio_run --action=trk --source=data.fib.gz --seed_count=100000 --smoothing=0 --method=0 --interpolation=0 --thread_count=10 --seed=fx_roi_lh.nii.gz --roa=fx_roa_lh_hollow.nii.gz --step_size=1 --turning_angle=40 --min_length=100 --max_length=250 --output=cmd_line_trk.gz
