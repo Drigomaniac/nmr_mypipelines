@@ -15,7 +15,8 @@ classdef dwi_HAB < dwiMRI_Session
     %%  *Only filesep wit '/' are used in the properties class declaration.
     %%   Besides these, all should be any operating system compatible (tested in CentOS Linux)
     properties
-        
+        %software used:
+        dsistudio_version='GQI_DSISv053117'
         %root directoy where raw data lives:
         root_location='/cluster/sperling/HAB/Project1/DWIs_30b700/Sessions/';
         dcm_location='/cluster/sperling/HAB/Project1/DICOM_ARCHIVE/All_DICOMS/';
@@ -115,7 +116,7 @@ classdef dwi_HAB < dwiMRI_Session
             
         end
         
-        function obj=setMyParams(obj)
+        function obj = setMyParams(obj)
             %Global parameters:
             obj.vox= [2 2 2 ];
             obj.setDefaultParams; %from dwiMRI_Session class
@@ -200,7 +201,7 @@ classdef dwi_HAB < dwiMRI_Session
             obj.Params.GQI.in.bvecs = obj.Params.Eddy.out.bvecs;
             obj.Params.GQI.in.bvals = obj.Params.Eddy.in.bvals;
             obj.Params.GQI.in.mask = obj.Params.MaskAfterEddy.out.finalmask;
-            obj.Params.GQI.in.prefix = 'GQI_DSISv041917' ; %Double check this so you prefix the version of DSISTUDIO!
+            obj.Params.GQI.in.prefix = obj.dsistudio_version ; %Double check this so you prefix the version of DSISTUDIO!
             obj.Params.GQI.out.export = 'gfa,nqa0,nqa1';
             
             obj.proc_gqi();
@@ -275,9 +276,7 @@ classdef dwi_HAB < dwiMRI_Session
                 filesep obj.sessionname filesep 'mri' filesep 'aparc+aseg.mgz' ] ;
             
             obj.proc_getFreeSurfer();
-            
-            
-            
+             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %FS2dwi (move aparc and aparc2009 segmes to dwi space):
             obj.Params.FS2dwi.in.movefiles = ['..' filesep '05_FS2dwi' ];
@@ -300,7 +299,6 @@ classdef dwi_HAB < dwiMRI_Session
             obj.Params.FS2dwi.in.hippofield_right = ...
                 strtrim(strrep(obj.Params.FreeSurfer.out.aparcaseg,'aparc+aseg','rh.hippoSfLabels-T1-T2.v10.FSvoxelSpace')); 
             
-            
             obj.proc_FS2dwi();
         end
         
@@ -309,15 +307,16 @@ classdef dwi_HAB < dwiMRI_Session
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %Creating Fornix TRKLAND 
+            %TRKLAND
             obj.Trkland.root = [ obj.root  'post_TRKLAND' filesep ];
             
             %b0 params:
             obj.Trkland.fx.in.b0 = obj.Params.B0mean.out.fn{end};
             %Template parameters:
             obj.Trkland.fx.tmp.b0 = [ obj.fx_template_dir '141210_8CS00178_b0.nii.gz' ] ;
-            obj.Trkland.fx.tmp.roa_solid_bil =[ obj.fx_template_dir 'TMP_178_bil_fx_dil9.nii.gz' ] ;
-            obj.Trkland.fx.tmp.roa_solid_lh = [ obj.fx_template_dir 'TMP_178_lh_fx_dil9.nii.gz' ] ;
-            obj.Trkland.fx.tmp.roa_solid_rh = [ obj.fx_template_dir 'TMP_178_rh_fx_dil9.nii.gz' ] ;
+            obj.Trkland.fx.tmp.roa_solid_bil =[ obj.fx_template_dir 'TMP_178_bil_fx_dil11.nii.gz' ] ;
+            obj.Trkland.fx.tmp.roa_solid_lh = [ obj.fx_template_dir 'TMP_178_lh_fx_dil11.nii.gz' ] ;
+            obj.Trkland.fx.tmp.roa_solid_rh = [ obj.fx_template_dir 'TMP_178_rh_fx_dil11.nii.gz' ] ;
             obj.Trkland.fx.tmp.roi_bil = [ obj.fx_template_dir 'TMP_178_bil_fx_dil.nii.gz' ] ;
             obj.Trkland.fx.tmp.roi_lh = [ obj.fx_template_dir 'TMP_178_lh_fx_dil.nii.gz' ] ;
             obj.Trkland.fx.tmp.roi_rh = [ obj.fx_template_dir 'TMP_178_rh_fx_dil.nii.gz' ] ;
@@ -339,7 +338,7 @@ classdef dwi_HAB < dwiMRI_Session
             obj.Trkland.fx.in.roa_lh_hollow = [ obj.Trkland.root 'fx_roa_lh_hollow.nii.gz'];
             %rh params:
             obj.Trkland.fx.in.roi_rh_hippo = strrep(obj.Params.FS2dwi.out.fn_aparc2009, ...
-                'dwi_aparc.a2009+aseg',[filesep 'aparc2009_aseg' filesep 'dwi_fs_Right-Hippocampus' ]);
+                'dwi_aparc.a2009+aseg',[ 'aparc2009_aseg' filesep 'dwi_fs_Right-Hippocampus' ]);
             obj.Trkland.fx.in.roi_rh = [ obj.Trkland.root 'fx_roi_rh.nii.gz'];
             obj.Trkland.fx.in.roa_rh_solid = [ obj.Trkland.root 'fx_roa_rh_solid.nii.gz'];
             obj.Trkland.fx.in.roa_rh_ero = [ obj.Trkland.root 'fx_roa_rh_ero.nii.gz'];
@@ -348,11 +347,16 @@ classdef dwi_HAB < dwiMRI_Session
             obj.Trkland.fx.in.fib =strtrim(obj.Params.GQI.out.fibs_fn{end});
             if exist(obj.Trkland.fx.in.fib) == 0 ; error('No fib found in variable: trkland.trks.fx.in.fib. Please check!') ; end
             
-            
-            
-            
-            
             obj.trkland_fx();
+           
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %TRKLAND_HIPPOCING
+            obj.Trkland.hippo_cing.in.hippo_lh = strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc2009_aseg/')
+            
+            obj.trkland_hippocing();
+            
+            
+            
             
         end
         

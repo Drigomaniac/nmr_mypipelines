@@ -110,6 +110,13 @@ classdef dwi_ADRC < dwiMRI_Session
             obj.Params.DropVols.out.fn=dir_wfp([obj.root, '01_DropVols', filesep, '*.nii.gz']);
             
             obj.proc_drop_vols();
+             obj.Params.CoRegMultiple.in.fn = obj.Params.Eddy.in.fn;
+            obj.Params.CoRegMultiple.in.b0 = obj.Params.MaskAfterEddy.in.b0 ;
+            obj.Params.CoRegMultiple.in.bvals = obj.Params.Eddy.in.bvals;
+            obj.Params.CoRegMultiple.in.bvecs = obj.Params.Eddy.out.bvecs;
+            
+            obj.Params.CoRegMultiple.in.movefiles = ['..' filesep '06_CoRegDWIs'];
+            obj.Params.CoRegMultiple.in.ref_iteration = 2; % All images will be registered to this iteration (in ADRC, 7p5_set1, index 1 is for 2p7_set4!)
             
             %%%%%%%%%%%%
             %02_GradCorrect
