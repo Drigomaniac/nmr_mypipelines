@@ -321,6 +321,9 @@ classdef dwi_HAB < dwiMRI_Session
             obj.Trkland.fx.tmp.roi_lh = [ obj.fx_template_dir 'TMP_178_lh_fx_dil.nii.gz' ] ;
             obj.Trkland.fx.tmp.roi_rh = [ obj.fx_template_dir 'TMP_178_rh_fx_dil.nii.gz' ] ;
             %IN PARAMS:
+            %Hippocampi:
+            obj.Trkland.fx.in.hippo_lh =  strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc2009_aseg/dwi_fs_Left-Hippocampus.nii.gz'); 
+            obj.Trkland.fx.in.hippo_rh =  strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc2009_aseg/dwi_fs_Right-Hippocampus.nii.gz'); 
             %tmp2b0s params:
             obj.Trkland.fx.in.fn_tmp2b0 =  [ obj.Trkland.root 'fx_tmp2b0.nii.gz' ];
             obj.Trkland.fx.in.tmp2b0_matfile = [ obj.Trkland.root 'fx_tmp2b0.mat'];
