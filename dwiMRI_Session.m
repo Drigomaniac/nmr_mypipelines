@@ -2282,7 +2282,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     %%%clean_trk_lh = rotrk_rm_bylen(temp_fx_lh_cline, temp_fx_lh,temp_fx_lh);
                     %Trim tracts here:
                     temp_hippocing_trimmed_lh = rotrk_trimmedbyTOI(clean_trk_lh, ...
-                        [ {obj.Trkland.hippocing.in.roi_postcing_lh}  {obj.Trkland.hippocing.in.seed_hippo_lh}  ], 'postcing');
+                        [ {obj.Trkland.hippocing.in.roi_postcing_lh}  {obj.Trkland.hippocing.in.hippo_lh}  ], 'postcing');
                     %Now that the TRK is clean, lets get the high_FA and get the centerline:
                     %Pick centerline based on high_sc and FA:
                     temp_hippocing_lh_cline_highFA = rotrk_centerline(temp_hippocing_trimmed_lh, 'high_sc','FA');
@@ -2347,7 +2347,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     %%%%clean_trk_rh = rotrk_rm_bylen(temp_fx_rh_cline, temp_fx_rh,temp_fx_rh);
                     %Trim tracts here:
                     temp_hippocing_trimmed_rh = rotrk_trimmedbyTOI(clean_trk_rh, ...
-                        [ {obj.Trkland.hippocing.in.roi_postcing_rh}  {obj.Trkland.hippocing.in.seed_hippo_rh}  ], 'postcing');
+                        [ {obj.Trkland.hippocing.in.roi_postcing_rh}  {obj.Trkland.hippocing.in.hippo_rh}  ], 'postcing');
                     %Now that the TRK is clean, lets get the high_FA and get the centerline:
                     %Pick centerline based on high_sc and FA:
                     temp_hippocing_rh_cline_highFA = rotrk_centerline(temp_hippocing_trimmed_rh, 'high_sc','FA');

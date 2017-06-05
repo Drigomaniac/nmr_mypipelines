@@ -2023,8 +2023,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         %Clean up based on normality of hausdorff distance
                         clean_trk_lh = rotrk_rm_byHDorff(temp_fx_lh_cline, temp_fx_lh,temp_fx_lh);
                         %clean_trk_lh = rotrk_rm_bylen(temp_fx_lh_cline, temp_fx_lh,temp_fx_lh);
-                        %Trim tracts here:
-                        temp_fx_trimmed_lh = rotrk_trimmedbyTOI(clean_trk_lh, ...
+                        %Trim tracts h                        temp_fx_trimmed_lh = rotrk_trimmedbyTOI(clean_trk_lh, ...
                             {obj.Trkland.fx.in.hippo_lh}, 'fx');
                         %Now that the TRK is clean, lets get the high_FA and get the centerline:
                         %Pick centerline based on high_sc and FA:
