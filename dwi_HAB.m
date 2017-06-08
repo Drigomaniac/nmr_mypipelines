@@ -275,7 +275,7 @@ classdef dwi_HAB < dwiMRI_Session
             obj.Params.FreeSurfer.out.aparcaseg = [ obj.Params.FreeSurfer.dir ...
                 filesep obj.sessionname filesep 'mri' filesep 'aparc+aseg.mgz' ] ;
             
-            obj.proc_getFreeSurfer();
+            %obj.proc_getFreeSurfer();
              
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %FS2dwi (move aparc and aparc2009 segmes to dwi space):

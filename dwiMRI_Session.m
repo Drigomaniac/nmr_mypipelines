@@ -199,19 +199,19 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             obj.Params.CoRegMultiple.in.bvecs = '' ;
             obj.Params.CoRegMultiple.in.movefiles = '' ;
             obj.Params.CoRegMultiple.in.ref_iteration = [] ; % All images will be registered to this iteration (in ADRC, 7p5_set1, index 1 is for 2p7_set4!)
-            obj.Params.CoRegMultiple.in.ref_prefix = '' ; 
-            obj.Params.CoRegMultiple.in.ref_file = '' ; 
+            obj.Params.CoRegMultiple.in.ref_prefix = '' ;
+            obj.Params.CoRegMultiple.in.ref_file = '' ;
             
-            obj.Params.CoRegMultiple.out.fn = '' ; 
-            obj.Params.CoRegMultiple.out.bvals = '' ; 
-            obj.Params.CoRegMultiple.out.bvecs = '' ; 
-            obj.Params.CoRegMultiple.out.matfile = '' ; 
-            obj.Params.CoRegMultiple.out.combined_fn = '' ; 
-            obj.Params.CoRegMultiple.out.combined_bvals = '' ; 
-            obj.Params.CoRegMultiple.out.combined_bvecs = '' ; 
-            obj.Params.CoRegMultiple.out.combined_b0 = '' ; 
-            obj.Params.CoRegMultiple.out.combined_bet = '' ; 
-            obj.Params.CoRegMultiple.out.combined_mask = '' ; 
+            obj.Params.CoRegMultiple.out.fn = '' ;
+            obj.Params.CoRegMultiple.out.bvals = '' ;
+            obj.Params.CoRegMultiple.out.bvecs = '' ;
+            obj.Params.CoRegMultiple.out.matfile = '' ;
+            obj.Params.CoRegMultiple.out.combined_fn = '' ;
+            obj.Params.CoRegMultiple.out.combined_bvals = '' ;
+            obj.Params.CoRegMultiple.out.combined_bvecs = '' ;
+            obj.Params.CoRegMultiple.out.combined_b0 = '' ;
+            obj.Params.CoRegMultiple.out.combined_bet = '' ;
+            obj.Params.CoRegMultiple.out.combined_mask = '' ;
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             obj.Params.Dtifit.in.movefiles = '';
@@ -1100,7 +1100,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 if ii ~=  obj.Params.CoRegMultiple.in.ref_iteration
                     %Dealing with *.nii.gz:
-                   
+                    
                     if exist(obj.Params.CoRegMultiple.out.matfile{ii},'file') == 0
                         %Creating matfiles:
                         exec_cmd=['flirt -in ' obj.Params.CoRegMultiple.in.b0{ii} ...
@@ -1232,17 +1232,17 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             
             obj.Params.CoRegMultiple.out.combined_mask = [outpath 'combined_preproc_bet_mask.nii.gz'] ;
             %b0:
-            if exist(obj.Params.CoRegMultiple.out.combined_b0,'file') == 0 
-                exec_cmd = [ 'cp '  obj.Params.CoRegMultiple.in.b0{obj.Params.CoRegMultiple.in.ref_iteration} ... 
-                    ' ' obj.Params.CoRegMultiple.out.combined_b0 ] 
+            if exist(obj.Params.CoRegMultiple.out.combined_b0,'file') == 0
+                exec_cmd = [ 'cp '  obj.Params.CoRegMultiple.in.b0{obj.Params.CoRegMultiple.in.ref_iteration} ...
+                    ' ' obj.Params.CoRegMultiple.out.combined_b0 ]
                 fprintf('\n Copying b0 combined...')
                 obj.RunBash(exec_cmd);
                 fprintf('..done \n')
             end
             %bet and mask:
-            if exist(obj.Params.CoRegMultiple.out.combined_bet,'file') == 0 
-                exec_cmd = [ 'bet2 ' obj.Params.CoRegMultiple.out.combined_b0 ... 
-                    ' ' obj.Params.CoRegMultiple.out.combined_bet  ' -f 0.3 -m ' ] 
+            if exist(obj.Params.CoRegMultiple.out.combined_bet,'file') == 0
+                exec_cmd = [ 'bet2 ' obj.Params.CoRegMultiple.out.combined_b0 ...
+                    ' ' obj.Params.CoRegMultiple.out.combined_bet  ' -f 0.3 -m ' ]
                 fprintf('\n Bet masking combined...')
                 obj.RunBash(exec_cmd);
                 fprintf('..done \n')
@@ -1250,8 +1250,6 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             end
             
         end
-    
-        
         
         function obj = proc_dtifit(obj)
             wasRun=false;
@@ -1605,7 +1603,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             %if strcmp(obj.Params.FreeSurfer.shell,'bash')
             display([ 'The whoami output is: ' obj.Params.FreeSurfer.shell ])
             
-            if exist(obj.Params.FreeSurfer.out.aparcaseg, 'file') == 0 
+            if exist(obj.Params.FreeSurfer.out.aparcaseg, 'file') == 0
                 if strcmp(obj.Params.FreeSurfer.shell,'rdp20') %due to launchpad errors, I decided to use this 'whoami' instead of shell. NEED TO FIX IT!
                     export_shell=[ 'export FREESURFER_HOME=' obj.Params.FreeSurfer.init_location ' ; '...
                         ' source $FREESURFER_HOME/SetUpFreeSurfer.sh ;' ...
@@ -1997,10 +1995,10 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             %CLEAN UP OF THE TRACT AND EXTRACTING CENTERLINE
             for tohide=1:1
                 %Init outputs:
-                obj.Trkland.fx.out.clean_trks_lh = [ obj.Trkland.root  'trkk_fx_clean_lh.trk.gz'];
-                obj.Trkland.fx.out.clean_trks_lh = [ obj.Trkland.root  'trkk_fx_clean_lh.trk.gz'];
-                obj.Trkland.fx.out.clean_trkstrimmed_lh = [  obj.Trkland.root  'trkk_fx_cleantrimmed_lh.trk.gz' ];
-                obj.Trkland.fx.out.clean_trkstrimmed_rh = [  obj.Trkland.root  'trkk_fx_cleantrimmed_rh.trk.gz'];
+                obj.Trkland.fx.out.clean_trks_lh = [ obj.Trkland.root  'trkk_fx_trimmedclean_lh.trk.gz'];
+                obj.Trkland.fx.out.clean_trks_rh = [ obj.Trkland.root  'trkk_fx_trimmmedclean_rh.trk.gz'];
+                obj.Trkland.fx.out.clean_trkstrimmed_lh = [  obj.Trkland.root  'trkk_fx_trimmed_lh.trk.gz' ];
+                obj.Trkland.fx.out.clean_trkstrimmed_rh = [  obj.Trkland.root  'trkk_fx_trimmed_rh.trk.gz'];
                 obj.Trkland.fx.out.clineFA_lh_highFA = [ obj.Trkland.root  'cline_highFA_fx_lh.trk.gz'];
                 obj.Trkland.fx.out.clineFA_lh_HDorff = [ obj.Trkland.root  'cline_HDorff_fx_lh.trk.gz'];
                 obj.Trkland.fx.out.clineFA_rh_highFA = [ obj.Trkland.root  'cline_highFA_fx_rh.trk.gz'];
@@ -2018,14 +2016,15 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         temp_fx_lh = rotrk_add_sc(  temp_fx_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
                         temp_fx_lh = rotrk_add_sc(  temp_fx_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
                         temp_fx_lh = rotrk_add_sc(  temp_fx_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
-                        %Select the HDorff centerline(first pass)
-                        temp_fx_lh_cline = rotrk_centerline(temp_fx_lh,'hausdorff');
-                        %Clean up based on normality of hausdorff distance
-                        clean_trk_lh = rotrk_rm_byHDorff(temp_fx_lh_cline, temp_fx_lh,temp_fx_lh);
-                        %clean_trk_lh = rotrk_rm_bylen(temp_fx_lh_cline, temp_fx_lh,temp_fx_lh);
                         %Trim tracts here:
-                        temp_fx_trimmed_lh = rotrk_trimmedbyTOI(clean_trk_lh, ...
-                            {obj.Trkland.fx.in.hippo_lh}, 'fx');
+                        temp_fx_trimmed_lh = rotrk_trimmedbyTOI(temp_fx_lh, ...
+                            {obj.Trkland.fx.in.hippo_lh}, 'fx_lh');
+                        
+                        %Select the HDorff centerline(first pass)
+                        temp_fx_lh_cline = rotrk_centerline(temp_fx_trimmed_lh,'hausdorff');
+                        %Clean up based on normality of hausdorff distance
+                        clean_trk_lh = rotrk_rm_byHDorff(temp_fx_lh_cline, temp_fx_trimmed_lh,temp_fx_trimmed_lh);
+                        %clean_trk_lh = rotrk_rm_bylen(temp_fx_lh_cline, temp_fx_lh,temp_fx_lh);
                         %Now that the TRK is clean, lets get the high_FA and get the centerline:
                         %Pick centerline based on high_sc and FA:
                         temp_fx_lh_cline_highFA = rotrk_centerline(temp_fx_trimmed_lh, 'high_sc','FA');
@@ -2072,7 +2071,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         obj.Trkland.fx.data.lh_cline_RD_HDorff = mean(temp_fx_lh_cline_HDorff.unique_voxels(:,5));
                         obj.Trkland.fx.data.lh_cline_AxD_HDorff = mean(temp_fx_lh_cline_HDorff.unique_voxels(:,6));
                         obj.Trkland.fx.data.lh_cline_MD_HDorff = mean(temp_fx_lh_cline_HDorff.unique_voxels(:,7));
-                       
+                        
                     end
                 end
                 %For right side (centerline approach):
@@ -2087,14 +2086,14 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         temp_fx_rh = rotrk_add_sc(  temp_fx_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
                         temp_fx_rh = rotrk_add_sc(  temp_fx_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
                         temp_fx_rh = rotrk_add_sc(  temp_fx_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
-                        %Select the HDorff centerline(first pass)
-                        temp_fx_rh_cline = rotrk_centerline(temp_fx_rh,'hausdorff');
-                        %Clean up based on normality of hausdorff distance
-                        clean_trk_rh = rotrk_rm_byHDorff(temp_fx_rh_cline, temp_fx_rh,temp_fx_rh);
-                        %%%%clean_trk_rh = rotrk_rm_bylen(temp_fx_rh_cline, temp_fx_rh,temp_fx_rh);
                         %Trim tracts here:
-                        temp_fx_trimmed_rh = rotrk_trimmedbyTOI(clean_trk_rh, ...
-                            {obj.Trkland.fx.in.hippo_rh}, 'fx');
+                        temp_fx_trimmed_rh = rotrk_trimmedbyTOI(temp_fx_rh, ...
+                            {obj.Trkland.fx.in.hippo_rh}, 'fx_rh');
+                        %Select the HDorff centerline(first pass)
+                        temp_fx_rh_cline = rotrk_centerline(temp_fx_trimmed_rh,'hausdorff');
+                        %Clean up based on normality of hausdorff distance
+                        clean_trk_rh = rotrk_rm_byHDorff(temp_fx_rh_cline, temp_fx_trimmed_rh,temp_fx_trimmed_rh);
+                        %%%%clean_trk_rh = rotrk_rm_bylen(temp_fx_rh_cline, temp_fx_rh,temp_fx_rh);
                         %Now that the TRK is clean, lets get the high_FA and get the centerline:
                         %Pick centerline based on high_sc and FA:
                         temp_fx_rh_cline_highFA = rotrk_centerline(temp_fx_trimmed_rh, 'high_sc','FA');
@@ -2125,10 +2124,10 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         obj.Trkland.fx.data.rh_clean_AxD = mean(clean_trk_rh.unique_voxels(:,6));
                         obj.Trkland.fx.data.rh_clean_MD = mean(clean_trk_rh.unique_voxels(:,7));
                         %Trimmed_clean_hippocing:
-                        obj.Trkland.fx.data.rh_trimmedclean_FA = mean(temp_fx_trimmed_lh.unique_voxels(:,4));
-                        obj.Trkland.fx.data.rh_trimmedclean_RD = mean(temp_fx_trimmed_lh.unique_voxels(:,5));
-                        obj.Trkland.fx.data.rh_trimmedclean_AxD = mean(temp_fx_trimmed_lh.unique_voxels(:,6));
-                        obj.Trkland.fx.data.rh_trimmedclean_MD = mean(temp_fx_trimmed_lh.unique_voxels(:,7));
+                        obj.Trkland.fx.data.rh_trimmedclean_FA = mean(temp_fx_trimmed_rh.unique_voxels(:,4));
+                        obj.Trkland.fx.data.rh_trimmedclean_RD = mean(temp_fx_trimmed_rh.unique_voxels(:,5));
+                        obj.Trkland.fx.data.rh_trimmedclean_AxD = mean(temp_fx_trimmed_rh.unique_voxels(:,6));
+                        obj.Trkland.fx.data.rh_trimmedclean_MD = mean(temp_fx_trimmed_rh.unique_voxels(:,7));
                         %Cline_HighFA
                         obj.Trkland.fx.data.rh_cline_length_HDorff=temp_fx_rh_cline_highFA.len_matrix;
                         obj.Trkland.fx.data.rh_cline_FA_highFA = mean(temp_fx_rh_cline_highFA.unique_voxels(:,4));
@@ -2156,64 +2155,62 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             %ROIs/SEEDs PREPARATION
             for tohide=1:1
                 %Dilate Hippos:
-                obj.Trkland.hippocing.in.seed_hippo_lh = [ obj.Trkland.root 'hippoCing_seed_hippoDil_lh.nii.gz' ] ;
-                obj.Trkland.hippocing.in.seed_hippo_rh = [ obj.Trkland.root 'hippoCing_seed_hippoDil_rh.nii.gz' ] ;
+                tmp_roi_hippocing_hippo_lh = [ obj.Trkland.root 'hippoCing_seed_hippoDil1_lh.nii.gz' ] ;
+                tmp_roi_hippocing_hippo_rh = [ obj.Trkland.root 'hippoCing_seed_hippoDil1_rh.nii.gz' ] ;
+                obj.Trkland.hippocing.in.seed_hippo_lh = [ obj.Trkland.root 'hippoCing_seed_hippoDil2_lh.nii.gz' ] ;
+                obj.Trkland.hippocing.in.seed_hippo_rh = [ obj.Trkland.root 'hippoCing_seed_hippoDil2_rh.nii.gz' ] ;
                 %left:
-                if exist(obj.Trkland.hippocing.in.seed_hippo_lh , 'file') == 0
+                if exist(tmp_roi_hippocing_hippo_lh , 'file') == 0
                     fprintf('\n Dilating Hippocampus_lh...')
                     exec_cmd = ['fslmaths ' obj.Trkland.hippocing.in.hippo_lh ...
+                        ' -dilM ' tmp_roi_hippocing_hippo_lh  ];
+                    obj.RunBash(exec_cmd);
+                    fprintf('...done \n');
+                end
+                if exist(obj.Trkland.hippocing.in.seed_hippo_lh , 'file') == 0
+                    fprintf('\n 2nd dilation Hippocampus_lh...')
+                    exec_cmd = ['fslmaths ' tmp_roi_hippocing_hippo_lh ...
                         ' -dilM ' obj.Trkland.hippocing.in.seed_hippo_lh  ];
                     obj.RunBash(exec_cmd);
                     fprintf('...done \n');
                 end
                 %right:
-                if exist(obj.Trkland.hippocing.in.seed_hippo_rh , 'file') == 0
+                if exist( tmp_roi_hippocing_hippo_rh , 'file') == 0
                     fprintf('\n Dilating Hippocampus_rh...')
                     exec_cmd = ['fslmaths ' obj.Trkland.hippocing.in.hippo_rh ...
+                        ' -dilM '  tmp_roi_hippocing_hippo_rh  ];
+                    obj.RunBash(exec_cmd);
+                    fprintf('...done \n');
+                end
+                if exist(obj.Trkland.hippocing.in.seed_hippo_rh , 'file') == 0
+                    fprintf('\n 2nd dilation Hippocampus_rh...')
+                    exec_cmd = ['fslmaths ' tmp_roi_hippocing_hippo_rh  ...
                         ' -dilM ' obj.Trkland.hippocing.in.seed_hippo_rh  ];
                     obj.RunBash(exec_cmd);
                     fprintf('...done \n');
                 end
                 
-                
                 %Dilate Postcingulates:
-                tmp_roi_postcing_lh = [ obj.Trkland.root 'hippoCing_roi_postcingulateDil_lh.nii.gz' ] ;
-                tmp_roi_postcing_rh = [ obj.Trkland.root 'hippoCing_roi_postcingulateDil_rh.nii.gz' ] ;
-                obj.Trkland.hippocing.in.roi_postcing_lh = [ obj.Trkland.root 'hippoCing_roi_postcingulateDil2_lh.nii.gz' ] ;
-                obj.Trkland.hippocing.in.roi_postcing_rh = [ obj.Trkland.root 'hippoCing_roi_postcingulateDil2_rh.nii.gz' ] ;
+                obj.Trkland.hippocing.in.roi_postcing_lh = [ obj.Trkland.root 'hippoCing_roi_postcingulateDil1_lh.nii.gz' ] ;
+                obj.Trkland.hippocing.in.roi_postcing_rh = [ obj.Trkland.root 'hippoCing_roi_postcingulateDil1_rh.nii.gz' ] ;
                 
                 %left:
-                if exist(tmp_roi_postcing_lh , 'file') == 0
+                if exist(obj.Trkland.hippocing.in.roi_postcing_lh  , 'file') == 0
                     fprintf('\n Dilating Posterior cingulate_lh...')
                     exec_cmd = ['fslmaths ' obj.Trkland.hippocing.in.postcing_lh ...
-                        ' -dilM ' tmp_roi_postcing_lh  ];
-                    obj.RunBash(exec_cmd);
-                    fprintf('...done \n');
-                end
-                if exist(obj.Trkland.hippocing.in.roi_postcing_lh , 'file') == 0
-                    fprintf('\n Dilating Posterior cingulate_lh...')
-                    exec_cmd = ['fslmaths ' tmp_roi_postcing_lh ...
-                        ' -dilM ' obj.Trkland.hippocing.in.roi_postcing_lh  ];
+                        ' -dilM ' obj.Trkland.hippocing.in.roi_postcing_lh   ];
                     obj.RunBash(exec_cmd);
                     fprintf('...done \n');
                 end
                 
                 %right:
-                if exist(tmp_roi_postcing_rh , 'file') == 0
-                    fprintf('\n Dilating Posterior cingulate_lh...')
-                    exec_cmd = ['fslmaths ' obj.Trkland.hippocing.in.postcing_rh ...
-                        ' -dilM ' tmp_roi_postcing_rh  ];
-                    obj.RunBash(exec_cmd);
-                    fprintf('...done \n');
-                end
-                if exist(obj.Trkland.hippocing.in.roi_postcing_rh , 'file') == 0
+                if exist(obj.Trkland.hippocing.in.roi_postcing_rh  , 'file') == 0
                     fprintf('\n Dilating Posterior cingulate_rh...')
-                    exec_cmd = ['fslmaths '  tmp_roi_postcing_rh  ...
-                        ' -dilM ' obj.Trkland.hippocing.in.roi_postcing_rh  ];
+                    exec_cmd = ['fslmaths ' obj.Trkland.hippocing.in.postcing_rh ...
+                        ' -dilM ' obj.Trkland.hippocing.in.roi_postcing_rh   ];
                     obj.RunBash(exec_cmd);
                     fprintf('...done \n');
                 end
-                
             end
             
             %TRACKING STARS HERE:
@@ -2221,21 +2218,11 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 obj.Trkland.hippocing.out.trk_lh = [ obj.Trkland.root  'trkk_hippoCing_lh.trk.gz'];
                 obj.Trkland.hippocing.out.trk_rh = [ obj.Trkland.root  'trkk_hippoCing_rh.trk.gz'];
                 
-                obj.Trkland.hippocing.out.clean_trks_lh = [ obj.Trkland.root  'trkk_hippocing_clean_lh.trk.gz'];
-                obj.Trkland.hippocing.out.clean_trks_rh = [ obj.Trkland.root  'trkk_hippocing_clean_rh.trk.gz'];
-                
-                obj.Trkland.hippocing.out.clean_trkstrimmed_lh = [ obj.Trkland.root  'trkk_hippocing_cleantrimmed_lh.trk.gz'];
-                obj.Trkland.hippocing.out.clean_trkstrimmed_rh = [ obj.Trkland.root  'trkk_hippocing_cleantrimmed_rh.trk.gz'];
-                
-                obj.Trkland.hippocing.out.clineFA_lh_highFA = [ obj.Trkland.root  'cline_highFA_hippocing_lh.trk.gz'];
-                obj.Trkland.hippocing.out.clineFA_lh_HDorff = [ obj.Trkland.root  'cline_HDorff_hippocing_lh.trk.gz'];
-                obj.Trkland.hippocing.out.clineFA_rh_highFA = [ obj.Trkland.root  'cline_highFA_hippocing_rh.trk.gz'];
-                obj.Trkland.hippocing.out.clineFA_rh_HDorff = [ obj.Trkland.root  'cline_HDorff_hippocing_rh.trk.gz'];
                 
                 %Left side trking:
                 if exist(obj.Trkland.hippocing.out.trk_lh,'file') == 0
                     exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
-                        ' --seed_count=10000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
+                        ' --seed_count=20000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
                         ' --seed=' obj.Trkland.hippocing.in.seed_hippo_lh ' --roi=' obj.Trkland.hippocing.in.roi_postcing_lh ...
                         ' --step_size=1 --turning_angle=40 --min_length=110 --max_length=250 ' ...
                         ' --output=' obj.Trkland.hippocing.out.trk_lh ];
@@ -2251,7 +2238,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 %Right side trking:
                 if exist(obj.Trkland.hippocing.out.trk_rh,'file') == 0
                     exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
-                        ' --seed_count=10000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
+                        ' --seed_count=20000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
                         ' --seed=' obj.Trkland.hippocing.in.seed_hippo_rh ' --roi=' obj.Trkland.hippocing.in.roi_postcing_rh ...
                         ' --step_size=1 --turning_angle=40 --min_length=110 --max_length=250 ' ...
                         ' --output=' obj.Trkland.hippocing.out.trk_rh ];
@@ -2263,374 +2250,388 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     wasRun=true;
                     obj.UpdateHist(obj.Trkland.hippocing,'trkland_hippocing', obj.Trkland.hippocing.out.trk_rh,wasRun);
                 end
-            end    
+            end
             
             %CLEANUP OF THE TRACTS
-                %LEFT SIDE:
-                if exist(obj.Trkland.hippocing.out.clean_trks_lh ,'file') == 0 && exist(obj.Trkland.hippocing.out.trk_lh,'file') ~= 0
-                    clear temp_hippocing_lh clean_trk_lh temp_hippocing_lh_cline
-                    temp_hippocing_lh = rotrk_read(obj.Trkland.hippocing.out.trk_lh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'hippocing_lh');
-                    %add Scalars:
-                    temp_hippocing_lh = rotrk_add_sc(  temp_hippocing_lh ,obj.Params.Dtifit.out.FA{end} , 'FA');
-                    temp_hippocing_lh = rotrk_add_sc(  temp_hippocing_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
-                    temp_hippocing_lh = rotrk_add_sc(  temp_hippocing_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
-                    temp_hippocing_lh = rotrk_add_sc(  temp_hippocing_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
-                    %Select the HDorff centerline(first pass):
-                    temp_hippocing_lh_cline = rotrk_centerline(temp_hippocing_lh,'hausdorff');
-                    %Clean up based on normality of hausdorff distance:
-                    clean_trk_lh = rotrk_rm_byHDorff(temp_hippocing_lh_cline, temp_hippocing_lh,temp_hippocing_lh);
-                    %%%clean_trk_lh = rotrk_rm_bylen(temp_fx_lh_cline, temp_fx_lh,temp_fx_lh);
-                    %Trim tracts here:
-                    temp_hippocing_trimmed_lh = rotrk_trimmedbyTOI(clean_trk_lh, ...
-                        [ {obj.Trkland.hippocing.in.roi_postcing_lh}  {obj.Trkland.hippocing.in.hippo_lh}  ], 'postcing');
-                    %Now that the TRK is clean, lets get the high_FA and get the centerline:
-                    %Pick centerline based on high_sc and FA:
-                    temp_hippocing_lh_cline_highFA = rotrk_centerline(temp_hippocing_trimmed_lh, 'high_sc','FA');
-                    temp_hippocing_lh_cline_HDorff = rotrk_centerline(temp_hippocing_trimmed_lh, 'hausdorff');
-                    %save trks:
-                    rotrk_write(clean_trk_lh.header,clean_trk_lh.sstr,obj.Trkland.hippocing.out.clean_trks_lh );
-                    rotrk_write(temp_hippocing_trimmed_lh.header,temp_hippocing_trimmed_lh.sstr,obj.Trkland.hippocing.out.clean_trkstrimmed_lh);
-                    rotrk_write(temp_hippocing_lh_cline_highFA.header,temp_hippocing_lh_cline_highFA.sstr,obj.Trkland.hippocing.out.clineFA_lh_highFA );
-                    rotrk_write(temp_hippocing_lh_cline_HDorff.header,temp_hippocing_lh_cline_HDorff.sstr,obj.Trkland.hippocing.out.clineFA_lh_HDorff);
-                    wasRun=true;
-                    obj.UpdateHist(obj.Trkland.hippocing,'trkland_hippocing', obj.Trkland.hippocing.out.clineFA_lh_highFA,wasRun);
-                    %Get volume data of unclean/cleaned tracts:
-                    %Volume:
-                    obj.Trkland.hippocing.data.lh_unclean_vol = temp_hippocing_lh.num_uvox;
-                    obj.Trkland.hippocing.data.lh_trimmedclean_vol = temp_hippocing_trimmed_lh.num_uvox;
-                    obj.Trkland.hippocing.data.lh_clean_vol = clean_trk_lh.num_uvox;
-                    obj.Trkland.hippocing.data.lh_cline_HighFA_vol = temp_hippocing_lh_cline_highFA.num_uvox;
-                    obj.Trkland.hippocing.data.lh_cline_HDorff_vol = temp_hippocing_lh_cline_HDorff.num_uvox;
-                    %METRICS DATA NOW
-                    %unclean_hippocing_lh
-                    obj.Trkland.hippocing.data.lh_unclean_FA = mean(temp_hippocing_lh.unique_voxels(:,4));
-                    obj.Trkland.hippocing.data.lh_unclean_RD = mean(temp_hippocing_lh.unique_voxels(:,5));
-                    obj.Trkland.hippocing.data.lh_unclean_AxD = mean(temp_hippocing_lh.unique_voxels(:,6));
-                    obj.Trkland.hippocing.data.lh_unclean_MD = mean(temp_hippocing_lh.unique_voxels(:,7));
-                    %Clean_hippocing:
-                    obj.Trkland.hippocing.data.lh_clean_FA = mean(clean_trk_lh.unique_voxels(:,4));
-                    obj.Trkland.hippocing.data.lh_clean_RD = mean(clean_trk_lh.unique_voxels(:,5));
-                    obj.Trkland.hippocing.data.lh_clean_AxD = mean(clean_trk_lh.unique_voxels(:,6));
-                    obj.Trkland.hippocing.data.lh_clean_MD = mean(clean_trk_lh.unique_voxels(:,7));
-                    %Trimmed_clean_hippocing:
-                    obj.Trkland.hippocing.data.lh_trimmedclean_FA = mean(temp_hippocing_trimmed_lh.unique_voxels(:,4));
-                    obj.Trkland.hippocing.data.lh_trimmedclean_RD = mean(temp_hippocing_trimmed_lh.unique_voxels(:,5));
-                    obj.Trkland.hippocing.data.lh_trimmedclean_AxD = mean(temp_hippocing_trimmed_lh.unique_voxels(:,6));
-                    obj.Trkland.hippocing.data.lh_trimmedclean_MD = mean(temp_hippocing_trimmed_lh.unique_voxels(:,7));
-                    %Cline_HighFA
-                    obj.Trkland.hippocing.data.lh_cline_length_highFA=temp_hippocing_lh_cline_highFA.len_matrix;
-                    obj.Trkland.hippocing.data.lh_cline_FA_highFA = mean(temp_hippocing_lh_cline_highFA.unique_voxels(:,4));
-                    obj.Trkland.hippocing.data.lh_cline_RD_highFA = mean(temp_hippocing_lh_cline_highFA.unique_voxels(:,5));
-                    obj.Trkland.hippocing.data.lh_cline_AxD_highFA = mean(temp_hippocing_lh_cline_highFA.unique_voxels(:,6));
-                    obj.Trkland.hippocing.data.lh_cline_MD_highFA = mean(temp_hippocing_lh_cline_highFA.unique_voxels(:,7));
-                    %Cline_HDorff
-                    obj.Trkland.hippocing.data.lh_cline_length_HDorff=temp_hippocing_lh_cline_HDorff.len_matrix;
-                    obj.Trkland.hippocing.data.lh_cline_FA_HDorff = mean(temp_hippocing_lh_cline_HDorff.unique_voxels(:,4));
-                    obj.Trkland.hippocing.data.lh_cline_RD_HDorff = mean(temp_hippocing_lh_cline_HDorff.unique_voxels(:,5));
-                    obj.Trkland.hippocing.data.lh_cline_AxD_HDorff = mean(temp_hippocing_lh_cline_HDorff.unique_voxels(:,6));
-                    obj.Trkland.hippocing.data.lh_cline_MD_HDorff = mean(temp_hippocing_lh_cline_HDorff.unique_voxels(:,7));
-                end
+            obj.Trkland.hippocing.out.clean_trkstrimmed_lh = [ obj.Trkland.root  'trkk_hippocing_trimmed_lh.trk.gz'];
+            obj.Trkland.hippocing.out.clean_trkstrimmed_rh = [ obj.Trkland.root  'trkk_hippocing_trimmed_rh.trk.gz'];
+            
+            obj.Trkland.hippocing.out.clean_trks_lh = [ obj.Trkland.root  'trkk_hippocing_trimmedclean_lh.trk.gz'];
+            obj.Trkland.hippocing.out.clean_trks_rh = [ obj.Trkland.root  'trkk_hippocing_trimmedclean_rh.trk.gz'];
+            
+            obj.Trkland.hippocing.out.clineFA_lh_highFA = [ obj.Trkland.root  'cline_highFA_hippocing_lh.trk.gz'];
+            obj.Trkland.hippocing.out.clineFA_lh_HDorff = [ obj.Trkland.root  'cline_HDorff_hippocing_lh.trk.gz'];
+            obj.Trkland.hippocing.out.clineFA_rh_highFA = [ obj.Trkland.root  'cline_highFA_hippocing_rh.trk.gz'];
+            obj.Trkland.hippocing.out.clineFA_rh_HDorff = [ obj.Trkland.root  'cline_HDorff_hippocing_rh.trk.gz'];
+            
+            
+            %LEFT SIDE:
+            if exist(obj.Trkland.hippocing.out.clean_trks_lh ,'file') == 0 && exist(obj.Trkland.hippocing.out.trk_lh,'file') ~= 0
+                clear temp_hippocing_lh clean_trk_lh temp_hippocing_lh_cline
+                temp_hippocing_lh = rotrk_read(obj.Trkland.hippocing.out.trk_lh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'hippocing_lh');
+                %add Scalars:
+                temp_hippocing_lh = rotrk_add_sc(  temp_hippocing_lh ,obj.Params.Dtifit.out.FA{end} , 'FA');
+                temp_hippocing_lh = rotrk_add_sc(  temp_hippocing_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
+                temp_hippocing_lh = rotrk_add_sc(  temp_hippocing_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
+                temp_hippocing_lh = rotrk_add_sc(  temp_hippocing_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
+                %Trim tracts here:
+                temp_hippocing_trimmed_lh = rotrk_trimmedbyTOI(temp_hippocing_lh, ...
+                    [  {obj.Trkland.hippocing.in.hippo_lh}  {obj.Trkland.hippocing.in.roi_postcing_lh}  ], 'postcing_lh');
                 
-                %RIGHT SIDE:
-                if exist(obj.Trkland.hippocing.out.clean_trks_rh ,'file') == 0 && exist(obj.Trkland.hippocing.out.trk_rh,'file') ~= 0
-                    clear temp_hippocing_rh clean_trk_rh temp_hippocing_rh_cline
-                    temp_hippocing_rh = rotrk_read(obj.Trkland.hippocing.out.trk_rh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'hippocing_rh');
-                    %add Scalars
-                    temp_hippocing_rh = rotrk_add_sc(  temp_hippocing_rh ,obj.Params.Dtifit.out.FA{end} , 'FA');
-                    temp_hippocing_rh = rotrk_add_sc(  temp_hippocing_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
-                    temp_hippocing_rh = rotrk_add_sc(  temp_hippocing_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
-                    temp_hippocing_rh = rotrk_add_sc(  temp_hippocing_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
-                    %Select the HDorff centerline(first pass)
-                    temp_hippocing_rh_cline = rotrk_centerline(temp_hippocing_rh,'hausdorff');
-                    %Clean up based on normality of hausdorff distance
-                    clean_trk_rh = rotrk_rm_byHDorff(temp_hippocing_rh_cline, temp_hippocing_rh,temp_hippocing_rh);
-                    %%%%clean_trk_rh = rotrk_rm_bylen(temp_fx_rh_cline, temp_fx_rh,temp_fx_rh);
-                    %Trim tracts here:
-                    temp_hippocing_trimmed_rh = rotrk_trimmedbyTOI(clean_trk_rh, ...
-                        [ {obj.Trkland.hippocing.in.roi_postcing_rh}  {obj.Trkland.hippocing.in.hippo_rh}  ], 'postcing');
-                    %Now that the TRK is clean, lets get the high_FA and get the centerline:
-                    %Pick centerline based on high_sc and FA:
-                    temp_hippocing_rh_cline_highFA = rotrk_centerline(temp_hippocing_trimmed_rh, 'high_sc','FA');
-                    temp_hippocing_rh_cline_HDorff = rotrk_centerline(temp_hippocing_trimmed_rh, 'hausdorff');
-                   %save trks:
-                    rotrk_write(clean_trk_rh.header,clean_trk_rh.sstr,obj.Trkland.hippocing.out.clean_trks_rh )
-                    rotrk_write(temp_hippocing_trimmed_rh.header,temp_hippocing_trimmed_rh.sstr,obj.Trkland.hippocing.out.clean_trkstrimmed_rh);
-                    rotrk_write(temp_hippocing_rh_cline_highFA.header,temp_hippocing_rh_cline_highFA.sstr,obj.Trkland.hippocing.out.clineFA_rh_highFA )
-                    rotrk_write(temp_hippocing_rh_cline_HDorff.header,temp_hippocing_rh_cline_HDorff.sstr,obj.Trkland.hippocing.out.clineFA_rh_HDorff)
-                    wasRun=true;
-                    obj.UpdateHist(obj.Trkland.hippocing,'trkland_hippocing', obj.Trkland.hippocing.out.clineFA_rh_highFA,wasRun);
-                    %Get volume data of unclean/cleaned tracts:
-                    %Volume:
-                    obj.Trkland.hippocing.data.rh_unclean_vol = temp_hippocing_rh.num_uvox;
-                    obj.Trkland.hippocing.data.rh_clean_vol = clean_trk_rh.num_uvox;
-                    obj.Trkland.hippocing.data.rh_trimmedclean_vol = temp_hippocing_trimmed_rh.num_uvox;
-                    obj.Trkland.hippocing.data.rh_cline_HighFA_vol = temp_hippocing_rh_cline_highFA.num_uvox;
-                    obj.Trkland.hippocing.data.rh_cline_HDorff_vol = temp_hippocing_rh_cline_HDorff.num_uvox;
-                    %METRICS DATA NOW
-                    %unclean_hippocing_rh
-                    obj.Trkland.hippocing.data.rh_unclean_FA = mean(temp_hippocing_rh.unique_voxels(:,4));
-                    obj.Trkland.hippocing.data.rh_unclean_RD = mean(temp_hippocing_rh.unique_voxels(:,5));
-                    obj.Trkland.hippocing.data.rh_unclean_AxD = mean(temp_hippocing_rh.unique_voxels(:,6));
-                    obj.Trkland.hippocing.data.rh_unclean_MD = mean(temp_hippocing_rh.unique_voxels(:,7));
-                    %Clean_hippocing:
-                    obj.Trkland.hippocing.data.rh_clean_FA = mean(clean_trk_rh.unique_voxels(:,4));
-                    obj.Trkland.hippocing.data.rh_clean_RD = mean(clean_trk_rh.unique_voxels(:,5));
-                    obj.Trkland.hippocing.data.rh_clean_AxD = mean(clean_trk_rh.unique_voxels(:,6));
-                    obj.Trkland.hippocing.data.rh_clean_MD = mean(clean_trk_rh.unique_voxels(:,7));
-                    %Trimmed_clean_hippocing:
-                    obj.Trkland.hippocing.data.rh_trimmedclean_FA = mean(temp_hippocing_trimmed_rh.unique_voxels(:,4));
-                    obj.Trkland.hippocing.data.rh_trimmedclean_RD = mean(temp_hippocing_trimmed_rh.unique_voxels(:,5));
-                    obj.Trkland.hippocing.data.rh_trimmedclean_AxD = mean(temp_hippocing_trimmed_rh.unique_voxels(:,6));
-                    obj.Trkland.hippocing.data.rh_trimmedclean_MD = mean(temp_hippocing_trimmed_rh.unique_voxels(:,7));
-                    %Cline_HighFA
-                    obj.Trkland.hippocing.data.rh_cline_length_highFA=temp_hippocing_rh_cline_highFA.len_matrix;
-                    obj.Trkland.hippocing.data.rh_cline_FA_highFA = mean(temp_hippocing_rh_cline_highFA.unique_voxels(:,4));
-                    obj.Trkland.hippocing.data.rh_cline_RD_highFA = mean(temp_hippocing_rh_cline_highFA.unique_voxels(:,5));
-                    obj.Trkland.hippocing.data.rh_cline_AxD_highFA = mean(temp_hippocing_rh_cline_highFA.unique_voxels(:,6));
-                    obj.Trkland.hippocing.data.rh_cline_MD_highFA = mean(temp_hippocing_rh_cline_highFA.unique_voxels(:,7));
-                    %Cline_HDorff
-                    obj.Trkland.hippocing.data.rh_cline_length_HDorff=temp_hippocing_rh_cline_HDorff.len_matrix;
-                    obj.Trkland.hippocing.data.rh_cline_FA_HDorff = mean(temp_hippocing_rh_cline_HDorff.unique_voxels(:,4));
-                    obj.Trkland.hippocing.data.rh_cline_RD_HDorff = mean(temp_hippocing_rh_cline_HDorff.unique_voxels(:,5));
-                    obj.Trkland.hippocing.data.rh_cline_AxD_HDorff = mean(temp_hippocing_rh_cline_HDorff.unique_voxels(:,6));
-                    obj.Trkland.hippocing.data.rh_cline_MD_HDorff = mean(temp_hippocing_rh_cline_HDorff.unique_voxels(:,7));
-                end
+                %Select the HDorff centerline(first pass):
+                temp_hippocing_lh_cline = rotrk_centerline(temp_hippocing_trimmed_lh,'hausdorff');
+                %Clean up based on normality of hausdorff distance:
+                clean_trk_lh = rotrk_rm_byHDorff(temp_hippocing_lh_cline, temp_hippocing_trimmed_lh,temp_hippocing_trimmed_lh);
+                %%%clean_trk_lh = rotrk_rm_bylen(temp_fx_lh_cline, temp_fx_lh,temp_fx_lh);
+                %Now that the TRK is clean, lets get the high_FA and get the centerline:
+                %Pick centerline based on high_sc and FA:
+                temp_hippocing_lh_cline_highFA = rotrk_centerline(clean_trk_lh, 'high_sc','FA');
+                temp_hippocing_lh_cline_HDorff = rotrk_centerline(clean_trk_lh, 'hausdorff');
+                %save trks:
+                rotrk_write(temp_hippocing_trimmed_lh.header,temp_hippocing_trimmed_lh.sstr,obj.Trkland.hippocing.out.clean_trkstrimmed_lh);
+                rotrk_write(clean_trk_lh.header,clean_trk_lh.sstr,obj.Trkland.hippocing.out.clean_trks_lh );
+                rotrk_write(temp_hippocing_lh_cline_highFA.header,temp_hippocing_lh_cline_highFA.sstr,obj.Trkland.hippocing.out.clineFA_lh_highFA );
+                rotrk_write(temp_hippocing_lh_cline_HDorff.header,temp_hippocing_lh_cline_HDorff.sstr,obj.Trkland.hippocing.out.clineFA_lh_HDorff);
+                wasRun=true;
+                obj.UpdateHist(obj.Trkland.hippocing,'trkland_hippocing', obj.Trkland.hippocing.out.clineFA_lh_highFA,wasRun);
+                %Get volume data of unclean/cleaned tracts:
+                %Volume:
+                obj.Trkland.hippocing.data.lh_unclean_vol = temp_hippocing_lh.num_uvox;
+                obj.Trkland.hippocing.data.lh_trimmedclean_vol = temp_hippocing_trimmed_lh.num_uvox;
+                obj.Trkland.hippocing.data.lh_clean_vol = clean_trk_lh.num_uvox;
+                obj.Trkland.hippocing.data.lh_cline_HighFA_vol = temp_hippocing_lh_cline_highFA.num_uvox;
+                obj.Trkland.hippocing.data.lh_cline_HDorff_vol = temp_hippocing_lh_cline_HDorff.num_uvox;
+                %METRICS DATA NOW
+                %unclean_hippocing_lh
+                obj.Trkland.hippocing.data.lh_unclean_FA = mean(temp_hippocing_lh.unique_voxels(:,4));
+                obj.Trkland.hippocing.data.lh_unclean_RD = mean(temp_hippocing_lh.unique_voxels(:,5));
+                obj.Trkland.hippocing.data.lh_unclean_AxD = mean(temp_hippocing_lh.unique_voxels(:,6));
+                obj.Trkland.hippocing.data.lh_unclean_MD = mean(temp_hippocing_lh.unique_voxels(:,7));
+                %Clean_hippocing:
+                obj.Trkland.hippocing.data.lh_clean_FA = mean(clean_trk_lh.unique_voxels(:,4));
+                obj.Trkland.hippocing.data.lh_clean_RD = mean(clean_trk_lh.unique_voxels(:,5));
+                obj.Trkland.hippocing.data.lh_clean_AxD = mean(clean_trk_lh.unique_voxels(:,6));
+                obj.Trkland.hippocing.data.lh_clean_MD = mean(clean_trk_lh.unique_voxels(:,7));
+                %Trimmed_clean_hippocing:
+                obj.Trkland.hippocing.data.lh_trimmedclean_FA = mean(temp_hippocing_trimmed_lh.unique_voxels(:,4));
+                obj.Trkland.hippocing.data.lh_trimmedclean_RD = mean(temp_hippocing_trimmed_lh.unique_voxels(:,5));
+                obj.Trkland.hippocing.data.lh_trimmedclean_AxD = mean(temp_hippocing_trimmed_lh.unique_voxels(:,6));
+                obj.Trkland.hippocing.data.lh_trimmedclean_MD = mean(temp_hippocing_trimmed_lh.unique_voxels(:,7));
+                %Cline_HighFA
+                obj.Trkland.hippocing.data.lh_cline_length_highFA=temp_hippocing_lh_cline_highFA.len_matrix;
+                obj.Trkland.hippocing.data.lh_cline_FA_highFA = mean(temp_hippocing_lh_cline_highFA.unique_voxels(:,4));
+                obj.Trkland.hippocing.data.lh_cline_RD_highFA = mean(temp_hippocing_lh_cline_highFA.unique_voxels(:,5));
+                obj.Trkland.hippocing.data.lh_cline_AxD_highFA = mean(temp_hippocing_lh_cline_highFA.unique_voxels(:,6));
+                obj.Trkland.hippocing.data.lh_cline_MD_highFA = mean(temp_hippocing_lh_cline_highFA.unique_voxels(:,7));
+                %Cline_HDorff
+                obj.Trkland.hippocing.data.lh_cline_length_HDorff=temp_hippocing_lh_cline_HDorff.len_matrix;
+                obj.Trkland.hippocing.data.lh_cline_FA_HDorff = mean(temp_hippocing_lh_cline_HDorff.unique_voxels(:,4));
+                obj.Trkland.hippocing.data.lh_cline_RD_HDorff = mean(temp_hippocing_lh_cline_HDorff.unique_voxels(:,5));
+                obj.Trkland.hippocing.data.lh_cline_AxD_HDorff = mean(temp_hippocing_lh_cline_HDorff.unique_voxels(:,6));
+                obj.Trkland.hippocing.data.lh_cline_MD_HDorff = mean(temp_hippocing_lh_cline_HDorff.unique_voxels(:,7));
+            end
             
-         end
+            %RIGHT SIDE:
+            if exist(obj.Trkland.hippocing.out.clean_trks_rh ,'file') == 0 && exist(obj.Trkland.hippocing.out.trk_rh,'file') ~= 0
+                clear temp_hippocing_rh clean_trk_rh temp_hippocing_rh_cline
+                temp_hippocing_rh = rotrk_read(obj.Trkland.hippocing.out.trk_rh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'hippocing_rh');
+                %add Scalars
+                temp_hippocing_rh = rotrk_add_sc(  temp_hippocing_rh ,obj.Params.Dtifit.out.FA{end} , 'FA');
+                temp_hippocing_rh = rotrk_add_sc(  temp_hippocing_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
+                temp_hippocing_rh = rotrk_add_sc(  temp_hippocing_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
+                temp_hippocing_rh = rotrk_add_sc(  temp_hippocing_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
+                %Trim tracts here:
+                temp_hippocing_trimmed_rh = rotrk_trimmedbyTOI(temp_hippocing_rh, ...
+                    [ {obj.Trkland.hippocing.in.hippo_rh}   {obj.Trkland.hippocing.in.roi_postcing_rh}   ], 'postcing_rh');
+                %
+                %Select the HDorff centerline(first pass)
+                temp_hippocing_rh_cline = rotrk_centerline(temp_hippocing_trimmed_rh,'hausdorff');
+                %Clean up based on normality of hausdorff distance
+                clean_trk_rh = rotrk_rm_byHDorff(temp_hippocing_rh_cline, temp_hippocing_trimmed_rh,temp_hippocing_trimmed_rh);
+                %%%%clean_trk_rh = rotrk_rm_bylen(temp_fx_rh_cline, temp_fx_rh,temp_fx_rh);
+                %Now that the TRK is clean, lets get the high_FA and get the centerline:
+                %Pick centerline based on high_sc and FA:
+                temp_hippocing_rh_cline_highFA = rotrk_centerline(clean_trk_rh, 'high_sc','FA');
+                temp_hippocing_rh_cline_HDorff = rotrk_centerline(clean_trk_rh, 'hausdorff');
+                %save trks:
+                rotrk_write(clean_trk_rh.header,clean_trk_rh.sstr,obj.Trkland.hippocing.out.clean_trks_rh )
+                rotrk_write(temp_hippocing_trimmed_rh.header,temp_hippocing_trimmed_rh.sstr,obj.Trkland.hippocing.out.clean_trkstrimmed_rh);
+                rotrk_write(temp_hippocing_rh_cline_highFA.header,temp_hippocing_rh_cline_highFA.sstr,obj.Trkland.hippocing.out.clineFA_rh_highFA )
+                rotrk_write(temp_hippocing_rh_cline_HDorff.header,temp_hippocing_rh_cline_HDorff.sstr,obj.Trkland.hippocing.out.clineFA_rh_HDorff)
+                wasRun=true;
+                obj.UpdateHist(obj.Trkland.hippocing,'trkland_hippocing', obj.Trkland.hippocing.out.clineFA_rh_highFA,wasRun);
+                %Get volume data of unclean/cleaned tracts:
+                %Volume:
+                obj.Trkland.hippocing.data.rh_unclean_vol = temp_hippocing_rh.num_uvox;
+                obj.Trkland.hippocing.data.rh_clean_vol = clean_trk_rh.num_uvox;
+                obj.Trkland.hippocing.data.rh_trimmedclean_vol = temp_hippocing_trimmed_rh.num_uvox;
+                obj.Trkland.hippocing.data.rh_cline_HighFA_vol = temp_hippocing_rh_cline_highFA.num_uvox;
+                obj.Trkland.hippocing.data.rh_cline_HDorff_vol = temp_hippocing_rh_cline_HDorff.num_uvox;
+                %METRICS DATA NOW
+                %unclean_hippocing_rh
+                obj.Trkland.hippocing.data.rh_unclean_FA = mean(temp_hippocing_rh.unique_voxels(:,4));
+                obj.Trkland.hippocing.data.rh_unclean_RD = mean(temp_hippocing_rh.unique_voxels(:,5));
+                obj.Trkland.hippocing.data.rh_unclean_AxD = mean(temp_hippocing_rh.unique_voxels(:,6));
+                obj.Trkland.hippocing.data.rh_unclean_MD = mean(temp_hippocing_rh.unique_voxels(:,7));
+                %Clean_hippocing:
+                obj.Trkland.hippocing.data.rh_clean_FA = mean(clean_trk_rh.unique_voxels(:,4));
+                obj.Trkland.hippocing.data.rh_clean_RD = mean(clean_trk_rh.unique_voxels(:,5));
+                obj.Trkland.hippocing.data.rh_clean_AxD = mean(clean_trk_rh.unique_voxels(:,6));
+                obj.Trkland.hippocing.data.rh_clean_MD = mean(clean_trk_rh.unique_voxels(:,7));
+                %Trimmed_clean_hippocing:
+                obj.Trkland.hippocing.data.rh_trimmedclean_FA = mean(temp_hippocing_trimmed_rh.unique_voxels(:,4));
+                obj.Trkland.hippocing.data.rh_trimmedclean_RD = mean(temp_hippocing_trimmed_rh.unique_voxels(:,5));
+                obj.Trkland.hippocing.data.rh_trimmedclean_AxD = mean(temp_hippocing_trimmed_rh.unique_voxels(:,6));
+                obj.Trkland.hippocing.data.rh_trimmedclean_MD = mean(temp_hippocing_trimmed_rh.unique_voxels(:,7));
+                %Cline_HighFA
+                obj.Trkland.hippocing.data.rh_cline_length_highFA=temp_hippocing_rh_cline_highFA.len_matrix;
+                obj.Trkland.hippocing.data.rh_cline_FA_highFA = mean(temp_hippocing_rh_cline_highFA.unique_voxels(:,4));
+                obj.Trkland.hippocing.data.rh_cline_RD_highFA = mean(temp_hippocing_rh_cline_highFA.unique_voxels(:,5));
+                obj.Trkland.hippocing.data.rh_cline_AxD_highFA = mean(temp_hippocing_rh_cline_highFA.unique_voxels(:,6));
+                obj.Trkland.hippocing.data.rh_cline_MD_highFA = mean(temp_hippocing_rh_cline_highFA.unique_voxels(:,7));
+                %Cline_HDorff
+                obj.Trkland.hippocing.data.rh_cline_length_HDorff=temp_hippocing_rh_cline_HDorff.len_matrix;
+                obj.Trkland.hippocing.data.rh_cline_FA_HDorff = mean(temp_hippocing_rh_cline_HDorff.unique_voxels(:,4));
+                obj.Trkland.hippocing.data.rh_cline_RD_HDorff = mean(temp_hippocing_rh_cline_HDorff.unique_voxels(:,5));
+                obj.Trkland.hippocing.data.rh_cline_AxD_HDorff = mean(temp_hippocing_rh_cline_HDorff.unique_voxels(:,6));
+                obj.Trkland.hippocing.data.rh_cline_MD_HDorff = mean(temp_hippocing_rh_cline_HDorff.unique_voxels(:,7));
+            end
             
-
-    end      
+        end
         
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%% END Data Processing Methods %%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
- 
-
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%% BEGIN Data Post-Processing Methods %%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%% END of Post-Processing Methods %%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        methods (Access = protected)
-            function [ind, assume] = CheckHist(obj,step,wasRun)
-                assume = false;
-                ind = [];
-                
-                for ii = 1:numel(obj.history)
-                    tmp = obj.history{ii};
-                    if isfield(tmp,'assume')
-                        ind(ii,1) = isequaln(rmfield(tmp,'assume'),step);
-                    else
-                        ind(ii,1) = isequaln(tmp,step);
-                    end
-                end
-                ind = find(ind==1);
-                
-                if isempty(ind);
-                    disp('Just Did');
-                    ind = numel(obj.history)+1;
-                    if ~wasRun
-                        assume=true;
-                    end
+    end
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%% END Data Processing Methods %%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%% BEGIN Data Post-Processing Methods %%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%% END of Post-Processing Methods %%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    methods (Access = protected)
+        function [ind, assume] = CheckHist(obj,step,wasRun)
+            assume = false;
+            ind = [];
+            
+            for ii = 1:numel(obj.history)
+                tmp = obj.history{ii};
+                if isfield(tmp,'assume')
+                    ind(ii,1) = isequaln(rmfield(tmp,'assume'),step);
                 else
-                    disp('Already done');
+                    ind(ii,1) = isequaln(tmp,step);
                 end
             end
+            ind = find(ind==1);
             
-            function obj = RunBash(obj,exec_cmd, exit_status)
-                %Code values:
-                %   44  --> Show output
-                %   144 --> Show output and exist_status is 1
-                
-                
-                if nargin < 3 %This will allow us to pass other exit status, such as 1 for DSISTUDIO in GQI
-                    exit_status = 0 ;
+            if isempty(ind);
+                disp('Just Did');
+                ind = numel(obj.history)+1;
+                if ~wasRun
+                    assume=true;
                 end
-                
-                if exit_status == 44 || exit_status == 144 % 44 codes for non-comment when running system:
-                    [ sys_success , sys_error ] = system(exec_cmd,'-echo') ;
-                    if exit_status == 44
-                        exit_status = 0; %return exit_status to zero.
-                    else
-                        exit_status = 1; %return exit_status to zero.
-                    end
-                else
-                    [ sys_success , sys_error ] = system(exec_cmd) ;
-                end
-                
-                if sys_success==exit_status; disp('');
-                else
-                    fprintf('\n\n===================================');
-                    fprintf('===================================\n\n');
-                    fprintf(['\n \t\tError in exec_cmd: \n ' exec_cmd '\n\n\n' ]);
-                    fprintf(['\n \t\tError output by system(exec_cmd) is:\n ' sys_error '\n'])
-                    fprintf('\n\n===================================');
-                    fprintf('===================================\n\n');
-                    error('Stopping now....');
-                end
+            else
+                disp('Already done');
+            end
+        end
+        
+        function obj = RunBash(obj,exec_cmd, exit_status)
+            %Code values:
+            %   44  --> Show output
+            %   144 --> Show output and exist_status is 1
+            
+            
+            if nargin < 3 %This will allow us to pass other exit status, such as 1 for DSISTUDIO in GQI
+                exit_status = 0 ;
             end
             
-            function obj = UpdateErrors(obj,message)
-                new_msg=['\nOn: ' date() ' --> \n\t' message '\n'];
-                obj.error_messages{end+1}=new_msg;
-            end
-            
-            function obj = UpdateHist(obj,Params,cmd,checkFile,wasRun)
-                if wasRun
-                    info = regexprep(sprintf('%-30s%s', [cmd ':'], obj.UserTime),'\n','');
+            if exit_status == 44 || exit_status == 144 % 44 codes for non-comment when running system:
+                [ sys_success , sys_error ] = system(exec_cmd,'-echo') ;
+                if exit_status == 44
+                    exit_status = 0; %return exit_status to zero.
                 else
-                    %                 %%% For Linux
-                    [a theUser] = system(['ls -l --full-time ' checkFile ' |  awk  ''{print $3}''']);
-                    [a theTime] = system(['ls -l --full-time ' checkFile ' |  awk  ''{print $6" "$7}''']);
-                    theTime = datestr(theTime(1:end-11));
-                    info = regexprep(sprintf('%-30s%s', [cmd ':'], ['Last run by (file created) ' theUser ' on ' theTime]),'\n','');
+                    exit_status = 1; %return exit_status to zero.
                 end
-                
-                Params.lastRun = info;
-                [ind assume] = obj.CheckHist(Params,wasRun);
-                Params.assume = assume;
-                obj.history{ind,1} = Params;
-                
-                if obj.dosave
-                    save([obj.objectHome filesep obj.sessionname '.mat'],'obj');
-                end
+            else
+                [ sys_success , sys_error ] = system(exec_cmd) ;
             end
             
-            function outpath = getPath(obj,a,movefiles)
-                if isempty(movefiles)
+            if sys_success==exit_status; disp('');
+            else
+                fprintf('\n\n===================================');
+                fprintf('===================================\n\n');
+                fprintf(['\n \t\tError in exec_cmd: \n ' exec_cmd '\n\n\n' ]);
+                fprintf(['\n \t\tError output by system(exec_cmd) is:\n ' sys_error '\n'])
+                fprintf('\n\n===================================');
+                fprintf('===================================\n\n');
+                error('Stopping now....');
+            end
+        end
+        
+        function obj = UpdateErrors(obj,message)
+            new_msg=['\nOn: ' date() ' --> \n\t' message '\n'];
+            obj.error_messages{end+1}=new_msg;
+        end
+        
+        function obj = UpdateHist(obj,Params,cmd,checkFile,wasRun)
+            if wasRun
+                info = regexprep(sprintf('%-30s%s', [cmd ':'], obj.UserTime),'\n','');
+            else
+                %                 %%% For Linux
+                [a theUser] = system(['ls -l --full-time ' checkFile ' |  awk  ''{print $3}''']);
+                [a theTime] = system(['ls -l --full-time ' checkFile ' |  awk  ''{print $6" "$7}''']);
+                theTime = datestr(theTime(1:end-11));
+                info = regexprep(sprintf('%-30s%s', [cmd ':'], ['Last run by (file created) ' theUser ' on ' theTime]),'\n','');
+            end
+            
+            Params.lastRun = info;
+            [ind assume] = obj.CheckHist(Params,wasRun);
+            Params.assume = assume;
+            obj.history{ind,1} = Params;
+            
+            if obj.dosave
+                save([obj.objectHome filesep obj.sessionname '.mat'],'obj');
+            end
+        end
+        
+        function outpath = getPath(obj,a,movefiles)
+            if isempty(movefiles)
+                outpath = [a filesep movefiles filesep];
+            else
+                if movefiles(1)==filesep || movefiles(1)=='~'
+                    outpath = [movefiles filesep];
+                else
                     outpath = [a filesep movefiles filesep];
+                end
+            end
+            outpath = regexprep(outpath,[filesep filesep],filesep);
+            
+            %%%% Do I want to do the below?
+            if ~exist(outpath,'dir');
+                mkdir(outpath);
+            end
+            hm = pwd;
+            cd(outpath)
+            
+            outpath = [pwd filesep];
+            cd(hm);
+        end
+        
+        function out = UserTime(obj)
+            tmp = pwd;
+            cd ~
+            user = pwd;
+            cd(tmp);
+            
+            ind = find(user == filesep);
+            if ind(end)==numel(user);
+                user = user(ind(end-1)+1:ind(end)-1);
+            else
+                user = user(ind(end)+1:end);
+            end
+            out = ['last run by ' user ' on ' datestr(clock)];
+        end
+        
+        function obj = make_root(obj)
+            if exist(obj.root,'dir')==0
+                try
+                    system(['mkdir -p ' obj.root ]);
+                catch
+                    disp([ 'Trying to create /DWIs/ in:' obj.root ...
+                        ' Maybe some permission issues?'])
+                end
+            end
+        end
+        
+        function obj = UploadData_DWI(obj)
+            id = obj.sessionname;
+            if isempty(id);
+                disp('No Session_ID.  Cannot upload data');
+                return
+            end
+            
+            if isnumeric(id)
+                id = num2str(id);
+            end
+            
+            %%Select current SessionID
+            dctl_cmd = [ 'SELECT MRI_Session_ID FROM Sessions.MRI  WHERE ' ' MRI_Session_Name = ''' id '''' ];
+            cur_DC_ID = DataCentral(dctl_cmd);
+            
+            %%Eddymotion uploading
+            MOTION_fields=fields(obj.Params.EddyMotion.out.vals);
+            for ii=1:numel(MOTION_fields)
+                if size(obj.Params.EddyMotion.out.vals.(MOTION_fields{ii}){1},2) == 9 %9 is the number of characters for this double type variable
+                    disp(''); %Skip uploading because it already exists!
                 else
-                    if movefiles(1)==filesep || movefiles(1)=='~'
-                        outpath = [movefiles filesep];
-                    else
-                        outpath = [a filesep movefiles filesep];
-                    end
-                end
-                outpath = regexprep(outpath,[filesep filesep],filesep);
-                
-                %%%% Do I want to do the below?
-                if ~exist(outpath,'dir');
-                    mkdir(outpath);
-                end
-                hm = pwd;
-                cd(outpath)
-                
-                outpath = [pwd filesep];
-                cd(hm);
-            end
-            
-            function out = UserTime(obj)
-                tmp = pwd;
-                cd ~
-                user = pwd;
-                cd(tmp);
-                
-                ind = find(user == filesep);
-                if ind(end)==numel(user);
-                    user = user(ind(end-1)+1:ind(end)-1);
-                else
-                    user = user(ind(end)+1:end);
-                end
-                out = ['last run by ' user ' on ' datestr(clock)];
-            end
-            
-            function obj = make_root(obj)
-                if exist(obj.root,'dir')==0
-                    try
-                        system(['mkdir -p ' obj.root ]);
-                    catch
-                        disp([ 'Trying to create /DWIs/ in:' obj.root ...
-                            ' Maybe some permission issues?'])
-                    end
-                end
-            end
-            
-            function obj = UploadData_DWI(obj)
-                id = obj.sessionname;
-                if isempty(id);
-                    disp('No Session_ID.  Cannot upload data');
-                    return
-                end
-                
-                if isnumeric(id)
-                    id = num2str(id);
-                end
-                
-                %%Select current SessionID
-                dctl_cmd = [ 'SELECT MRI_Session_ID FROM Sessions.MRI  WHERE ' ' MRI_Session_Name = ''' id '''' ];
-                cur_DC_ID = DataCentral(dctl_cmd);
-                
-                %%Eddymotion uploading
-                MOTION_fields=fields(obj.Params.EddyMotion.out.vals);
-                for ii=1:numel(MOTION_fields)
-                    if size(obj.Params.EddyMotion.out.vals.(MOTION_fields{ii}){1},2) == 9 %9 is the number of characters for this double type variable
-                        disp(''); %Skip uploading because it already exists!
-                    else
-                        fprintf(['\nUploading motion value: ' MOTION_fields{ii} '(' ...
-                            strtrim(cell2char(obj.Params.EddyMotion.out.vals.(MOTION_fields{ii})))  ') for ' obj.sessionname ]);
-                        dctl_cmd = [ ' SELECT MRI_skelDWI_motion_eddyres_' MOTION_fields{ii} ...
-                            ' FROM MRI.skelDWI  WHERE MRI_Session_ID = ' num2str(cur_DC_ID.MRI_Session_ID)  ];
-                        check_dctl_cmd = DataCentral(dctl_cmd);
-                        if isempty(check_dctl_cmd.(['MRI_skelDWI_motion_eddyres_' MOTION_fields{ii}]))
-                            fprintf(['Motion values: ' MOTION_fields{ii} ' is: '   ])
-                            dctl_cmd = [ 'INSERT INTO MRI.skelDWI (MRI_Session_ID,  MRI_skelDWI_motion_eddyres_' MOTION_fields{ii} ') ' ...
-                                ' values ( ' num2str(cur_DC_ID.MRI_Session_ID) ',' strtrim(cell2char(obj.Params.EddyMotion.out.vals.(MOTION_fields{ii}))) ')'   ] ;
-                            DataCentral(dctl_cmd);
-                            fprintf('...done\n');
-                        elseif isnan(check_dctl_cmd.(['MRI_skelDWI_motion_eddyres_' MOTION_fields{ii}]))
-                            fprintf(['Skel TOI ==> Uploading to DataCentral: ' id ' and TOI: ' MOTION_fields{ii}  ])
-                            dctl_cmd = [ 'UPDATE MRI.skelDWI SET MRI_skelDWI_motion_eddyres_' MOTION_fields{ii} ...
-                                ' = ''' strtrim(cell2char(obj.Params.EddyMotion.out.vals.(MOTION_fields{ii}))) ''' WHERE MRI_Session_ID =  ' ...
-                                num2str(cur_DC_ID.MRI_Session_ID)   ] ;
-                            DataCentral(dctl_cmd);
-                            fprintf('...done\n');
-                        end
-                    end
-                end
-                fprintf('...done\n');
-                
-                %%Skel Values uploading
-                TOI_fields=fields(obj.Params.Skel_TOI.out);
-                fprintf('\n');
-                for ii=1:numel(TOI_fields)
-                    dctl_cmd = [ ' SELECT MRI_skelDWI_' TOI_fields{ii} ...
+                    fprintf(['\nUploading motion value: ' MOTION_fields{ii} '(' ...
+                        strtrim(cell2char(obj.Params.EddyMotion.out.vals.(MOTION_fields{ii})))  ') for ' obj.sessionname ]);
+                    dctl_cmd = [ ' SELECT MRI_skelDWI_motion_eddyres_' MOTION_fields{ii} ...
                         ' FROM MRI.skelDWI  WHERE MRI_Session_ID = ' num2str(cur_DC_ID.MRI_Session_ID)  ];
-                    %  dctl_cmd = [ ' SELECT MRI_skelDWI_' TOI_fields{ii} ...
-                    %       ' FROM rdp20.DWI_TBSS_SKEL_VALS  WHERE MRI_Session_ID = ' num2str(cur_DC_ID.MRI_Session_ID)  ];
-                    
                     check_dctl_cmd = DataCentral(dctl_cmd);
-                    
-                    if isempty(check_dctl_cmd.(['MRI_skelDWI_' TOI_fields{ii}]))
-                        fprintf(['Skel TOI ==> Uploading to DataCentral: ' id ' and TOI: ' TOI_fields{ii}  ])
-                        %       dctl_cmd = [ 'INSERT INTO rdp20.DWI_TBSS_SKEL_VALS (MRI_Session_ID,  MRI_skelDWI_' TOI_fields{ii} ') ' ...
-                        %          ' values ( ' num2str(cur_DC_ID.MRI_Session_ID) ',' strtrim(obj.Params.Skel_TOI.out.(TOI_fields{ii})) ')'   ] ;
-                        dctl_cmd = [ 'INSERT INTO MRI.skelDWI (MRI_Session_ID,  MRI_skelDWI_' TOI_fields{ii} ') ' ...
-                            ' values ( ' num2str(cur_DC_ID.MRI_Session_ID) ',' strtrim(obj.Params.Skel_TOI.out.(TOI_fields{ii})) ')'   ] ;
+                    if isempty(check_dctl_cmd.(['MRI_skelDWI_motion_eddyres_' MOTION_fields{ii}]))
+                        fprintf(['Motion values: ' MOTION_fields{ii} ' is: '   ])
+                        dctl_cmd = [ 'INSERT INTO MRI.skelDWI (MRI_Session_ID,  MRI_skelDWI_motion_eddyres_' MOTION_fields{ii} ') ' ...
+                            ' values ( ' num2str(cur_DC_ID.MRI_Session_ID) ',' strtrim(cell2char(obj.Params.EddyMotion.out.vals.(MOTION_fields{ii}))) ')'   ] ;
                         DataCentral(dctl_cmd);
                         fprintf('...done\n');
-                    elseif isnan(check_dctl_cmd.(['MRI_skelDWI_' TOI_fields{ii}]))
-                        fprintf(['Skel TOI ==> Uploading to DataCentral: ' id ' and TOI: ' TOI_fields{ii}  ])
-                        %    dctl_cmd = [ 'UPDATE rdp20.DWI_TBSS_SKEL_VALS SET MRI_skelDWI_' TOI_fields{ii} ...
-                        %    ' = ''' strtrim(obj.Params.Skel_TOI.out.(TOI_fields{ii})) ''' WHERE MRI_Session_ID =  ' ...
-                        %    num2str(cur_DC_ID.MRI_Session_ID)   ] ;
-                        dctl_cmd = [ 'UPDATE MRI.skelDWI SET MRI_skelDWI_' TOI_fields{ii} ...
-                            ' = ''' strtrim(obj.Params.Skel_TOI.out.(TOI_fields{ii})) ''' WHERE MRI_Session_ID =  ' ...
+                    elseif isnan(check_dctl_cmd.(['MRI_skelDWI_motion_eddyres_' MOTION_fields{ii}]))
+                        fprintf(['Skel TOI ==> Uploading to DataCentral: ' id ' and TOI: ' MOTION_fields{ii}  ])
+                        dctl_cmd = [ 'UPDATE MRI.skelDWI SET MRI_skelDWI_motion_eddyres_' MOTION_fields{ii} ...
+                            ' = ''' strtrim(cell2char(obj.Params.EddyMotion.out.vals.(MOTION_fields{ii}))) ''' WHERE MRI_Session_ID =  ' ...
                             num2str(cur_DC_ID.MRI_Session_ID)   ] ;
                         DataCentral(dctl_cmd);
                         fprintf('...done\n');
                     end
-                    % DataCentral(['UPDATE PIB.noT1_SUVR_new SET ' Q ' WHERE PIB_Session_ID = "' id '"']);
-                    
-                    %%% upload ROI data
-                    obj.resave;
                 end
-                disp('skelTOIs values have been uploaded to DataCentral');
             end
-         end
+            fprintf('...done\n');
+            
+            %%Skel Values uploading
+            TOI_fields=fields(obj.Params.Skel_TOI.out);
+            fprintf('\n');
+            for ii=1:numel(TOI_fields)
+                dctl_cmd = [ ' SELECT MRI_skelDWI_' TOI_fields{ii} ...
+                    ' FROM MRI.skelDWI  WHERE MRI_Session_ID = ' num2str(cur_DC_ID.MRI_Session_ID)  ];
+                %  dctl_cmd = [ ' SELECT MRI_skelDWI_' TOI_fields{ii} ...
+                %       ' FROM rdp20.DWI_TBSS_SKEL_VALS  WHERE MRI_Session_ID = ' num2str(cur_DC_ID.MRI_Session_ID)  ];
+                
+                check_dctl_cmd = DataCentral(dctl_cmd);
+                
+                if isempty(check_dctl_cmd.(['MRI_skelDWI_' TOI_fields{ii}]))
+                    fprintf(['Skel TOI ==> Uploading to DataCentral: ' id ' and TOI: ' TOI_fields{ii}  ])
+                    %       dctl_cmd = [ 'INSERT INTO rdp20.DWI_TBSS_SKEL_VALS (MRI_Session_ID,  MRI_skelDWI_' TOI_fields{ii} ') ' ...
+                    %          ' values ( ' num2str(cur_DC_ID.MRI_Session_ID) ',' strtrim(obj.Params.Skel_TOI.out.(TOI_fields{ii})) ')'   ] ;
+                    dctl_cmd = [ 'INSERT INTO MRI.skelDWI (MRI_Session_ID,  MRI_skelDWI_' TOI_fields{ii} ') ' ...
+                        ' values ( ' num2str(cur_DC_ID.MRI_Session_ID) ',' strtrim(obj.Params.Skel_TOI.out.(TOI_fields{ii})) ')'   ] ;
+                    DataCentral(dctl_cmd);
+                    fprintf('...done\n');
+                elseif isnan(check_dctl_cmd.(['MRI_skelDWI_' TOI_fields{ii}]))
+                    fprintf(['Skel TOI ==> Uploading to DataCentral: ' id ' and TOI: ' TOI_fields{ii}  ])
+                    %    dctl_cmd = [ 'UPDATE rdp20.DWI_TBSS_SKEL_VALS SET MRI_skelDWI_' TOI_fields{ii} ...
+                    %    ' = ''' strtrim(obj.Params.Skel_TOI.out.(TOI_fields{ii})) ''' WHERE MRI_Session_ID =  ' ...
+                    %    num2str(cur_DC_ID.MRI_Session_ID)   ] ;
+                    dctl_cmd = [ 'UPDATE MRI.skelDWI SET MRI_skelDWI_' TOI_fields{ii} ...
+                        ' = ''' strtrim(obj.Params.Skel_TOI.out.(TOI_fields{ii})) ''' WHERE MRI_Session_ID =  ' ...
+                        num2str(cur_DC_ID.MRI_Session_ID)   ] ;
+                    DataCentral(dctl_cmd);
+                    fprintf('...done\n');
+                end
+                % DataCentral(['UPDATE PIB.noT1_SUVR_new SET ' Q ' WHERE PIB_Session_ID = "' id '"']);
+                
+                %%% upload ROI data
+                obj.resave;
+            end
+            disp('skelTOIs values have been uploaded to DataCentral');
+        end
+    end
 end
 
-    
-    
-    
+
+
+
