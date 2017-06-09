@@ -2414,22 +2414,28 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             obj.RunBash(exec_cmd);
             
             %ROIs/SEEDs PREPARATION
-            obj.Trkland.cingulum.in.roi_antroscing_lh = [ obj.Trkland.root 'cingulum_roi_antrostralcingulate_lh.nii.gz' ] ;
-            obj.Trkland.cingulum.in.roi_antroscing_rh = [ obj.Trkland.root 'cingulum_roi_antrostralcingulate_rh.nii.gz' ] ;
+            tmp_roi_antroscing_lh = [ obj.Trkland.root 'cingulum_roi_antrostralcingulateDil1_lh.nii.gz' ] ;
+            obj.Trkland.cingulum.in.roi_antroscing_lh = [ obj.Trkland.root 'cingulum_roi_antrostralcingulateDil2_lh.nii.gz' ] ;
+            
+            tmp_roi_antroscing_rh = [ obj.Trkland.root 'cingulum_roi_antrostralcingulateDil1_rh.nii.gz' ] ;
+            obj.Trkland.cingulum.in.roi_antroscing_rh = [ obj.Trkland.root 'cingulum_roi_antrostralcingulateDil2_rh.nii.gz' ] ;
             
             obj.Trkland.cingulum.in.seed_postcing_lh = [ obj.Trkland.root 'cingulum_seed_postcingulate_lh.nii.gz' ] ;
             obj.Trkland.cingulum.in.seed_postcing_rh = [ obj.Trkland.root 'cingulum_seed_postcingulate_rh.nii.gz' ] ;
             for tohide=1:1
                 %left:
                 if exist(obj.Trkland.cingulum.in.roi_antroscing_lh , 'file') == 0
-                    fprintf('\n Copying anterior cingulate_lh...')
-                    exec_cmd = ['cp ' obj.Trkland.cingulum.in.rostantcing_lh ...
-                        ' ' obj.Trkland.cingulum.in.roi_antroscing_lh  ];
+                    fprintf('\n Working on anterior cingulate_lh...')
+                     exec_cmd = ['fslmaths '  obj.Trkland.cingulum.in.rostantcing_lh ...
+                        ' -dilM ' tmp_roi_antroscing_lh  ];
+                    obj.RunBash(exec_cmd);
+                    exec_cmd = ['fslmaths '  tmp_roi_antroscing_lh ...
+                        ' -dilM ' obj.Trkland.cingulum.in.roi_antroscing_lh  ];
                     obj.RunBash(exec_cmd);
                     fprintf('...done \n');
                 end
                 if exist(obj.Trkland.cingulum.in.seed_postcing_lh , 'file') == 0
-                    fprintf('\n Copying posterior cingulate_lh...')
+                    fprintf('\n Working on posterior cingulate_lh...')
                     exec_cmd = ['cp ' obj.Trkland.cingulum.in.postcing_lh ...
                         ' ' obj.Trkland.cingulum.in.seed_postcing_lh  ];
                     obj.RunBash(exec_cmd);
@@ -2437,14 +2443,17 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 end
                 %right:
                 if exist(obj.Trkland.cingulum.in.roi_antroscing_rh , 'file') == 0
-                    fprintf('\n Copying anterior cingulate_rh...')
-                    exec_cmd = ['cp ' obj.Trkland.cingulum.in.rostantcing_rh ...
-                        ' ' obj.Trkland.cingulum.in.roi_antroscing_rh  ];
+                    fprintf('\n Working on anterior cingulate_rh...')
+                    exec_cmd = ['fslmaths '  obj.Trkland.cingulum.in.rostantcing_rh ...
+                        ' -dilM ' tmp_roi_antroscing_rh  ];
+                    obj.RunBash(exec_cmd);
+                    exec_cmd = ['fslmaths '  tmp_roi_antroscing_rh ...
+                        ' -dilM ' obj.Trkland.cingulum.in.roi_antroscing_rh  ];
                     obj.RunBash(exec_cmd);
                     fprintf('...done \n');
                 end
                 if exist(obj.Trkland.cingulum.in.seed_postcing_rh , 'file') == 0
-                    fprintf('\n Copying posterior cingulate_rh...')
+                    fprintf('\n Working on posterior cingulate_rh...')
                     exec_cmd = ['cp ' obj.Trkland.cingulum.in.postcing_rh ...
                         ' ' obj.Trkland.cingulum.in.seed_postcing_rh  ];
                     obj.RunBash(exec_cmd);
