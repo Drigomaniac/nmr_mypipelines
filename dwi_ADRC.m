@@ -133,6 +133,10 @@ classdef dwi_ADRC < dwiMRI_Session
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %For FreeSurfer Segmentation (needed for b0 bbreg correction)
+            [ tmpa, tmpb ] = system('whoami ');
+            %[ tmpa, tmpb ] = system('echo $0');
+            %[~,  tmpshell , ~] = fileparts(tmpb);
+            obj.Params.FreeSurfer.shell = strtrim(tmpb); %strtrim(tmpshell);
             obj.Params.FreeSurfer.dir = obj.FS_location;
             obj.Params.FreeSurfer.init_location = obj.init_FS;
             
