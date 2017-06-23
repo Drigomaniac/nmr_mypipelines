@@ -79,7 +79,7 @@ classdef dwi_ADRC < dwiMRI_Session
                 end
             end
             %Start the CommonProc:;;
-            obj.CommonProc();
+            obj.CommonPreProc();
         end
         
         function obj=setMyParams(obj)
@@ -91,7 +91,7 @@ classdef dwi_ADRC < dwiMRI_Session
             
         end
         
-        function obj = CommonProc(obj)
+        function obj = CommonPreProc(obj)
             obj.dosave = true ; %To record process in MAT file
             
              if isempty(obj.rawfiles)
@@ -230,60 +230,61 @@ classdef dwi_ADRC < dwiMRI_Session
             
             
             
-%             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%             %For DTIFIT:
-%             %We will use the --wls option as it seems to improve the fit of
-%             %the diffusion tensor model and negativity values due to noise
-%             %REF: https://www.jiscmail.ac.uk/cgi-bin/webadmin?A2=FSL;735f6320.1409
-%             obj.Params.Dtifit.in.movefiles = [ '..' filesep '05_Dtifit' ];
-%             obj.Params.Dtifit.in.fn = obj.Params. Eddy.out.fn;
-%             obj.Params.Dtifit.in.prefix = 'DTIFIT_FSLv509' ; %Double check this so you prefix the version of FSL!
-%             obj.Params.Dtifit.in.bvecs = obj.Params.Eddy.out.bvecs;
-%             obj.Params.Dtifit.in.bvals = obj.Params.Eddy.in.bvals;
-%             obj.Params.Dtifit.in.mask = obj.Params.MaskAfterEddy.out.finalmask;
-%             
-%             obj.proc_dtifit();
-%             
-%             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%             %For GQI:
-%             obj.Params.GQI.in.movefiles = [ '..' filesep '05_Recon_gqi' ];
-%             obj.Params.GQI.in.fn = obj.Params. Eddy.out.fn;
-%             obj.Params.GQI.in.bvecs = obj.Params.Eddy.out.bvecs;
-%             obj.Params.GQI.in.bvals = obj.Params.Eddy.in.bvals;
-%             obj.Params.GQI.in.mask = obj.Params.MaskAfterEddy.out.finalmask;
-%             obj.Params.GQI.in.prefix = 'GQI_DSISv041917' ; %Double check this so you prefix the version of DSISTUDIO!
-%             obj.Params.GQI.out.export = 'gfa,nqa0,nqa1';
-%             
-%             obj.proc_gqi();
-%             
-%             
-%             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%             %FS2dwi:
-%             obj.Params.FS2dwi.in.movefiles = ['..' filesep '05_FS2dwi' ];
-%             obj.Params.FS2dwi.in.b0 = obj.Params.B0mean.out.fn ; 
-%             obj.Params.FS2dwi.in.aparcaseg = obj.Params.FreeSurfer.out.aparcaseg ; 
-%             
-%             obj.Params.FS2dwi.in.tmpfile_aparcaseg = [ obj.dependencies_dir 'FS_aparc.txt' ] ; 
-%             obj.Params.FS2dwi.in.tmpfile_aparcaseg2009 = [ obj.dependencies_dir 'FS_aparc2009.txt' ] ; 
-%             obj.Params.FS2dwi.in.tmpfile_hippo_bil = [ obj.dependencies_dir 'FS_hippolabels_bil.txt' ] ;
-%             
-%             
-%             
-%             obj.Params.FS2dwi.in.aparcaseg2009 = ...
-%                 strtrim(strrep(obj.Params.FreeSurfer.out.aparcaseg,'aparc+aseg','aparc.a2009s+aseg')); 
-%             
-%             %A possible error is the naming convention when only a T1 was
-%             %used!!
-%             obj.Params.FS2dwi.in.hippofield_left = ...
-%                 strtrim(strrep(obj.Params.FreeSurfer.out.aparcaseg,'aparc+aseg','lh.hippoSfLabels-T1-T2.v10.FSvoxelSpace')); 
-%             obj.Params.FS2dwi.in.hippofield_right = ...
-%                 strtrim(strrep(obj.Params.FreeSurfer.out.aparcaseg,'aparc+aseg','rh.hippoSfLabels-T1-T2.v10.FSvoxelSpace')); 
-%           
-%             obj.proc_FS2dwi();
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %For DWI combined DTIFIT:
+            %We will use the --wls option as it seems to improve the fit of
+            %the diffusion tensor model and negativity values due to noise
+            %REF: https://www.jiscmail.ac.uk/cgi-bin/webadmin?A2=FSL;735f6320.1409
+            obj.Params.Dtifit.in.movefiles = [ '..' filesep '07_Combined_Dtifit' ];
+            obj.Params.Dtifit.in.fn ={obj.Params.CoRegMultiple.out.combined_fn};
+            obj.Params.Dtifit.in.prefix = 'DTIFIT_FSLv509' ; %Double check this so you prefix the version of FSL!
+            obj.Params.Dtifit.in.bvecs = {obj.Params.CoRegMultiple.out.combined_bvecs};
+            obj.Params.Dtifit.in.bvals = {obj.Params.CoRegMultiple.out.combined_bvals};
+            obj.Params.Dtifit.in.mask = {obj.Params.CoRegMultiple.out.combined_mask};
+            
+            obj.proc_dtifit();
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %For GQI:
+            obj.Params.GQI.in.movefiles = [ '..' filesep '07_Combined_Recon_gqi' ];
+            obj.Params.GQI.in.fn = {obj.Params.CoRegMultiple.out.combined_fn};
+            obj.Params.GQI.in.bvecs = {obj.Params.CoRegMultiple.out.combined_bvecs};
+            obj.Params.GQI.in.bvals = {obj.Params.CoRegMultiple.out.combined_bvals};
+            obj.Params.GQI.in.mask ={obj.Params.CoRegMultiple.out.combined_mask};
+            obj.Params.GQI.in.prefix = 'GQI_DSISv053117' ; %Double check this so you prefix the version of DSISTUDIO!
+            obj.Params.GQI.out.export = 'gfa,nqa0,nqa1';
+            
+            obj.proc_gqi();
+            
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %FS2dwi:
+            obj.Params.FS2dwi.in.movefiles = ['..' filesep '07_Combined_FS2dwi' ];
+            obj.Params.FS2dwi.in.b0 = {obj.Params.CoRegMultiple.out.combined_b0} ; 
+            obj.Params.FS2dwi.in.aparcaseg = obj.Params.FreeSurfer.out.aparcaseg ; 
+            
+            obj.Params.FS2dwi.in.tmpfile_aparcaseg = [ obj.dependencies_dir 'FS_aparc.txt' ] ; 
+            obj.Params.FS2dwi.in.tmpfile_aparcaseg2009 = [ obj.dependencies_dir 'FS_aparc2009.txt' ] ; 
+            obj.Params.FS2dwi.in.tmpfile_hippo_bil = [ obj.dependencies_dir 'FS_hippolabels_bil.txt' ] ;
+            
+            
+            
+            obj.Params.FS2dwi.in.aparcaseg2009 = ...
+                strtrim(strrep(obj.Params.FreeSurfer.out.aparcaseg,'aparc+aseg','aparc.a2009s+aseg')); 
+            
+            %A possible error is the naming convention when only a T1 was
+            %used!!
+            obj.Params.FS2dwi.in.hippofield_left = ...
+                strtrim(strrep(obj.Params.FreeSurfer.out.aparcaseg,'aparc+aseg','lh.hippoSfLabels-T1-T2.v10.FSvoxelSpace')); 
+            obj.Params.FS2dwi.in.hippofield_right = ...
+                strtrim(strrep(obj.Params.FreeSurfer.out.aparcaseg,'aparc+aseg','rh.hippoSfLabels-T1-T2.v10.FSvoxelSpace')); 
+          
+            obj.proc_FS2dwi();
             
             
         end
         
+   
         function resave(obj)
             save([obj.objectHome filesep obj.sessionname '.mat'],'obj');
         end

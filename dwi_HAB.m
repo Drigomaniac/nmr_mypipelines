@@ -305,10 +305,24 @@ classdef dwi_HAB < dwiMRI_Session
                 strtrim(strrep(obj.Params.FreeSurfer.out.aparcaseg,'aparc+aseg','rh.hippoSfLabels-T1-T2.v10.FSvoxelSpace')); 
             
             obj.proc_FS2dwi();
+            
         end
         
-        
         function obj = CommonPostProc(obj) 
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %TRACULA (and implicit functionality of bedpostx):
+            obj.Params.Tracula.in.movefiles = ['..' filesep 'post_TRACULA' ];
+            obj.Params.Tracula.in.fn = obj.Params.Eddy.out.fn{1} ; 
+            obj.Params.Tracula.in.dcmrirc = [obj.dependencies_dir 'dcmrirc.template' ];
+            obj.Params.Tracula.in.FSDIR = obj.Params.FreeSurfer.dir;
+            obj.Params.Tracula.in.bvec = obj.Params.Eddy.out.bvecs{1};  
+            obj.Params.Tracula.in.bval = obj.Params.Eddy.in.bvals{1};
+            obj.Params.Tracula.in.nb0 = 5;
+            obj.Params.Tracula.in.prefix = 'hab';
+            
+            obj.proc_tracula();
+            
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %Creating Fornix TRKLAND 
@@ -330,6 +344,9 @@ classdef dwi_HAB < dwiMRI_Session
                 %Hippocampi:
                 obj.Trkland.fx.in.hippo_lh =  strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc2009_aseg/dwi_fs_Left-Hippocampus.nii.gz');
                 obj.Trkland.fx.in.hippo_rh =  strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc2009_aseg/dwi_fs_Right-Hippocampus.nii.gz');
+                %Thalami:
+                obj.Trkland.fx.in.thalamus_lh = strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc2009_aseg/dwi_fs_Left-Thalamus-Proper.nii.gz');
+                obj.Trkland.fx.in.thalamus_rh = strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc2009_aseg/dwi_fs_Right-Thalamus-Proper.nii.gz');
                 %tmp2b0s params:
                 obj.Trkland.fx.in.fn_tmp2b0 =  [ obj.Trkland.root 'fx_tmp2b0.nii.gz' ];
                 obj.Trkland.fx.in.tmp2b0_matfile = [ obj.Trkland.root 'fx_tmp2b0.mat'];
@@ -381,7 +398,6 @@ classdef dwi_HAB < dwiMRI_Session
             
             
         end
-        
         
         function resave(obj)
             save([obj.objectHome filesep obj.sessionname '.mat'],'obj');
