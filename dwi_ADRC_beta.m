@@ -1,4 +1,4 @@
-classdef dwi_ADRC < dwiMRI_Session
+classdef dwi_ADRC_beta < dwiMRI_Session_beta
     %%  classdef dwi_ADRC < dwiMRI_Session
     %%  This class is a subclass of its parent class dwi_MRI_Session.m
     %%  (where it will inherent other methods).
@@ -31,7 +31,7 @@ classdef dwi_ADRC < dwiMRI_Session
         
     end
     methods
-        function obj = dwi_ADRC(sessionname,opt)
+        function obj = dwi_ADRC_beta(sessionname,opt)
              %For compiler code:
             if ~isdeployed()
                 addpath(genpath('/autofs/space/kant_004/users/rdp20/scripts/matlab'));
@@ -64,7 +64,7 @@ classdef dwi_ADRC < dwiMRI_Session
                 load([obj.objectHome filesep sessionname '.mat']);
                 oldroot = obj.root;
                 obj.wasLoaded = true;
-                obj.FS_location = tmp_FS_location
+                obj.FS_location = tmp_FS_location;
             else
                 obj.setMyParams;
             end
@@ -390,8 +390,33 @@ classdef dwi_ADRC < dwiMRI_Session
             obj.Params.AFQ.in.movefiles = ['..' filesep 'post_AFQ' ];
             obj.Params.AFQ.in.dwi = obj.Params.CoRegMultiple.out.combined_fn ;
             obj.Params.AFQ.in.T1 = obj.T1 ;
+            obj.Params.AFQ.in.tmp_bvecs = obj.Params.CoRegMultiple.out.combined_bvecs;
+            obj.Params.AFQ.in.tmp_bvals = obj.Params.CoRegMultiple.out.combined_bvals;
             
-            %obj.proc_AFQ();
+            
+            %Parameter specification for pre-processedAFQ
+            obj.Params.AFQ.dwParams.bvalue = []; 
+            obj.Params.AFQ.dwParams.gradDirsCode = [];
+            obj.Params.AFQ.dwParams.clobber = 1; % 1 -> files overwritten, 0 -> ask for it, -1 -> existing files will be used
+            obj.Params.AFQ.dwParams.dt6BaseName = ''; %if empty dti<nDirs>trilin
+            obj.Params.AFQ.dwParams.flipLrApFlag =false ; 
+            obj.Params.AFQ.dwParams.numBootStrapSamples  = 500; 
+            obj.Params.AFQ.dwParams.fitMethod = 'ls';
+            obj.Params.AFQ.dwParams.nStep = 50;
+            obj.Params.AFQ.dwParams.eddyCorrect = 0; % 1 --> eddy & motion, 0 --> motion -1 --> nothing
+            obj.Params.AFQ.dwParams.excludeVols = [];
+            obj.Params.AFQ.dwParams.bsplineInterpFlag = false; %false = trilinear, true = bspline
+            obj.Params.AFQ.dwParams.phaseEncodeDir = 2;
+            obj.Params.AFQ.dwParams.dwOutMm = [1.8 1.8 1.8];
+            obj.Params.AFQ.dwParams.rotateBvecsWithRx       = false;
+            obj.Params.AFQ.dwParams.rotateBvecsWithCanXform = false;
+            obj.Params.AFQ.dwParams.bvecsFile =  '';%initialize inside the superclass obj.Params.CoRegMultiple.out.combined_bvals;
+            obj.Params.AFQ.dwParams.bvalsFile = ''; %initialize inside the superclass 
+            obj.Params.AFQ.dwParams.noiseCalcMethod = 'b0';
+            obj.Params.AFQ.dwParams.outDir = ''; %this will initialize within the superclass method
+%             
+%             
+            obj.proc_AFQ();
             
         end
     end

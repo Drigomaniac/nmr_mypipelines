@@ -1,4 +1,4 @@
-classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
+classdef dwiMRI_Session_beta  < dynamicprops & matlab.mixin.SetGet
     %%% Written by:
     %%%             Rodrigo Perea (rpereacamargo@mgh.harvard.edu)
     %%%             Aaron Schultz (aschultz@martinos.org)
@@ -62,7 +62,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
     
     
     methods
-        function obj=dwiMRI_Session()
+        function obj=dwiMRI_Session_beta()
             setDefaultParams(obj);
         end
         
@@ -1913,8 +1913,54 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 %Set output directory:
                 obj.Params.AFQ.out.dir = outpath ;
                 obj.Params.AFQ.out.dwi = 'AFQ_dn.mat';
-                %
-                [obj.Params.AFQ.out.dwi, obj.Params.AFQ.out.dir] = dtiInit(obj.Params.AFQ.in.dwi, obj.Params.AFQ.in.T1, []);
+                
+                %Checking whether the T1 is in *.nii.gz format, if not gzip
+                %it under the outpath directory and reassign!
+                obj.Params.AFQ.out.T1 = ([outpath 'raw_T1.nii.gz' ]);
+                if exist(obj.Params.AFQ.out.T1,'file') == 0 ;
+                    [ T1_path, T1_name, T1_ext ] = fileparts(obj.Params.AFQ.in.T1);
+                    if strcmp(strtrim(T1_ext),'.nii')
+                        exec_cmd = (['cp ' strtrim(obj.Params.AFQ.in.T1) ' ' outpath 'raw_T1.nii' ]);
+                        obj.RunBash(exec_cmd);
+                        exec_cmd = (['gzip ' outpath 'raw_T1.nii' ]);
+                        obj.RunBash(exec_cmd);
+                        obj.Params.AFQ.out.T1 = [ outpath T1_name strtrim(T1_ext) '.gz'];
+                    elseif strcmp(T1_ext, '.gz')
+                        exec_cmd = (['cp ' strtrim(obj.Params.AFQ.in.T1) ' ' obj.Params.AFQ.out.T1 ]);
+                        obj.RunBash(exec_cmd);
+                        obj.Params.AFQ.out.T1 = ([outpath 'raw_T1.nii' ]);
+                    else
+                        error('In proc_AFQ: unrecognized T1 file extension. Please check!');
+                    end
+                end
+                
+                
+                %Check whether a col or row orientation for bvecs/bvals
+                %BVALS:
+                temp_bvals=dlmread(obj.Params.AFQ.in.tmp_bvals);
+                obj.Params.AFQ.dwParams.bvalsFile = [outpath 'raw.bvals' ] ; 
+                if exist(obj.Params.AFQ.dwParams.bvalsFile,'file') == 0
+                    if size(temp_bvals,1) > size(temp_bvals,2) % change!
+                        dlmwrite( obj.Params.AFQ.dwParams.bvalsFile, temp_bvals',' ');
+                    else
+                        exec_cmd(['cp ' obj.Params.AFQ.in.tmp_bvals ' ' obj.Params.AFQ.dwParams.bvalsFile ]);
+                    end
+                end
+                %BVECS:
+                temp_bvecs=dlmread(obj.Params.AFQ.in.tmp_bvecs);
+                obj.Params.AFQ.dwParams.bvecsFile = [outpath 'raw.bvecs' ] ; 
+                if exist(obj.Params.AFQ.dwParams.bvecsFile,'file') == 0
+                    if size(temp_bvecs,1) > size(temp_bvecs,2) % change!
+                        dlmwrite(obj.Params.AFQ.dwParams.bvecsFile,temp_bvecs',' ');
+                    else
+                        exec_cmd(['cp ' obj.Params.AFQ.in.tmp_bvecs ' ' obj.Params.AFQ.dwParams.bvecsFile ]); 
+                    end
+                end
+                
+                %Initialize the output Base directory as part of the
+                %AFQ.dwPArams.outDir 
+                obj.Params.AFQ.dwParams.outDir = outpath;
+                [obj.Params.AFQ.out.dwi, obj.Params.AFQ.out.dir] = dtiInit(obj.Params.AFQ.in.dwi, obj.Params.AFQ.out.T1, obj.Params.AFQ.dwParams);
           
                 
             end
