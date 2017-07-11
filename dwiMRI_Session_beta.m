@@ -1914,17 +1914,21 @@ classdef dwiMRI_Session_beta  < dynamicprops & matlab.mixin.SetGet
                 obj.Params.AFQ.out.dir = outpath ;
                 obj.Params.AFQ.out.dwi = 'AFQ_dn.mat';
                 
-                %Checking whether the T1 is in *.nii.gz format, if not gzip
+                %check the T1 file:
+                [ T1_path, T1_name, T1_ext ] = fileparts(obj.Params.AFQ.in.T1);
+                %Checking whether the T1 is in *.nii.gz or *.mgz format, if not gzip
                 %it under the outpath directory and reassign!
                 obj.Params.AFQ.out.T1 = ([outpath 'raw_T1.nii.gz' ]);
                 if exist(obj.Params.AFQ.out.T1,'file') == 0 ;
-                    [ T1_path, T1_name, T1_ext ] = fileparts(obj.Params.AFQ.in.T1);
                     if strcmp(strtrim(T1_ext),'.nii')
                         exec_cmd = (['cp ' strtrim(obj.Params.AFQ.in.T1) ' ' outpath 'raw_T1.nii' ]);
                         obj.RunBash(exec_cmd);
                         exec_cmd = (['gzip ' outpath 'raw_T1.nii' ]);
                         obj.RunBash(exec_cmd);
                         obj.Params.AFQ.out.T1 = [ outpath T1_name strtrim(T1_ext) '.gz'];
+                    elseif strcmp(T1_ext, '.mgz')
+                        exec_cmd = (['mri_convert ' strtrim(obj.Params.FreeSurfer.in.T1) ' ' outpath 'raw_T1.nii.gz' ]);
+                        obj.RunBash(exec_cmd);
                     elseif strcmp(T1_ext, '.gz')
                         exec_cmd = (['cp ' strtrim(obj.Params.AFQ.in.T1) ' ' obj.Params.AFQ.out.T1 ]);
                         obj.RunBash(exec_cmd);
@@ -1932,6 +1936,7 @@ classdef dwiMRI_Session_beta  < dynamicprops & matlab.mixin.SetGet
                     else
                         error('In proc_AFQ: unrecognized T1 file extension. Please check!');
                     end
+                    
                 end
                 
                 
@@ -1943,7 +1948,8 @@ classdef dwiMRI_Session_beta  < dynamicprops & matlab.mixin.SetGet
                     if size(temp_bvals,1) > size(temp_bvals,2) % change!
                         dlmwrite( obj.Params.AFQ.dwParams.bvalsFile, temp_bvals',' ');
                     else
-                        exec_cmd(['cp ' obj.Params.AFQ.in.tmp_bvals ' ' obj.Params.AFQ.dwParams.bvalsFile ]);
+                        exec_cmd=['cp ' obj.Params.AFQ.in.tmp_bvals ' ' obj.Params.AFQ.dwParams.bvalsFile ];
+                        obj.RunBash(exec_cmd);
                     end
                 end
                 %BVECS:
@@ -1953,7 +1959,8 @@ classdef dwiMRI_Session_beta  < dynamicprops & matlab.mixin.SetGet
                     if size(temp_bvecs,1) > size(temp_bvecs,2) % change!
                         dlmwrite(obj.Params.AFQ.dwParams.bvecsFile,temp_bvecs',' ');
                     else
-                        exec_cmd(['cp ' obj.Params.AFQ.in.tmp_bvecs ' ' obj.Params.AFQ.dwParams.bvecsFile ]); 
+                        exec_cmd=['cp ' obj.Params.AFQ.in.tmp_bvecs ' ' obj.Params.AFQ.dwParams.bvecsFile ]; 
+                        obj.RunBash(exec_cmd);
                     end
                 end
                 

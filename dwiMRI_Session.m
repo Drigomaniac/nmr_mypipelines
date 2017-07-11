@@ -26,6 +26,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
     end
     
     properties
+        exec_onecmd = '' ; %Sets the opt option when initialize to execute one single instruction. 
         sessionname = '';
         rawfiles = '';
         root=''; %to be modified if specified as an argument.
@@ -1766,7 +1767,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     end
                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 else
-                    error([ 'in proc_FS2dwi(obj): FS aparc_aseg (supposely) located in: ' obj.Params.FS2dwi.in.aparcaseg ' does not exist'])
+                    error([ 'in proc_FS2dwi(obj): FS aparc_aseg (supposely) located in: ' obj.Params.FS2dwi.out.fn_aparc2009 ' does not exist'])
                 end
             end
             %HIPPOFIELD_LEFT EXTRACTION:
@@ -1915,15 +1916,32 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 obj.Params.AFQ.out.dwi = 'AFQ_dn.mat';
                 %
                 [obj.Params.AFQ.out.dwi, obj.Params.AFQ.out.dir] = dtiInit(obj.Params.AFQ.in.dwi, obj.Params.AFQ.in.T1, []);
-          
+                
                 
             end
-          end
+        end
         
         function obj = trkland_fx(obj)
             wasRun = false;
             fprintf('\n\n\n \t In trkland_fx() ... \n ');
             
+            %Initialize which image you'll use for FLIRT (either FA or b0)
+            %This is changeable! 
+            
+            obj.Trkland.fx.in.ref = obj.Trkland.fx.in.b0;
+            %obj.Trkland.fx.in.ref = obj.Trkland.fx.in.FA;
+            
+            %Creating root directory:
+            for tohide=1:1
+                [a b c ] = fileparts(obj.Trkland.fx.in.b0);
+                outpath=obj.getPath(a,obj.Trkland.fx.in.movefiles);
+                obj.Trkland.fx.out.QCfile_lh = [outpath 'QC_fx_lh.flag'] ;
+                obj.Trkland.fx.out.QCfile_rh = [outpath 'QC_fx_rh.flag'] ;
+                obj.Trkland.fx.out.QCfile_bil = [outpath 'QC_fx_bil.flag'] ;
+                
+            end
+            
+            obj.Trkland.fx.out.QC = false; %Denotes if quality check has been done.
             %MATFILE TRANSFORMATION SECTION:
             for tohide=1:1
                 %Create fx directory (if doesn't exist)
@@ -1933,9 +1951,9 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 if exist(obj.Trkland.fx.in.tmp2b0_matfile,'file') == 0
                     %USING FLIRT, HERE WE COULD ALSO TRY SPM_COREG (not sure if
                     %I'll get/how to get the *.mat though...). Flirt does a decent job anyhow
-                    fprintf('\n Coregistering TMP-B0 to image...')
+                    fprintf(['\n Coregistering TMP-B0 to:' obj.Trkland.fx.in.ref ] );
                     exec_cmd = ['flirt -in ' obj.Trkland.fx.tmp.b0  ...
-                        ' -ref ' obj.Trkland.fx.in.b0 ' -omat ' obj.Trkland.fx.in.tmp2b0_matfile ...
+                        ' -ref ' obj.Trkland.fx.in.ref ' -omat ' obj.Trkland.fx.in.tmp2b0_matfile ...
                         ' -out ' obj.Trkland.fx.in.fn_tmp2b0 ];
                     obj.RunBash(exec_cmd);
                     fprintf('...done \n');
@@ -1948,7 +1966,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 if exist(obj.Trkland.fx.in.roi_bil, 'file') == 0
                     fprintf('\n Coregistering bil_roi...')
                     exec_cmd = ['flirt -in '  obj.Trkland.fx.tmp.roi_bil  ...
-                        ' -ref ' obj.Trkland.fx.in.b0 ' -applyxfm -init ' obj.Trkland.fx.in.tmp2b0_matfile ...
+                        ' -ref ' obj.Trkland.fx.in.ref ' -applyxfm -init ' obj.Trkland.fx.in.tmp2b0_matfile ...
                         ' -interp  nearestneighbour -out ' obj.Trkland.fx.in.roi_bil ];
                     obj.RunBash(exec_cmd);
                     fprintf('...done \n');
@@ -1957,7 +1975,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 if exist(obj.Trkland.fx.in.roa_bil_solid, 'file') == 0
                     fprintf('\n Coregistering bil_solid...')
                     exec_cmd = ['flirt -in ' obj.Trkland.fx.tmp.roa_solid_bil ...
-                        ' -ref ' obj.Trkland.fx.in.b0 ' -applyxfm -init ' obj.Trkland.fx.in.tmp2b0_matfile ...
+                        ' -ref ' obj.Trkland.fx.in.ref ' -applyxfm -init ' obj.Trkland.fx.in.tmp2b0_matfile ...
                         ' -interp  nearestneighbour -out ' obj.Trkland.fx.in.roa_bil_solid ];
                     obj.RunBash(exec_cmd);
                     fprintf('...done \n');
@@ -1986,7 +2004,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 if exist(obj.Trkland.fx.in.roi_lh, 'file') == 0
                     fprintf('\n Coregistering lh_roi...')
                     exec_cmd = ['flirt -in '  obj.Trkland.fx.tmp.roi_lh  ...
-                        ' -ref ' obj.Trkland.fx.in.b0 ' -applyxfm -init ' obj.Trkland.fx.in.tmp2b0_matfile ...
+                        ' -ref ' obj.Trkland.fx.in.ref ' -applyxfm -init ' obj.Trkland.fx.in.tmp2b0_matfile ...
                         ' -interp  nearestneighbour -out ' obj.Trkland.fx.in.roi_lh ];
                     obj.RunBash(exec_cmd);
                     fprintf('...done \n');
@@ -1995,7 +2013,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 if exist(obj.Trkland.fx.in.roa_lh_solid, 'file') == 0
                     fprintf('\n Coregistering lh_solid...')
                     exec_cmd = ['flirt -in ' obj.Trkland.fx.tmp.roa_solid_lh ...
-                        ' -ref ' obj.Trkland.fx.in.b0 ' -applyxfm -init ' obj.Trkland.fx.in.tmp2b0_matfile ...
+                        ' -ref ' obj.Trkland.fx.in.ref ' -applyxfm -init ' obj.Trkland.fx.in.tmp2b0_matfile ...
                         ' -interp  nearestneighbour -out ' obj.Trkland.fx.in.roa_lh_solid ];
                     obj.RunBash(exec_cmd);
                     fprintf('...done \n');
@@ -2024,7 +2042,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 if exist(obj.Trkland.fx.in.roi_rh, 'file') == 0
                     fprintf('\n Coregistering rh_roi...')
                     exec_cmd = ['flirt -in '  obj.Trkland.fx.tmp.roi_rh  ...
-                        ' -ref ' obj.Trkland.fx.in.b0 ' -applyxfm -init ' obj.Trkland.fx.in.tmp2b0_matfile ...
+                        ' -ref ' obj.Trkland.fx.in.ref ' -applyxfm -init ' obj.Trkland.fx.in.tmp2b0_matfile ...
                         ' -interp  nearestneighbour -out ' obj.Trkland.fx.in.roi_rh ];
                     obj.RunBash(exec_cmd);
                     fprintf('...done \n');
@@ -2033,7 +2051,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 if exist(obj.Trkland.fx.in.roa_rh_solid, 'file') == 0
                     fprintf('\n Coregistering rh_solid...')
                     exec_cmd = ['flirt -in ' obj.Trkland.fx.tmp.roa_solid_rh ...
-                        ' -ref ' obj.Trkland.fx.in.b0 ' -applyxfm -init ' obj.Trkland.fx.in.tmp2b0_matfile ...
+                        ' -ref ' obj.Trkland.fx.in.ref ' -applyxfm -init ' obj.Trkland.fx.in.tmp2b0_matfile ...
                         ' -interp  nearestneighbour -out ' obj.Trkland.fx.in.roa_rh_solid ];
                     obj.RunBash(exec_cmd);
                     fprintf('...done \n');
@@ -2055,42 +2073,50 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     fprintf('...done \n');
                 end
             end
+            
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %STARTING THE ACTUAL TRACKING NOW:
             for tohide=1:1
-                %Init outputs:
-                obj.Trkland.fx.out.trks_lh = [ obj.Trkland.root  'trkk_fx_lh.trk.gz'];
-                obj.Trkland.fx.out.trks_rh = [ obj.Trkland.root  'trkk_fx_rh.trk.gz'];
-                %Left side trking:
-                if exist(obj.Trkland.fx.out.trks_lh,'file') == 0
-                    exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
-                        ' --seed_count=10000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
-                        ' --seed=' obj.Trkland.fx.in.roi_lh ' --roa=' obj.Trkland.fx.in.roa_lh_hollow ...
-                        ' --step_size=1 --turning_angle=40 --min_length=80 --max_length=250 ' ...
-                        ' --output=' obj.Trkland.fx.out.trks_lh ];
-                    for dd=1:4 %trying 4 times to get a trk. If not, quit!
+                if exist(obj.Trkland.fx.out.QCfile_bil,'file') == 0
+                    %Init outputs:
+                    obj.Trkland.fx.out.trks_lh = [ obj.Trkland.root  'trkk_fx_lh.trk.gz'];
+                    obj.Trkland.fx.out.trks_rh = [ obj.Trkland.root  'trkk_fx_rh.trk.gz'];
+                    if exist(obj.Trkland.fx.out.QCfile_lh) == 0
+                        %Left side trking:
                         if exist(obj.Trkland.fx.out.trks_lh,'file') == 0
-                            obj.RunBash(exec_cmd,144);
+                            exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
+                                ' --seed_count=10000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
+                                ' --seed=' obj.Trkland.fx.in.roi_lh ' --roa=' obj.Trkland.fx.in.roa_lh_hollow ...
+                                ' --step_size=1 --turning_angle=40 --min_length=80 --max_length=250 ' ...
+                                ' --output=' obj.Trkland.fx.out.trks_lh ];
+                            for dd=1:4 %trying 4 times to get a trk. If not, quit!
+                                if exist(obj.Trkland.fx.out.trks_lh,'file') == 0
+                                    obj.RunBash(exec_cmd,144);
+                                end
+                            end
+                            wasRun=true;
+                            obj.UpdateHist(obj.Trkland.fx,'trkland_fx', obj.Trkland.fx.out.trks_lh,wasRun);
                         end
                     end
-                    wasRun=true;
-                    obj.UpdateHist(obj.Trkland.fx,'trkland_fx', obj.Trkland.fx.out.trks_lh,wasRun);
-                end
-                %Right side trking:
-                if exist(obj.Trkland.fx.out.trks_rh,'file') == 0
-                    exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
-                        ' --seed_count=10000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
-                        ' --seed=' obj.Trkland.fx.in.roi_rh ' --roa=' obj.Trkland.fx.in.roa_rh_hollow ...
-                        ' --step_size=1 --turning_angle=40 --min_length=80 --max_length=250 ' ...
-                        ' --output=' obj.Trkland.fx.out.trks_rh ];
-                    %Trying 4 times to get a trk, if not....quit
-                    for dd=1:4
+                    
+                    if exist(obj.Trkland.fx.out.QCfile_rh) == 0
+                        %Right side trking:
                         if exist(obj.Trkland.fx.out.trks_rh,'file') == 0
-                            obj.RunBash(exec_cmd,144);
+                            exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
+                                ' --seed_count=10000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
+                                ' --seed=' obj.Trkland.fx.in.roi_rh ' --roa=' obj.Trkland.fx.in.roa_rh_hollow ...
+                                ' --step_size=1 --turning_angle=40 --min_length=80 --max_length=250 ' ...
+                                ' --output=' obj.Trkland.fx.out.trks_rh ];
+                            %Trying 4 times to get a trk, if not....quit
+                            for dd=1:4
+                                if exist(obj.Trkland.fx.out.trks_rh,'file') == 0
+                                    obj.RunBash(exec_cmd,144);
+                                end
+                            end
+                            wasRun=true;
+                            obj.UpdateHist(obj.Trkland.fx,'trkland_fx', obj.Trkland.fx.out.trks_lh,wasRun);
                         end
                     end
-                    wasRun=true;
-                    obj.UpdateHist(obj.Trkland.fx,'trkland_fx', obj.Trkland.fx.out.trks_lh,wasRun);
                 end
             end
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2110,145 +2136,153 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 for tohide=1:1
                     %CLEANING UP THE STREAMLINES
                     if exist(obj.Trkland.fx.out.clean_trks_lh,'file') == 0 && exist(obj.Trkland.fx.out.trks_lh,'file') ~= 0
-                        try
-                            obj.Trkland.Trks.fx_raw_lh = rotrk_read(obj.Trkland.fx.out.trks_lh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'fx_lh');
-                            %add Scalars
-                            obj.Trkland.Trks.fx_raw_lh = rotrk_add_sc(  obj.Trkland.Trks.fx_raw_lh ,obj.Params.Dtifit.out.FA{end} , 'FA');
-                            obj.Trkland.Trks.fx_raw_lh = rotrk_add_sc(  obj.Trkland.Trks.fx_raw_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
-                            obj.Trkland.Trks.fx_raw_lh = rotrk_add_sc(  obj.Trkland.Trks.fx_raw_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
-                            obj.Trkland.Trks.fx_raw_lh = rotrk_add_sc(  obj.Trkland.Trks.fx_raw_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
-                            %Trim tracts here:
-                            obj.Trkland.Trks.fx_trimmed_lh = rotrk_trimmedbyTOI(obj.Trkland.Trks.fx_raw_lh, ...
-                                [ {obj.Trkland.fx.in.thalamus_lh} {obj.Trkland.fx.in.hippo_lh} ], 'fx_lh');
-                            %Select the HDorff centerline(first pass)
-                            obj.Trkland.Trks.fx_clineinit_lh = rotrk_centerline(obj.Trkland.Trks.fx_trimmed_lh,'hausdorff');
-                            %Clean up based on normality of hausdorff distance
-                            obj.Trkland.Trks.fx_cleantrimmed_lh = rotrk_rm_byHDorff(obj.Trkland.Trks.fx_clineinit_lh, obj.Trkland.Trks.fx_trimmed_lh,obj.Trkland.Trks.fx_trimmed_lh);
-                            %obj.Trkland.Trks.fx_cleantrimmed_lh = rotrk_rm_bylen(obj.Trkland.Trks.fx_clineinit_lh, obj.Trkland.Trks.fx_raw_lh,obj.Trkland.Trks.fx_raw_lh);
-                            %Now that the TRK is clean, lets get the high_FA and get the centerline:
-                            %Pick centerline based on high_sc and FA:
-                            obj.Trkland.Trks.fx_clinehighFA_lh = rotrk_centerline(obj.Trkland.Trks.fx_cleantrimmed_lh, 'high_sc','FA');
-                            obj.Trkland.Trks.fx_clineHDorff_lh = rotrk_centerline(obj.Trkland.Trks.fx_cleantrimmed_lh, 'hausdorff');
-                            %save trks:
-                            rotrk_write(obj.Trkland.Trks.fx_cleantrimmed_lh.header,obj.Trkland.Trks.fx_cleantrimmed_lh.sstr,obj.Trkland.fx.out.clean_trks_lh);
-                            rotrk_write(obj.Trkland.Trks.fx_trimmed_lh.header,obj.Trkland.Trks.fx_trimmed_lh.sstr,obj.Trkland.fx.out.clean_trkstrimmed_lh);
-                            rotrk_write(obj.Trkland.Trks.fx_clinehighFA_lh.header,obj.Trkland.Trks.fx_clinehighFA_lh.sstr,obj.Trkland.fx.out.clineFA_lh_highFA );
-                            rotrk_write(obj.Trkland.Trks.fx_clineHDorff_lh.header,obj.Trkland.Trks.fx_clineHDorff_lh.sstr,obj.Trkland.fx.out.clineFA_lh_HDorff );
-                            wasRun=true;
-                            obj.UpdateHist(obj.Trkland.fx,'trkland_fx', obj.Trkland.fx.out.clineFA_lh_highFA,wasRun);
-                            %Get volume data of unclean/cleaned tracts:
-                            %Volume:
-                            obj.Trkland.fx.data.lh_unclean_vol = obj.Trkland.Trks.fx_raw_lh.num_uvox;
-                            obj.Trkland.fx.data.lh_clean_vol = obj.Trkland.Trks.fx_cleantrimmed_lh.num_uvox;
-                            obj.Trkland.fx.data.lh_trimmedclean_vol = obj.Trkland.Trks.fx_trimmed_lh.num_uvox;
-                            obj.Trkland.fx.data.lh_cline_HighFA_vol = obj.Trkland.Trks.fx_clinehighFA_lh.num_uvox;
-                            obj.Trkland.fx.data.lh_cline_HDorff_vol = obj.Trkland.Trks.fx_clineHDorff_lh.num_uvox;
-                            %METRICS DATA NOW
-                            %unclean_fx_lh
-                            obj.Trkland.fx.data.lh_unclean_FA = mean(obj.Trkland.Trks.fx_raw_lh.unique_voxels(:,4));
-                            obj.Trkland.fx.data.lh_unclean_RD = mean(obj.Trkland.Trks.fx_raw_lh.unique_voxels(:,5));
-                            obj.Trkland.fx.data.lh_unclean_AxD = mean(obj.Trkland.Trks.fx_raw_lh.unique_voxels(:,6));
-                            obj.Trkland.fx.data.lh_unclean_MD = mean(obj.Trkland.Trks.fx_raw_lh.unique_voxels(:,7));
-                            %Trimmed_clean_hippocing:
-                            obj.Trkland.fx.data.lh_trimmedclean_FA = mean(obj.Trkland.Trks.fx_trimmed_lh.unique_voxels(:,4));
-                            obj.Trkland.fx.data.lh_trimmedclean_RD = mean(obj.Trkland.Trks.fx_trimmed_lh.unique_voxels(:,5));
-                            obj.Trkland.fx.data.lh_trimmedclean_AxD = mean(obj.Trkland.Trks.fx_trimmed_lh.unique_voxels(:,6));
-                            obj.Trkland.fx.data.lh_trimmedclean_MD = mean(obj.Trkland.Trks.fx_trimmed_lh.unique_voxels(:,7));
-                            %Clean_fx:
-                            obj.Trkland.fx.data.lh_clean_FA = mean(obj.Trkland.Trks.fx_cleantrimmed_lh.unique_voxels(:,4));
-                            obj.Trkland.fx.data.lh_clean_RD = mean(obj.Trkland.Trks.fx_cleantrimmed_lh.unique_voxels(:,5));
-                            obj.Trkland.fx.data.lh_clean_AxD = mean(obj.Trkland.Trks.fx_cleantrimmed_lh.unique_voxels(:,6));
-                            obj.Trkland.fx.data.lh_clean_MD = mean(obj.Trkland.Trks.fx_cleantrimmed_lh.unique_voxels(:,7));
-                            %Cline_HighFA
-                            obj.Trkland.fx.data.lh_cline_length_highFA=obj.Trkland.Trks.fx_clinehighFA_lh.len_matrix;
-                            obj.Trkland.fx.data.lh_cline_FA_highFA = mean(obj.Trkland.Trks.fx_clinehighFA_lh.unique_voxels(:,4));
-                            obj.Trkland.fx.data.lh_cline_RD_highFA = mean(obj.Trkland.Trks.fx_clinehighFA_lh.unique_voxels(:,5));
-                            obj.Trkland.fx.data.lh_cline_AxD_highFA = mean(obj.Trkland.Trks.fx_clinehighFA_lh.unique_voxels(:,6));
-                            obj.Trkland.fx.data.lh_cline_MD_highFA = mean(obj.Trkland.Trks.fx_clinehighFA_lh.unique_voxels(:,7));
-                            %Cline_HDorff
-                            obj.Trkland.fx.data.lh_cline_length_HDorff=obj.Trkland.Trks.fx_clineHDorff_lh.len_matrix;
-                            obj.Trkland.fx.data.lh_cline_FA_HDorff = mean(obj.Trkland.Trks.fx_clineHDorff_lh.unique_voxels(:,4));
-                            obj.Trkland.fx.data.lh_cline_RD_HDorff = mean(obj.Trkland.Trks.fx_clineHDorff_lh.unique_voxels(:,5));
-                            obj.Trkland.fx.data.lh_cline_AxD_HDorff = mean(obj.Trkland.Trks.fx_clineHDorff_lh.unique_voxels(:,6));
-                            obj.Trkland.fx.data.lh_cline_MD_HDorff = mean(obj.Trkland.Trks.fx_clineHDorff_lh.unique_voxels(:,7));
-                        catch
-                            warning('No cleanup for fornix_lh was finished correctly. Maybe the specific tract cant be reached. Check raw tracts...')
-                        end
+                        obj.Trkland.fx.out.QC = true;
+                        %             try
+                        obj.Trkland.Trks.fx_raw_lh = rotrk_read(obj.Trkland.fx.out.trks_lh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'fx_lh');
+                        %add Scalars
+                        obj.Trkland.Trks.fx_raw_lh = rotrk_add_sc(  obj.Trkland.Trks.fx_raw_lh ,obj.Params.Dtifit.out.FA{end} , 'FA');
+                        obj.Trkland.Trks.fx_raw_lh = rotrk_add_sc(  obj.Trkland.Trks.fx_raw_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
+                        obj.Trkland.Trks.fx_raw_lh = rotrk_add_sc(  obj.Trkland.Trks.fx_raw_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
+                        obj.Trkland.Trks.fx_raw_lh = rotrk_add_sc(  obj.Trkland.Trks.fx_raw_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
+                        %Trim tracts here:
+                        obj.Trkland.Trks.fx_trimmed_lh = rotrk_trimmedbyTOI(obj.Trkland.Trks.fx_raw_lh, ...
+                            [ {obj.Trkland.fx.in.thalamus_lh} {obj.Trkland.fx.in.hippo_lh} ], 'fx_lh');
+                        rotrk_write(obj.Trkland.Trks.fx_trimmed_lh.header,obj.Trkland.Trks.fx_trimmed_lh.sstr,obj.Trkland.fx.out.clean_trkstrimmed_lh);
+                        %Select the HDorff centerline(first pass)
+                        obj.Trkland.Trks.fx_clineinit_lh = rotrk_centerline(obj.Trkland.Trks.fx_trimmed_lh,'hausdorff');
+                        %Clean up based on normality of hausdorff distance
+                        obj.Trkland.Trks.fx_cleantrimmed_lh = rotrk_rm_byHDorff(obj.Trkland.Trks.fx_clineinit_lh, obj.Trkland.Trks.fx_trimmed_lh,obj.Trkland.Trks.fx_trimmed_lh);
+                        
+                        %obj.Trkland.Trks.fx_cleantrimmed_lh = rotrk_rm_bylen(obj.Trkland.Trks.fx_clineinit_lh, obj.Trkland.Trks.fx_raw_lh,obj.Trkland.Trks.fx_raw_lh);
+                        %Now that the TRK is clean, lets get the high_FA and get the centerline:
+                        %Pick centerline based on high_sc and FA:
+                        obj.Trkland.Trks.fx_clinehighFA_lh = rotrk_centerline(obj.Trkland.Trks.fx_cleantrimmed_lh, 'high_sc','FA');
+                        obj.Trkland.Trks.fx_clineHDorff_lh = rotrk_centerline(obj.Trkland.Trks.fx_cleantrimmed_lh, 'hausdorff');
+                        %save trks:
+                        rotrk_write(obj.Trkland.Trks.fx_cleantrimmed_lh.header,obj.Trkland.Trks.fx_cleantrimmed_lh.sstr,obj.Trkland.fx.out.clean_trks_lh);
+                        
+                        rotrk_write(obj.Trkland.Trks.fx_clinehighFA_lh.header,obj.Trkland.Trks.fx_clinehighFA_lh.sstr,obj.Trkland.fx.out.clineFA_lh_highFA );
+                        rotrk_write(obj.Trkland.Trks.fx_clineHDorff_lh.header,obj.Trkland.Trks.fx_clineHDorff_lh.sstr,obj.Trkland.fx.out.clineFA_lh_HDorff );
+                        wasRun=true;
+                        obj.UpdateHist(obj.Trkland.fx,'trkland_fx', obj.Trkland.fx.out.clineFA_lh_highFA,wasRun);
+                        %Get volume data of unclean/cleaned tracts:
+                        %Volume:
+                        obj.Trkland.fx.data.lh_unclean_vol = obj.Trkland.Trks.fx_raw_lh.num_uvox;
+                        obj.Trkland.fx.data.lh_clean_vol = obj.Trkland.Trks.fx_cleantrimmed_lh.num_uvox;
+                        obj.Trkland.fx.data.lh_trimmedclean_vol = obj.Trkland.Trks.fx_trimmed_lh.num_uvox;
+                        obj.Trkland.fx.data.lh_cline_HighFA_vol = obj.Trkland.Trks.fx_clinehighFA_lh.num_uvox;
+                        obj.Trkland.fx.data.lh_cline_HDorff_vol = obj.Trkland.Trks.fx_clineHDorff_lh.num_uvox;
+                        %METRICS DATA NOW
+                        %unclean_fx_lh
+                        obj.Trkland.fx.data.lh_unclean_FA = mean(obj.Trkland.Trks.fx_raw_lh.unique_voxels(:,4));
+                        obj.Trkland.fx.data.lh_unclean_RD = mean(obj.Trkland.Trks.fx_raw_lh.unique_voxels(:,5));
+                        obj.Trkland.fx.data.lh_unclean_AxD = mean(obj.Trkland.Trks.fx_raw_lh.unique_voxels(:,6));
+                        obj.Trkland.fx.data.lh_unclean_MD = mean(obj.Trkland.Trks.fx_raw_lh.unique_voxels(:,7));
+                        %Trimmed_clean_hippocing:
+                        obj.Trkland.fx.data.lh_trimmedclean_FA = mean(obj.Trkland.Trks.fx_trimmed_lh.unique_voxels(:,4));
+                        obj.Trkland.fx.data.lh_trimmedclean_RD = mean(obj.Trkland.Trks.fx_trimmed_lh.unique_voxels(:,5));
+                        obj.Trkland.fx.data.lh_trimmedclean_AxD = mean(obj.Trkland.Trks.fx_trimmed_lh.unique_voxels(:,6));
+                        obj.Trkland.fx.data.lh_trimmedclean_MD = mean(obj.Trkland.Trks.fx_trimmed_lh.unique_voxels(:,7));
+                        %Clean_fx:
+                        obj.Trkland.fx.data.lh_clean_FA = mean(obj.Trkland.Trks.fx_cleantrimmed_lh.unique_voxels(:,4));
+                        obj.Trkland.fx.data.lh_clean_RD = mean(obj.Trkland.Trks.fx_cleantrimmed_lh.unique_voxels(:,5));
+                        obj.Trkland.fx.data.lh_clean_AxD = mean(obj.Trkland.Trks.fx_cleantrimmed_lh.unique_voxels(:,6));
+                        obj.Trkland.fx.data.lh_clean_MD = mean(obj.Trkland.Trks.fx_cleantrimmed_lh.unique_voxels(:,7));
+                        %Cline_HighFA
+                        obj.Trkland.fx.data.lh_cline_length_highFA=obj.Trkland.Trks.fx_clinehighFA_lh.len_matrix;
+                        obj.Trkland.fx.data.lh_cline_FA_highFA = mean(obj.Trkland.Trks.fx_clinehighFA_lh.unique_voxels(:,4));
+                        obj.Trkland.fx.data.lh_cline_RD_highFA = mean(obj.Trkland.Trks.fx_clinehighFA_lh.unique_voxels(:,5));
+                        obj.Trkland.fx.data.lh_cline_AxD_highFA = mean(obj.Trkland.Trks.fx_clinehighFA_lh.unique_voxels(:,6));
+                        obj.Trkland.fx.data.lh_cline_MD_highFA = mean(obj.Trkland.Trks.fx_clinehighFA_lh.unique_voxels(:,7));
+                        %Cline_HDorff
+                        obj.Trkland.fx.data.lh_cline_length_HDorff=obj.Trkland.Trks.fx_clineHDorff_lh.len_matrix;
+                        obj.Trkland.fx.data.lh_cline_FA_HDorff = mean(obj.Trkland.Trks.fx_clineHDorff_lh.unique_voxels(:,4));
+                        obj.Trkland.fx.data.lh_cline_RD_HDorff = mean(obj.Trkland.Trks.fx_clineHDorff_lh.unique_voxels(:,5));
+                        obj.Trkland.fx.data.lh_cline_AxD_HDorff = mean(obj.Trkland.Trks.fx_clineHDorff_lh.unique_voxels(:,6));
+                        obj.Trkland.fx.data.lh_cline_MD_HDorff = mean(obj.Trkland.Trks.fx_clineHDorff_lh.unique_voxels(:,7));
+                        %            catch
+                        %               warning('No cleanup for fornix_lh was finished correctly. Maybe the specific tract cant be reached. Check raw tracts...')
+                        %          end
                     end
                 end
                 %For right side (centerline approach):
                 for tohide=1:1
                     %CLEANING UP THE STREAMLINES
-                    if exist(obj.Trkland.fx.out.clean_trks_rh,'file') == 0 && exist(obj.Trkland.fx.out.trks_lh,'file') ~= 0
-                        try
-                            clear obj.Trkland.Trks.fx_raw_rh obj.Trkland.Trks.fx_cleantrimmed_rh obj.Trkland.Trks.fx_clineinit_rh
-                            obj.Trkland.Trks.fx_raw_rh = rotrk_read(obj.Trkland.fx.out.trks_rh,obj.sessionname ...
-                                ,obj.Params.Dtifit.out.FA{end}, 'fx_rh');
-                            %add Scalars
-                            obj.Trkland.Trks.fx_raw_rh = rotrk_add_sc(  obj.Trkland.Trks.fx_raw_rh ,obj.Params.Dtifit.out.FA{end} , 'FA');
-                            obj.Trkland.Trks.fx_raw_rh = rotrk_add_sc(  obj.Trkland.Trks.fx_raw_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
-                            obj.Trkland.Trks.fx_raw_rh = rotrk_add_sc(  obj.Trkland.Trks.fx_raw_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
-                            obj.Trkland.Trks.fx_raw_rh = rotrk_add_sc(  obj.Trkland.Trks.fx_raw_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
-                            %Trim tracts here:
-                            obj.Trkland.Trks.fx_trimmed_rh = rotrk_trimmedbyTOI(obj.Trkland.Trks.fx_raw_rh, ...
-                                [ {obj.Trkland.fx.in.thalamus_rh} {obj.Trkland.fx.in.hippo_rh} ], 'fx_rh');
-                            %Select the HDorff centerline(first pass)
-                            obj.Trkland.Trks.fx_clineinit_rh = rotrk_centerline(obj.Trkland.Trks.fx_trimmed_rh,'hausdorff');
-                            %Clean up based on normality of hausdorff distance
-                            obj.Trkland.Trks.fx_cleantrimmed_rh = rotrk_rm_byHDorff(obj.Trkland.Trks.fx_clineinit_rh, obj.Trkland.Trks.fx_trimmed_rh,obj.Trkland.Trks.fx_trimmed_rh);
-                            %%%%obj.Trkland.Trks.fx_cleantrimmed_rh = rotrk_rm_bylen(obj.Trkland.Trks.fx_clineinit_rh, obj.Trkland.Trks.fx_raw_rh,obj.Trkland.Trks.fx_raw_rh);
-                            %Now that the TRK is clean, lets get the high_FA and get the centerline:
-                            %Pick centerline based on high_sc and FA:
-                            obj.Trkland.Trks.fx_clinehighFA_rh = rotrk_centerline(obj.Trkland.Trks.fx_cleantrimmed_rh, 'high_sc','FA');
-                            obj.Trkland.Trks.fx_clineHDorff_rh = rotrk_centerline(obj.Trkland.Trks.fx_cleantrimmed_rh, 'hausdorff');
-                            %save trks:
-                            rotrk_write(obj.Trkland.Trks.fx_cleantrimmed_rh.header,obj.Trkland.Trks.fx_cleantrimmed_rh.sstr,obj.Trkland.fx.out.clean_trks_rh)
-                            rotrk_write(obj.Trkland.Trks.fx_trimmed_rh.header,obj.Trkland.Trks.fx_trimmed_rh.sstr,obj.Trkland.fx.out.clean_trkstrimmed_rh);
-                            rotrk_write(obj.Trkland.Trks.fx_clinehighFA_rh.header,obj.Trkland.Trks.fx_clinehighFA_rh.sstr,obj.Trkland.fx.out.clineFA_rh_highFA )
-                            rotrk_write(obj.Trkland.Trks.fx_clineHDorff_rh.header,obj.Trkland.Trks.fx_clineHDorff_rh.sstr,obj.Trkland.fx.out.clineFA_rh_HDorff )
-                            wasRun=true;
-                            obj.UpdateHist(obj.Trkland.fx,'trkland_fx', obj.Trkland.fx.out.clineFA_rh_highFA,wasRun);
-                            %Get volume data of unclean/cleaned tracts:
-                            %Volume:
-                            obj.Trkland.fx.data.rh_unclean_vol = obj.Trkland.Trks.fx_raw_rh.num_uvox;
-                            obj.Trkland.fx.data.rh_clean_vol = obj.Trkland.Trks.fx_cleantrimmed_rh.num_uvox;
-                            obj.Trkland.fx.data.rh_unclean_vol = obj.Trkland.Trks.fx_raw_rh.num_uvox;
-                            obj.Trkland.fx.data.rh_cline_HighFA_vol = obj.Trkland.Trks.fx_clinehighFA_rh.num_uvox;
-                            obj.Trkland.fx.data.rh_cline_HDorff_vol = obj.Trkland.Trks.fx_clineHDorff_rh.num_uvox;
-                            %METRICS DATA NOW
-                            %unclean_fx_rh
-                            obj.Trkland.fx.data.rh_unclean_FA = mean(obj.Trkland.Trks.fx_raw_rh.unique_voxels(:,4));
-                            obj.Trkland.fx.data.rh_unclean_RD = mean(obj.Trkland.Trks.fx_raw_rh.unique_voxels(:,5));
-                            obj.Trkland.fx.data.rh_unclean_AxD = mean(obj.Trkland.Trks.fx_raw_rh.unique_voxels(:,6));
-                            obj.Trkland.fx.data.rh_unclean_MD = mean(obj.Trkland.Trks.fx_raw_rh.unique_voxels(:,7));
-                            %Trimmed_clean_hippocing:
-                            obj.Trkland.fx.data.rh_trimmedclean_FA = mean(obj.Trkland.Trks.fx_trimmed_rh.unique_voxels(:,4));
-                            obj.Trkland.fx.data.rh_trimmedclean_RD = mean(obj.Trkland.Trks.fx_trimmed_rh.unique_voxels(:,5));
-                            obj.Trkland.fx.data.rh_trimmedclean_AxD = mean(obj.Trkland.Trks.fx_trimmed_rh.unique_voxels(:,6));
-                            obj.Trkland.fx.data.rh_trimmedclean_MD = mean(obj.Trkland.Trks.fx_trimmed_rh.unique_voxels(:,7));
-                            %Clean_fx:
-                            obj.Trkland.fx.data.rh_clean_FA = mean(obj.Trkland.Trks.fx_cleantrimmed_rh.unique_voxels(:,4));
-                            obj.Trkland.fx.data.rh_clean_RD = mean(obj.Trkland.Trks.fx_cleantrimmed_rh.unique_voxels(:,5));
-                            obj.Trkland.fx.data.rh_clean_AxD = mean(obj.Trkland.Trks.fx_cleantrimmed_rh.unique_voxels(:,6));
-                            obj.Trkland.fx.data.rh_clean_MD = mean(obj.Trkland.Trks.fx_cleantrimmed_rh.unique_voxels(:,7));
-                            %Cline_HighFA
-                            obj.Trkland.fx.data.rh_cline_length_HDorff=obj.Trkland.Trks.fx_clinehighFA_rh.len_matrix;
-                            obj.Trkland.fx.data.rh_cline_FA_highFA = mean(obj.Trkland.Trks.fx_clinehighFA_rh.unique_voxels(:,4));
-                            obj.Trkland.fx.data.rh_cline_RD_highFA = mean(obj.Trkland.Trks.fx_clinehighFA_rh.unique_voxels(:,5));
-                            obj.Trkland.fx.data.rh_cline_AxD_highFA = mean(obj.Trkland.Trks.fx_clinehighFA_rh.unique_voxels(:,6));
-                            obj.Trkland.fx.data.rh_cline_MD_highFA = mean(obj.Trkland.Trks.fx_clinehighFA_rh.unique_voxels(:,7));
-                            %Cline_HDorff
-                            obj.Trkland.fx.data.rh_cline_length_HDorff=obj.Trkland.Trks.fx_clineHDorff_rh.len_matrix;
-                            obj.Trkland.fx.data.rh_cline_FA_HDorff = mean(obj.Trkland.Trks.fx_clineHDorff_rh.unique_voxels(:,4));
-                            obj.Trkland.fx.data.rh_cline_RD_HDorff = mean(obj.Trkland.Trks.fx_clineHDorff_rh.unique_voxels(:,5));
-                            obj.Trkland.fx.data.rh_cline_AxD_HDorff = mean(obj.Trkland.Trks.fx_clineHDorff_rh.unique_voxels(:,6));
-                            obj.Trkland.fx.data.rh_cline_MD_HDorff = mean(obj.Trkland.Trks.fx_clineHDorff_rh.unique_voxels(:,7));
-                        catch
-                            warning('No cleanup for fornix_rh was finished correctly. Maybe the specific tract cant be reached. Check raw tracts...')
-                        end
+                    if exist(obj.Trkland.fx.out.clean_trks_rh,'file') == 0 && exist(obj.Trkland.fx.out.trks_rh,'file') ~= 0
+                        %   try
+                        obj.Trkland.fx.out.QC = true;
+                        clear obj.Trkland.Trks.fx_raw_rh obj.Trkland.Trks.fx_cleantrimmed_rh obj.Trkland.Trks.fx_clineinit_rh
+                        obj.Trkland.Trks.fx_raw_rh = rotrk_read(obj.Trkland.fx.out.trks_rh,obj.sessionname ...
+                            ,obj.Params.Dtifit.out.FA{end}, 'fx_rh');
+                        %add Scalars
+                        obj.Trkland.Trks.fx_raw_rh = rotrk_add_sc(  obj.Trkland.Trks.fx_raw_rh ,obj.Params.Dtifit.out.FA{end} , 'FA');
+                        obj.Trkland.Trks.fx_raw_rh = rotrk_add_sc(  obj.Trkland.Trks.fx_raw_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
+                        obj.Trkland.Trks.fx_raw_rh = rotrk_add_sc(  obj.Trkland.Trks.fx_raw_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
+                        obj.Trkland.Trks.fx_raw_rh = rotrk_add_sc(  obj.Trkland.Trks.fx_raw_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
+                        %Trim tracts here:
+                        obj.Trkland.Trks.fx_trimmed_rh = rotrk_trimmedbyTOI(obj.Trkland.Trks.fx_raw_rh, ...
+                            [ {obj.Trkland.fx.in.thalamus_rh} {obj.Trkland.fx.in.hippo_rh} ], 'fx_rh');
+                        rotrk_write(obj.Trkland.Trks.fx_trimmed_rh.header,obj.Trkland.Trks.fx_trimmed_rh.sstr,obj.Trkland.fx.out.clean_trkstrimmed_rh);
+                        
+                        %Select the HDorff centerline(first pass)
+                        obj.Trkland.Trks.fx_clineinit_rh = rotrk_centerline(obj.Trkland.Trks.fx_trimmed_rh,'hausdorff');
+                        %Clean up based on normality of hausdorff distance
+                        obj.Trkland.Trks.fx_cleantrimmed_rh = rotrk_rm_byHDorff(obj.Trkland.Trks.fx_clineinit_rh, obj.Trkland.Trks.fx_trimmed_rh,obj.Trkland.Trks.fx_trimmed_rh);
+                        %%%%obj.Trkland.Trks.fx_cleantrimmed_rh = rotrk_rm_bylen(obj.Trkland.Trks.fx_clineinit_rh, obj.Trkland.Trks.fx_raw_rh,obj.Trkland.Trks.fx_raw_rh);
+                        %Now that the TRK is clean, lets get the high_FA and get the centerline:
+                        %Pick centerline based on high_sc and FA:
+                        obj.Trkland.Trks.fx_clinehighFA_rh = rotrk_centerline(obj.Trkland.Trks.fx_cleantrimmed_rh, 'high_sc','FA');
+                        obj.Trkland.Trks.fx_clineHDorff_rh = rotrk_centerline(obj.Trkland.Trks.fx_cleantrimmed_rh, 'hausdorff');
+                        %save trks:
+                        rotrk_write(obj.Trkland.Trks.fx_cleantrimmed_rh.header,obj.Trkland.Trks.fx_cleantrimmed_rh.sstr,obj.Trkland.fx.out.clean_trks_rh)
+                        rotrk_write(obj.Trkland.Trks.fx_clinehighFA_rh.header,obj.Trkland.Trks.fx_clinehighFA_rh.sstr,obj.Trkland.fx.out.clineFA_rh_highFA )
+                        rotrk_write(obj.Trkland.Trks.fx_clineHDorff_rh.header,obj.Trkland.Trks.fx_clineHDorff_rh.sstr,obj.Trkland.fx.out.clineFA_rh_HDorff )
+                        wasRun=true;
+                        obj.UpdateHist(obj.Trkland.fx,'trkland_fx', obj.Trkland.fx.out.clineFA_rh_highFA,wasRun);
+                        %Get volume data of unclean/cleaned tracts:
+                        %Volume:
+                        obj.Trkland.fx.data.rh_unclean_vol = obj.Trkland.Trks.fx_raw_rh.num_uvox;
+                        obj.Trkland.fx.data.rh_clean_vol = obj.Trkland.Trks.fx_cleantrimmed_rh.num_uvox;
+                        obj.Trkland.fx.data.rh_unclean_vol = obj.Trkland.Trks.fx_raw_rh.num_uvox;
+                        obj.Trkland.fx.data.rh_cline_HighFA_vol = obj.Trkland.Trks.fx_clinehighFA_rh.num_uvox;
+                        obj.Trkland.fx.data.rh_cline_HDorff_vol = obj.Trkland.Trks.fx_clineHDorff_rh.num_uvox;
+                        %METRICS DATA NOW
+                        %unclean_fx_rh
+                        obj.Trkland.fx.data.rh_unclean_FA = mean(obj.Trkland.Trks.fx_raw_rh.unique_voxels(:,4));
+                        obj.Trkland.fx.data.rh_unclean_RD = mean(obj.Trkland.Trks.fx_raw_rh.unique_voxels(:,5));
+                        obj.Trkland.fx.data.rh_unclean_AxD = mean(obj.Trkland.Trks.fx_raw_rh.unique_voxels(:,6));
+                        obj.Trkland.fx.data.rh_unclean_MD = mean(obj.Trkland.Trks.fx_raw_rh.unique_voxels(:,7));
+                        %Trimmed_clean_hippocing:
+                        obj.Trkland.fx.data.rh_trimmedclean_FA = mean(obj.Trkland.Trks.fx_trimmed_rh.unique_voxels(:,4));
+                        obj.Trkland.fx.data.rh_trimmedclean_RD = mean(obj.Trkland.Trks.fx_trimmed_rh.unique_voxels(:,5));
+                        obj.Trkland.fx.data.rh_trimmedclean_AxD = mean(obj.Trkland.Trks.fx_trimmed_rh.unique_voxels(:,6));
+                        obj.Trkland.fx.data.rh_trimmedclean_MD = mean(obj.Trkland.Trks.fx_trimmed_rh.unique_voxels(:,7));
+                        %Clean_fx:
+                        obj.Trkland.fx.data.rh_clean_FA = mean(obj.Trkland.Trks.fx_cleantrimmed_rh.unique_voxels(:,4));
+                        obj.Trkland.fx.data.rh_clean_RD = mean(obj.Trkland.Trks.fx_cleantrimmed_rh.unique_voxels(:,5));
+                        obj.Trkland.fx.data.rh_clean_AxD = mean(obj.Trkland.Trks.fx_cleantrimmed_rh.unique_voxels(:,6));
+                        obj.Trkland.fx.data.rh_clean_MD = mean(obj.Trkland.Trks.fx_cleantrimmed_rh.unique_voxels(:,7));
+                        %Cline_HighFA
+                        obj.Trkland.fx.data.rh_cline_length_HDorff=obj.Trkland.Trks.fx_clinehighFA_rh.len_matrix;
+                        obj.Trkland.fx.data.rh_cline_FA_highFA = mean(obj.Trkland.Trks.fx_clinehighFA_rh.unique_voxels(:,4));
+                        obj.Trkland.fx.data.rh_cline_RD_highFA = mean(obj.Trkland.Trks.fx_clinehighFA_rh.unique_voxels(:,5));
+                        obj.Trkland.fx.data.rh_cline_AxD_highFA = mean(obj.Trkland.Trks.fx_clinehighFA_rh.unique_voxels(:,6));
+                        obj.Trkland.fx.data.rh_cline_MD_highFA = mean(obj.Trkland.Trks.fx_clinehighFA_rh.unique_voxels(:,7));
+                        %Cline_HDorff
+                        obj.Trkland.fx.data.rh_cline_length_HDorff=obj.Trkland.Trks.fx_clineHDorff_rh.len_matrix;
+                        obj.Trkland.fx.data.rh_cline_FA_HDorff = mean(obj.Trkland.Trks.fx_clineHDorff_rh.unique_voxels(:,4));
+                        obj.Trkland.fx.data.rh_cline_RD_HDorff = mean(obj.Trkland.Trks.fx_clineHDorff_rh.unique_voxels(:,5));
+                        obj.Trkland.fx.data.rh_cline_AxD_HDorff = mean(obj.Trkland.Trks.fx_clineHDorff_rh.unique_voxels(:,6));
+                        obj.Trkland.fx.data.rh_cline_MD_HDorff = mean(obj.Trkland.Trks.fx_clineHDorff_rh.unique_voxels(:,7));
+                        %  catch
+                        %      warning('No cleanup for fornix_rh was finished correctly. Maybe the specific tract cant be reached. Check raw tracts...')
+                        %  end
                     end
                 end
-                
+                if obj.Trkland.fx.out.QC
+                    obj.UpdateHist(obj.Trkland.fx,'trkland_fx', obj.Trkland.fx.out.QCfile, wasRun);
+                    display([ 'trkland_fx: QC has been applied. File:' outpath ' exists.' ]);
+                end
             end
         end
         
@@ -2257,6 +2291,15 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             %Create trkland directory (if doesn't exist)
             exec_cmd = [ 'mkdir -p ' obj.Trkland.root ];
             obj.RunBash(exec_cmd);
+          
+            %Creating root directory:
+            for tohide=1:1
+                outpath=obj.Trkland.root;
+                
+                obj.Trkland.fx.hippocing.QCfile_lh = [outpath 'QC_hcing_lh.flag'] ;
+                obj.Trkland.fx.hippocing.QCfile_rh = [outpath 'QC_hcing_rh.flag'] ;
+                obj.Trkland.fx.hippocing.QCfile_bil = [outpath 'QC_hcing_bil.flag'] ;
+            end
             
             %ROIs/SEEDs PREPARATION
             for tohide=1:1
@@ -2321,40 +2364,46 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             
             %TRACKING STARS HERE:
             for tohide=1:1
-                obj.Trkland.hippocing.out.trk_lh = [ obj.Trkland.root  'trkk_hippocing_lh.trk.gz'];
-                obj.Trkland.hippocing.out.trk_rh = [ obj.Trkland.root  'trkk_hippocing_rh.trk.gz'];
-                
-                
-                %Left side trking:
-                if exist(obj.Trkland.hippocing.out.trk_lh,'file') == 0
-                    exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
-                        ' --seed_count=20000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
-                        ' --seed=' obj.Trkland.hippocing.in.seed_hippo_lh ' --roi=' obj.Trkland.hippocing.in.roi_postcing_lh ...
-                        ' --step_size=1 --turning_angle=40 --min_length=110 --max_length=250 ' ...
-                        ' --output=' obj.Trkland.hippocing.out.trk_lh ];
-                    for dd=1:4 %trying 4 times to get a trk. If not, quit!
+                if exist(obj.Trkland.fx.hippocing.QCfile_bil, 'file') == 0
+                    obj.Trkland.hippocing.out.trk_lh = [ obj.Trkland.root  'trkk_hippocing_lh.trk.gz'];
+                    obj.Trkland.hippocing.out.trk_rh = [ obj.Trkland.root  'trkk_hippocing_rh.trk.gz'];
+                    
+                    
+                    %Left side trking:
+                    if exist(obj.Trkland.fx.hippocing.QCfile_lh, 'file') == 0
                         if exist(obj.Trkland.hippocing.out.trk_lh,'file') == 0
-                            obj.RunBash(exec_cmd,144);
+                            exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
+                                ' --seed_count=20000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
+                                ' --seed=' obj.Trkland.hippocing.in.seed_hippo_lh ' --roi=' obj.Trkland.hippocing.in.roi_postcing_lh ...
+                                ' --step_size=1 --turning_angle=40 --min_length=110 --max_length=250 ' ...
+                                ' --output=' obj.Trkland.hippocing.out.trk_lh ];
+                            for dd=1:4 %trying 4 times to get a trk. If not, quit!
+                                if exist(obj.Trkland.hippocing.out.trk_lh,'file') == 0
+                                    obj.RunBash(exec_cmd,144);
+                                end
+                            end
+                            wasRun=true;
+                            obj.UpdateHist(obj.Trkland.hippocing,'trkland_hippocing', obj.Trkland.hippocing.out.trk_lh,wasRun);
                         end
                     end
-                    wasRun=true;
-                    obj.UpdateHist(obj.Trkland.hippocing,'trkland_hippocing', obj.Trkland.hippocing.out.trk_lh,wasRun);
-                end
-                
-                %Right side trking:
-                if exist(obj.Trkland.hippocing.out.trk_rh,'file') == 0
-                    exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
-                        ' --seed_count=20000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
-                        ' --seed=' obj.Trkland.hippocing.in.seed_hippo_rh ' --roi=' obj.Trkland.hippocing.in.roi_postcing_rh ...
-                        ' --step_size=1 --turning_angle=40 --min_length=110 --max_length=250 ' ...
-                        ' --output=' obj.Trkland.hippocing.out.trk_rh ];
-                    for dd=1:4 %trying 4 times to get a trk. If not, quit!
+                    
+                    %Right side trking:
+                    if exist(obj.Trkland.fx.hippocing.QCfile_rh, 'file') == 0
                         if exist(obj.Trkland.hippocing.out.trk_rh,'file') == 0
-                            obj.RunBash(exec_cmd,144);
+                            exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
+                                ' --seed_count=20000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
+                                ' --seed=' obj.Trkland.hippocing.in.seed_hippo_rh ' --roi=' obj.Trkland.hippocing.in.roi_postcing_rh ...
+                                ' --step_size=1 --turning_angle=40 --min_length=110 --max_length=250 ' ...
+                                ' --output=' obj.Trkland.hippocing.out.trk_rh ];
+                            for dd=1:4 %trying 4 times to get a trk. If not, quit!
+                                if exist(obj.Trkland.hippocing.out.trk_rh,'file') == 0
+                                    obj.RunBash(exec_cmd,144);
+                                end
+                            end
+                            wasRun=true;
+                            obj.UpdateHist(obj.Trkland.hippocing,'trkland_hippocing', obj.Trkland.hippocing.out.trk_rh,wasRun);
                         end
                     end
-                    wasRun=true;
-                    obj.UpdateHist(obj.Trkland.hippocing,'trkland_hippocing', obj.Trkland.hippocing.out.trk_rh,wasRun);
                 end
             end
             
@@ -2375,7 +2424,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             %LEFT SIDE:
             for tohide=1:1
                 if exist(obj.Trkland.hippocing.out.clean_trks_lh ,'file') == 0 && exist(obj.Trkland.hippocing.out.trk_lh,'file') ~= 0
-                    try
+                    %try
                         obj.Trkland.Trks.raw_hippocing_lh = rotrk_read(obj.Trkland.hippocing.out.trk_lh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'hippocing_lh');
                         %add Scalars:
                         obj.Trkland.Trks.raw_hippocing_lh = rotrk_add_sc(  obj.Trkland.Trks.raw_hippocing_lh ,obj.Params.Dtifit.out.FA{end} , 'FA');
@@ -2385,7 +2434,6 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         %Trim tracts here:
                         obj.Trkland.Trks.hippocing_trimmed_lh = rotrk_trimmedbyTOI(obj.Trkland.Trks.raw_hippocing_lh, ...
                             [  {obj.Trkland.hippocing.in.hippo_lh}  {obj.Trkland.hippocing.in.roi_postcing_lh}  ], 'postcing_lh');
-                        
                         %Select the HDorff centerline(first pass):
                         obj.Trkland.Trks.hippocing_clineinit_lh= rotrk_centerline(obj.Trkland.Trks.hippocing_trimmed_lh,'hausdorff');
                         %Clean up based on normality of hausdorff distance:
@@ -2437,9 +2485,9 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         obj.Trkland.hippocing.data.lh_cline_RD_HDorff = mean(obj.Trkland.Trks.hippocing_clineHDorff_lh.unique_voxels(:,5));
                         obj.Trkland.hippocing.data.lh_cline_AxD_HDorff = mean(obj.Trkland.Trks.hippocing_clineHDorff_lh.unique_voxels(:,6));
                         obj.Trkland.hippocing.data.lh_cline_MD_HDorff = mean(obj.Trkland.Trks.hippocing_clineHDorff_lh.unique_voxels(:,7));
-                    catch
-                        warning('No cleanup for hippocing_lh was finished correctly. Maybe the specific tract cant be reached? Check raw tracts...')
-                    end
+%                      catch
+%                          warning('No cleanup for hippocing_lh was finished correctly. Maybe the specific tract cant be reached? Check raw tracts...')
+%                      end
                 end
             end
             
@@ -2457,6 +2505,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         %Trim tracts here:
                         obj.Trkland.Trks.hippocing_trimmed_rh = rotrk_trimmedbyTOI(obj.Trkland.Trks.raw_hippocing_rh, ...
                             [ {obj.Trkland.hippocing.in.hippo_rh}   {obj.Trkland.hippocing.in.roi_postcing_rh}   ], 'postcing_rh');
+                       
                         %
                         %Select the HDorff centerline(first pass)
                         obj.Trkland.Trks.hippocing_clineinit_rh= rotrk_centerline(obj.Trkland.Trks.hippocing_trimmed_rh,'hausdorff');
@@ -2509,9 +2558,9 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         obj.Trkland.hippocing.data.rh_cline_RD_HDorff = mean(obj.Trkland.Trks.hippocing_clineHDorff_rh.unique_voxels(:,5));
                         obj.Trkland.hippocing.data.rh_cline_AxD_HDorff = mean(obj.Trkland.Trks.hippocing_clineHDorff_rh.unique_voxels(:,6));
                         obj.Trkland.hippocing.data.rh_cline_MD_HDorff = mean(obj.Trkland.Trks.hippocing_clineHDorff_rh.unique_voxels(:,7));
-                    catch
-                        warning('No cleanup for hippocing_rh was finished correctly. Maybe the specific tract cant be reached? Check raw tracts...')
-                    end
+                     catch
+                         warning('No cleanup for hippocing_rh was finished correctly. Maybe the specific tract cant be reached? Check raw tracts...')
+                     end
                 end
             end
         end
@@ -2635,7 +2684,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         obj.Trkland.Trks.raw_cingulum_lh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
                         %Trim tracts here:
                         obj.Trkland.Trks.cingulum_trimmed_lh = rotrk_trimmedbyTOI(obj.Trkland.Trks.raw_cingulum_lh, ...
-                            [ {obj.Trkland.cingulum.in.seed_postcing_lh}  {obj.Trkland.cingulum.in.rostantcing_lh}  ], 'cingulum_lh');
+                            [  {obj.Trkland.cingulum.in.seed_postcing_lh} {obj.Trkland.cingulum.in.rostantcing_lh} ], 'cingulum_lh');
                         
                         %Select the HDorff centerline(first pass):
                         obj.Trkland.Trks.cingulum_clineinit_lh= rotrk_centerline(obj.Trkland.Trks.cingulum_trimmed_lh,'hausdorff');
@@ -2707,7 +2756,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         obj.Trkland.Trks.raw_cingulum_rh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
                         %Trim tracts here:
                         obj.Trkland.Trks.cingulum_trimmed_rh = rotrk_trimmedbyTOI(obj.Trkland.Trks.raw_cingulum_rh, ...
-                            [  {obj.Trkland.cingulum.in.seed_postcing_rh}  {obj.Trkland.cingulum.in.rostantcing_rh}    ], 'cingulum_rh');
+                            [  {obj.Trkland.cingulum.in.seed_postcing_rh}  {obj.Trkland.cingulum.in.rostantcing_rh} ], 'cingulum_rh');
                         %
                         %Select the HDorff centerline(first pass)
                         obj.Trkland.Trks.cingulum_clineinit_rh= rotrk_centerline(obj.Trkland.Trks.cingulum_trimmed_rh,'hausdorff');
@@ -2766,10 +2815,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 end
             end
         end
-        
-        
-        
-        
+          
         %%%%%%%%%%%%%%%%%%% END Data Post-Processing Methods %%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
@@ -2911,6 +2957,40 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             end
         end
         
+        function obj = RefreshFields(obj,whatParam)
+            switch whatParam
+                case 'trkland_fx_data'
+                    if isfield(obj.Trkland.fx,'data') ~= 0
+                        display('In RefreshFields().  Updating data of obj.Trkland.fx.** ...');
+                        fields_datafx = fields(obj.Trkland.fx.data);
+                        for ii=1:size(fields_datafx,1)
+                            obj.Trkland.fx.data.(fields_datafx{ii}) = [] ;
+                        end
+                    end
+                case 'trkland_fx_data_out'
+                    display('In RefreshFields(). Updating data and out of obj.Trkland.fx.** ...');
+                    
+                    %Refreshing *.data:
+                    if isfield(obj.Trkland.fx,'data') ~= 0
+                        fields_datafx = fields(obj.Trkland.fx.data);
+                        for ii=1:size(fields_datafx,1)
+                            obj.Trkland.fx.data.(fields_datafx{ii}) = [] ;
+                        end
+                    end
+                    %Refreshing *.out:
+                    if isfield(obj.Trkland.fx,'out') ~= 0
+                        fields_outfx = fields(obj.Trkland.fx.out);
+                        for ii=1:size(fields_outfx,1)
+                            obj.Trkland.fx.out.(fields_outfx{ii}) = [] ;
+                        end
+                    end
+                otherwise
+                    error(['In RefreshFields(). I do not understand the argument: --> ' whatParam ' <-- please check']);
+                    
+            end
+            
+        end
+        
         function obj = UploadData_DWI(obj)
             id = obj.sessionname;
             if isempty(id);
@@ -2991,6 +3071,91 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 obj.resave;
             end
             disp('skelTOIs values have been uploaded to DataCentral');
+        end
+        
+        
+        
+        function obj = UploadData_TRKLAND(obj,opt)
+            id = obj.sessionname;
+            if isempty(id);
+                disp('No Session_ID.  Cannot upload data');
+                return
+            end
+            
+            if isnumeric(id)
+                id = num2str(id);
+            end
+            
+            
+            if nargin < 1
+                error('In UploadData_TRKLAND(): Select what trk you want to upload as the argument of this method. If not, it will quit with this error!');
+            end
+            
+            %%Select current SessionID
+            dctl_cmd = [ 'SELECT MRI_Session_ID FROM Sessions.MRI  WHERE ' ' MRI_Session_Name = ''' id '''' ];
+            cur_DC_ID = DataCentral(dctl_cmd);
+            
+            %Upload whatever you enter as the opt argument
+            switch opt
+                case 'fx'
+%                     disp('Uploading trkland_fx in DataCentral...');
+%                      if size(obj.Params.EddyMotion.out.vals.(MOTION_fields{ii}){1},2) == 9 %9 is the number of characters for this double type variable
+%                     disp(''); %Skip uploading because it already exists!
+%                 else
+%                     fprintf(['\nUploading motion value: ' MOTION_fields{ii} '(' ...
+%                         strtrim(cell2char(obj.Params.EddyMotion.out.vals.(MOTION_fields{ii})))  ') for ' obj.sessionname ]);
+%                     dctl_cmd = [ ' SELECT MRI_skelDWI_motion_eddyres_' MOTION_fields{ii} ...
+%                         ' FROM MRI.skelDWI  WHERE MRI_Session_ID = ' num2str(cur_DC_ID.MRI_Session_ID)  ];
+%                     check_dctl_cmd = DataCentral(dctl_cmd);
+%                     if isempty(check_dctl_cmd.(['MRI_skelDWI_motion_eddyres_' MOTION_fields{ii}]))
+%                         fprintf(['Motion values: ' MOTION_fields{ii} ' is: '   ])
+%                         dctl_cmd = [ 'INSERT INTO MRI.skelDWI (MRI_Session_ID,  MRI_skelDWI_motion_eddyres_' MOTION_fields{ii} ') ' ...
+%                             ' values ( ' num2str(cur_DC_ID.MRI_Session_ID) ',' strtrim(cell2char(obj.Params.EddyMotion.out.vals.(MOTION_fields{ii}))) ')'   ] ;
+%                         DataCentral(dctl_cmd);
+%                         fprintf('...done\n');
+%                     elseif isnan(check_dctl_cmd.(['MRI_skelDWI_motion_eddyres_' MOTION_fields{ii}]))
+%                         fprintf(['Skel TOI ==> Uploading to DataCentral: ' id ' and TOI: ' MOTION_fields{ii}  ])
+%                         dctl_cmd = [ 'UPDATE MRI.skelDWI SET MRI_skelDWI_motion_eddyres_' MOTION_fields{ii} ...
+%                             ' = ''' strtrim(cell2char(obj.Params.EddyMotion.out.vals.(MOTION_fields{ii}))) ''' WHERE MRI_Session_ID =  ' ...
+%                             num2str(cur_DC_ID.MRI_Session_ID)   ] ;
+%                         DataCentral(dctl_cmd);
+%                         fprintf('...done\n');
+
+
+%                     end
+%                     
+% %                     
+% vars = ''
+% 
+% flds = fields(obj_example.Trkland.fx.data);
+% 
+% for ind=1:numel(flds)
+%     newVar = flds{ind};
+%     newDef = [newVar ' float,'];
+%     vars = [vars newDef];
+%     
+%     
+% end
+% 
+% vars = vars(1:end-1)
+% 
+% %%
+% 
+% query = ['CREATE TABLE mjp91.Test (MRI_Session_ID INT PRIMARY KEY NOT NULL,' vars ')'];
+% 
+% DataCentral(query);
+% 
+% 
+% query = 'SHOW TABLES FROM mjp91';
+% 
+% 
+% x = struct2table(DataCentral(query));
+
+
+
+
+
+            end
         end
     end
 end

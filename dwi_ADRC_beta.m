@@ -388,10 +388,11 @@ classdef dwi_ADRC_beta < dwiMRI_Session_beta
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %AFQ:
             obj.Params.AFQ.in.movefiles = ['..' filesep 'post_AFQ' ];
-            obj.Params.AFQ.in.dwi = obj.Params.CoRegMultiple.out.combined_fn ;
+            obj.Params.AFQ.in.dwi = obj.Params.CoRegMultiple.out.fn{1} % obj.Params.CoRegMultiple.out.combined_fn ;
+            
             obj.Params.AFQ.in.T1 = obj.T1 ;
-            obj.Params.AFQ.in.tmp_bvecs = obj.Params.CoRegMultiple.out.combined_bvecs;
-            obj.Params.AFQ.in.tmp_bvals = obj.Params.CoRegMultiple.out.combined_bvals;
+            obj.Params.AFQ.in.tmp_bvecs = obj.Params.CoRegMultiple.out.bvecs{1}; %obj.Params.CoRegMultiple.out.combined_bvecs;
+            obj.Params.AFQ.in.tmp_bvals = obj.Params.CoRegMultiple.out.bvals{1}; %obj.Params.CoRegMultiple.out.combined_bvals;
             
             
             %Parameter specification for pre-processedAFQ
