@@ -321,7 +321,7 @@ classdef dwi_HAB < dwiMRI_Session
             obj.Params.Tracula.in.nb0 = 5;
             obj.Params.Tracula.in.prefix = 'hab';
             
-            obj.proc_tracula();
+            %obj.proc_tracula();
             
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -331,7 +331,8 @@ classdef dwi_HAB < dwiMRI_Session
             %FX_TRKLAND:
             for tohide=1:1
                 %b0 params:
-                obj.Trkland.fx.in.b0 = obj.Params.B0mean.out.fn{end};
+                obj.Trkland.fx.in.b0 = obj.Params.MaskAfterEddy.out.brainonly; % obj.Params.B0mean.out.fn{end}; --> BAD 
+                obj.Trkland.fx.in.movefiles = ['..' filesep 'post_TRKLAND' ];
                 %Template parameters:
                 obj.Trkland.fx.tmp.b0 = [ obj.fx_template_dir '141210_8CS00178_b0.nii.gz' ] ;
                 obj.Trkland.fx.tmp.roa_solid_bil =[ obj.fx_template_dir 'TMP_178_bil_fx_dil11.nii.gz' ] ;
