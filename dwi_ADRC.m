@@ -612,9 +612,6 @@ classdef dwi_ADRC < dwiMRI_Session
                     %TRKLAND
                     obj.Trkland.root = [ obj.root  'post_TRKLAND' filesep ];
            
-                    %empty fields:
-                    obj.RefreshFields('trkland_fx_data_out') %e.g. input trkland_fx_data to empty all the data values here.
-                    
                     %FX_TRKLAND:
                     for tohide=1:1
                         obj.Trkland.fx.in.movefiles = ['..' filesep 'post_TRKLAND' ];
