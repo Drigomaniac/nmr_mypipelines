@@ -1874,25 +1874,33 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 obj.Params.Tracula.out.dir = outpath ;
                 %
                 %Check for final file for step 1:;;;;
-                obj.Params.Tracula.out.lh_cst_diff = [ obj.Params.Tracula.out.dir  obj.sessionname ...
-                    filesep 'dlabel' filesep 'diff' filesep 'lh.cst_AS_avg33_mni_bbr_cpts_6.nii.gz' ]
-                if exist(obj.Params.Tracula.out.lh_cst_diff,'file') == 0
+                obj.Params.Tracula.out.prep_check = [ obj.Params.Tracula.out.dir  obj.sessionname ...
+                    filesep 'dlabel' filesep 'diff' filesep 'lh.cst_AS_avg33_mni_bbr_cpts_6.nii.gz' ];
+                if exist(obj.Params.Tracula.out.prep_check,'file') == 0
                     exec_cmd = ['trac-all -prep -c ' obj.Params.Tracula.out.dcmirc ' -i ' obj.Params.Tracula.in.fn ];
-                    try
-                        obj.RunBash(exec_cmd,44);
-                    catch
-                        error('Error when trying to run step 1 of tracula @ proc_tracula()');
-                    end
+                    obj.RunBash(exec_cmd,44);
+                else
+                    display(['In proc_tracula(). Skipping trac-all -prep ...']);
                 end
                 %Step 2: Trac-all -prep
-                exec_cmd = ['trac-all -bedp -c ' obj.Params.Tracula.out.dcmirc ' -i ' obj.Params.Tracula.in.fn ];
-                obj.RunBash(exec_cmd,44);
-                
-                %Step 3: Trac-all -prep
-                exec_cmd = ['trac-all -path -c ' obj.Params.Tracula.out.dcmirc ' -i ' obj.Params.Tracula.in.fn ];
-                obj.RunBash(exec_cmd,44);
-                
-                
+                obj.Params.Tracula.out.bedp_check = [ obj.Params.Tracula.out.dir  obj.sessionname ...
+                    filesep 'dmri.bedpostX' filesep 'mean_fsumsamples.nii.gz' ];
+                if exist(obj.Params.Tracula.out.bedp_check, 'file') == 0
+                    exec_cmd = ['trac-all -bedp -c ' obj.Params.Tracula.out.dcmirc ' -i ' obj.Params.Tracula.in.fn ];
+                    obj.RunBash(exec_cmd,44);
+                else
+                    display(['In proc_tracula(). Skipping trac-all -bedp ...']);
+                end
+                %Step 3: Trac-all -path
+                obj.Params.Tracula.out.path_check = [ obj.Params.Tracula.out.dir  obj.sessionname ...
+                    filesep 'dpath' filesep 'merged_avg33_mni_bbr.mgz' ];
+                if exist(obj.Params.Tracula.out.path_check,'file') == 0
+                    exec_cmd = ['trac-all -path -c ' obj.Params.Tracula.out.dcmirc ' -i ' obj.Params.Tracula.in.fn ];
+                    obj.RunBash(exec_cmd,44);
+                else
+                    display(['In proc_tracula(). Skipping trac-all -path ...']);
+                end
+                   
             end
             
             %catch
@@ -2098,6 +2106,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             obj.UpdateHist(obj.Trkland.fx,'trkland_fx', obj.Trkland.fx.out.trks_lh,wasRun);
                         end
                     else
+                        display('QC_flag_lh found in trklnad_fx. Skipping and removing data points...')
                         RefreshFields(obj,'fx','lh')
                     end
                     
@@ -2119,9 +2128,11 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             obj.UpdateHist(obj.Trkland.fx,'trkland_fx', obj.Trkland.fx.out.trks_lh,wasRun);
                         end
                     else
+                        display('QC_flag_rh found in trklnad_fx. Skipping and removing data points...')
                         RefreshFields(obj,'fx','rh')
                     end
                 else
+                    display('QC_flag_bil found in trklnad_fx. Skipping and removing data points...')
                     RefreshFields(obj,'fx','bil')
                 end
             end
@@ -2405,6 +2416,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             obj.UpdateHist(obj.Trkland.hippocing,'trkland_hippocing', obj.Trkland.hippocing.out.trk_lh,wasRun);
                         end
                     else
+                        display('QC_flag_lh found in trkland_hippocing. Skipping and removing data points...')
                         RefreshFields(obj,'hippocing','lh')
                     end
                     
@@ -2425,9 +2437,11 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             obj.UpdateHist(obj.Trkland.hippocing,'trkland_hippocing', obj.Trkland.hippocing.out.trk_rh,wasRun);
                         end
                     else
+                        display('QC_flag_rh found in trkland_hippocing. Skipping and removing data points...')
                         RefreshFields(obj,'hippocing','rh')
                     end
                 else
+                   display('QC_flag_bil found in trkland_hippocing. Skipping and removing data points...')
                    RefreshFields(obj,'hippocing','bil')
                 end
             end
@@ -2663,9 +2677,9 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 obj.Trkland.cingulum.out.clineFA_rh_highFA = [ obj.Trkland.root  'cline_cingulum_highFArh.trk.gz'];
                 obj.Trkland.cingulum.out.clineFA_rh_HDorff = [ obj.Trkland.root  'cline_cingulum_HDorffrh.trk.gz'];
                       
-                obj.Trkland.fx.cingulum.QCfile_lh = [outpath 'QC_cing_lh.flag'] ;
-                obj.Trkland.fx.cingulum.QCfile_rh = [outpath 'QC_cing_rh.flag'] ;
-                obj.Trkland.fx.cingulum.QCfile_bil = [outpath 'QC_cing_bil.flag'] ;
+                obj.Trkland.fx.cingulum.QCfile_lh = [outpath 'QC_cingulum_lh.flag'] ;
+                obj.Trkland.fx.cingulum.QCfile_rh = [outpath 'QC_cingulum_rh.flag'] ;
+                obj.Trkland.fx.cingulum.QCfile_bil = [outpath 'QC_cingulum_bil.flag'] ;
        
             end
             
@@ -2691,6 +2705,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             obj.UpdateHist(obj.Trkland.cingulum,'trkland_cingulum', obj.Trkland.cingulum.out.trk_lh,wasRun);
                         end
                     else
+                        display('QC_flag_lh found in trkland_cingulum. Skipping and removing data points...')
                         RefreshFields(obj,'cingulum','lh')
                     end
                     
@@ -2713,9 +2728,11 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             obj.UpdateHist(obj.Trkland.cingulum,'trkland_cingulum', obj.Trkland.cingulum.out.trk_rh,wasRun);
                         end
                     else
+                        display('QC_flag_rh found in trkland_cingulum. Skipping and removing data points...')
                         RefreshFields(obj,'cingulum','rh')
                     end
                 else
+                      display('QC_flag_bil found in trkland_cingulum. Skipping and removing data points...')
                       RefreshFields(obj,'cingulum','bil')
                 end
             end
@@ -2731,9 +2748,19 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         obj.Trkland.Trks.raw_cingulum_lh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
                         obj.Trkland.Trks.raw_cingulum_lh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
                         obj.Trkland.Trks.raw_cingulum_lh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
-                        %Trim tracts here:
-                        obj.Trkland.Trks.cingulum_trimmed_lh = rotrk_trimmedbyTOI(obj.Trkland.Trks.raw_cingulum_lh, ...
-                            [ {obj.Trkland.cingulum.in.seed_postcing_lh}  {obj.Trkland.cingulum.in.rostantcing_lh}  ], 'cingulum_lh');
+                          
+                        %Trim tracts here (checking if trimming occurs, mainly for manual edits):
+                        if exist(obj.Trkland.cingulum.out.clean_trkstrimmed_lh,'file') == 0
+                            obj.Trkland.Trks.cingulum_trimmed_lh = rotrk_trimmedbyTOI(obj.Trkland.Trks.raw_cingulum_lh, ...
+                                [ {obj.Trkland.cingulum.in.seed_postcing_lh}  {obj.Trkland.cingulum.in.rostantcing_lh}  ], 'cingulum_lh');
+                        else
+                            obj.Trkland.Trks.cingulum_trimmed_lh = rotrk_read(obj.Trkland.cingulum.out.clean_trkstrimmed_lh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'hippocing_lh' );
+                            obj.Trkland.Trks.cingulum_trimmed_lh  = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_lh  ,obj.Params.Dtifit.out.FA{end} , 'FA');
+                            obj.Trkland.Trks.cingulum_trimmed_lh  = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
+                            obj.Trkland.Trks.cingulum_trimmed_lh = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_lh  ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
+                            obj.Trkland.Trks.cingulum_trimmed_lh  = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_lh  ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
+                        end
+                        
                         
                         %Select the HDorff centerline(first pass):
                         obj.Trkland.Trks.cingulum_clineinit_lh= rotrk_centerline(obj.Trkland.Trks.cingulum_trimmed_lh,'hausdorff');
@@ -2803,10 +2830,21 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         obj.Trkland.Trks.raw_cingulum_rh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
                         obj.Trkland.Trks.raw_cingulum_rh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
                         obj.Trkland.Trks.raw_cingulum_rh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
-                        %Trim tracts here:
-                        obj.Trkland.Trks.cingulum_trimmed_rh = rotrk_trimmedbyTOI(obj.Trkland.Trks.raw_cingulum_rh, ...
-                            [  {obj.Trkland.cingulum.in.seed_postcing_rh}  {obj.Trkland.cingulum.in.rostantcing_rh}    ], 'cingulum_rh');
-                        %
+                      
+                        %Trim tracts here (checking if trimming occurs, mainly for manual edits):
+                        if exist(obj.Trkland.cingulum.out.clean_trkstrimmed_rh,'file') == 0
+                            obj.Trkland.Trks.cingulum_trimmed_rh = rotrk_trimmedbyTOI(obj.Trkland.Trks.raw_cingulum_rh, ...
+                                [ {obj.Trkland.cingulum.in.seed_postcing_rh}  {obj.Trkland.cingulum.in.rostantcing_rh}  ], 'cingulum_rh');
+                        else
+                            obj.Trkland.Trks.cingulum_trimmed_rh = rotrk_read(obj.Trkland.cingulum.out.clean_trkstrimmed_rh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'hippocing_rh' );
+                            obj.Trkland.Trks.cingulum_trimmed_rh  = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_rh  ,obj.Params.Dtifit.out.FA{end} , 'FA');
+                            obj.Trkland.Trks.cingulum_trimmed_rh  = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_rh  ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
+                            obj.Trkland.Trks.cingulum_trimmed_rh = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_rh  ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
+                            obj.Trkland.Trks.cingulum_trimmed_rh  = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_rh  ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
+                        end
+                        
+                        
+                        
                         %Select the HDorff centerline(first pass)
                         obj.Trkland.Trks.cingulum_clineinit_rh= rotrk_centerline(obj.Trkland.Trks.cingulum_trimmed_rh,'hausdorff');
                         %Clean up based on normality of hausdorff distance
@@ -2956,6 +2994,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             obj.UpdateHist(obj.Trkland.atr,'trkland_atr', obj.Trkland.atr.out.trk_lh,wasRun);
                         end
                     else
+                        display('QC_flag_rh found in trkland_atr. Skipping and removing data points...')
                         RefreshFields(obj,'atr','rh')
                     end
                     %Right side trking:
@@ -2977,9 +3016,11 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             
                         end
                     else
+                        display('QC_flag_lh found in trkland_atr. Skipping and removing data points...')
                         RefreshFields(obj,'atr','rh')
                     end
                 else
+                    display('QC_flag_bil found in trkland_atr. Skipping and removing data points...')
                     RefreshFields(obj,'atr','bil')
                 end
             end
@@ -3334,7 +3375,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             obj.Trkland.fx.data.(fields_data{ii}) = [];
                         else
                             if ~isempty(strfind(fields_data{ii},direction))
-                                obj.Trkland.fx.data(fields_data{ii}) = [] ;
+                                obj.Trkland.fx.data.(fields_data{ii}) = [] ;
                             end
                         end
                     end

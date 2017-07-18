@@ -714,7 +714,7 @@ classdef dwi_ADRC < dwiMRI_Session
                     obj.Params.Tracula.in.nb0 = 28;
                     obj.Params.Tracula.in.prefix = 'adrc';
                     
-                    %obj.proc_tracula();
+                    obj.proc_tracula();
                     
                 case 'proc_AFQ'
                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
