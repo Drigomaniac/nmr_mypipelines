@@ -69,6 +69,9 @@ classdef dwi_ADRC < dwiMRI_Session
                 obj.setMyParams;
             end
             
+            %Init project ID
+            obj.projectID='ADRC';
+            
             if isempty(obj.T1)
                   [~ , obj.T1 ]  = system([ 'ls ' obj.session_location 'T1' filesep '*.nii | head -1' ]);
             end
@@ -387,7 +390,9 @@ classdef dwi_ADRC < dwiMRI_Session
                 obj.Trkland.atr.in.thalamus_lh = strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc2009_aseg/dwi_fs_Left-Thalamus-Proper.nii.gz');
                 obj.Trkland.atr.in.thalamus_rh = strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc2009_aseg/dwi_fs_Right-Thalamus-Proper.nii.gz');
                 
-                trkland_atr(obj)
+              %Under DEVELOPMENT:
+              %I haven't found an optimal trimming technique
+              %trkland_atr(obj)
             end
             
             
@@ -698,7 +703,9 @@ classdef dwi_ADRC < dwiMRI_Session
                         obj.Trkland.atr.in.thalamus_lh = strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc2009_aseg/dwi_fs_Left-Thalamus-Proper.nii.gz');
                         obj.Trkland.atr.in.thalamus_rh = strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc2009_aseg/dwi_fs_Right-Thalamus-Proper.nii.gz');
                         
-                        trkland_atr(obj)
+                        %Under dev:
+                        %I haven't added an optimal trimming technique...
+                        %trkland_atr(obj)
                     end
                     
             
