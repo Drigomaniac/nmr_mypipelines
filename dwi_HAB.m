@@ -331,7 +331,7 @@ classdef dwi_HAB < dwiMRI_Session
             %FX_TRKLAND:
             for tohide=1:1
                 %b0 params:
-                obj.Trkland.fx.in.b0 = obj.Params.MaskAfterEddy.out.brainonly; % obj.Params.B0mean.out.fn{end}; --> BAD 
+                obj.Trkland.fx.in.b0 = obj.Params.B0mean.out.fn{end}; % obj.Params.MaskAfterEddy.out.brainonly; % obj.Params.B0mean.out.fn{end}; --> BAD 
                 obj.Trkland.fx.in.movefiles = ['..' filesep 'post_TRKLAND' ];
                 %Template parameters:
                 obj.Trkland.fx.tmp.b0 = [ obj.fx_template_dir '141210_8CS00178_b0.nii.gz' ] ;
@@ -399,7 +399,6 @@ classdef dwi_HAB < dwiMRI_Session
             
             
         end
-        
         function resave(obj)
             save([obj.objectHome filesep obj.sessionname '.mat'],'obj');
         end

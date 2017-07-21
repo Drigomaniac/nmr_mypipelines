@@ -398,6 +398,7 @@ classdef dwi_ADRC < dwiMRI_Session
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %TRACULA (and implicit functionality of bedpostx):
+            for tohide=1:1
             obj.Params.Tracula.in.movefiles = ['..' filesep 'post_TRACULA' ];
             obj.Params.Tracula.in.fn = obj.Params.CoRegMultiple.out.combined_fn ;
             obj.Params.Tracula.in.dcmrirc = [obj.dependencies_dir 'dcmrirc.template' ];
@@ -408,16 +409,17 @@ classdef dwi_ADRC < dwiMRI_Session
             obj.Params.Tracula.in.prefix = 'adrc';
             
             %obj.proc_tracula();
-                     
+            end
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %AFQ:
+            for tohide=1:1
             obj.Params.AFQ.in.movefiles = ['..' filesep 'post_AFQ' ];
             obj.Params.AFQ.in.dwi = obj.Params.CoRegMultiple.out.combined_fn ;
             obj.Params.AFQ.in.T1 = obj.T1 ;
             
             %obj.proc_AFQ();
-            
+            end
         end
         function obj = ParticularProc(obj)
             
