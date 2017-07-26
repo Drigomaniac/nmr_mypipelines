@@ -110,7 +110,7 @@ classdef dwi_HAB < dwiMRI_Session
             
             %Continue with CommonPreProc
             obj.CommonPreProc();
-            
+            return
             %Continue with CommonPostProc
             obj.CommonPostProc();
             
@@ -237,6 +237,8 @@ classdef dwi_HAB < dwiMRI_Session
             obj.Params.Skel_TOI.in.suffix = '_n272TMP';
            
             obj.proc_getskeltois();
+            
+            return
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         
             

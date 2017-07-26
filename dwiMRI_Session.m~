@@ -1543,29 +1543,63 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         fprintf('\nSkeletonizing  dtimetrics... ');
                         tic
                         fprintf('\n in FA...');
+                        %For FA we move the projected skeletonize into FA
+                        %(as we use this metric for the initial guess)
+                        exec_cmd =[ 'cp ' obj.Params.Skeletonize.out.fn{ii} obj.Params.Skeletonize.out.FA{ii} ];
+                        obj.RunBash(exec_cmd);
+                     
+                        %For RD/AxD//MD a -a (alternative metrics) should
+                        %be added...
+                        %RD:
+                        fprintf('\n in RD...');
                         exec_cmd=[ 'tbss_skeleton ' ...
                             ' -i '  obj.Params.Skeletonize.in.meanFA ...
                             ' -p '  obj.Params.Skeletonize.in.thr ...
                             ' '  obj.Params.Skeletonize.in.skel_dst ...
                             ' '  obj.Params.Skeletonize.in.ref_region  ...
                             ' '  obj.Params.Skeletonize.in.FA{ii} ...
-                            ' '  obj.Params.Skeletonize.out.FA{ii}];
+                            ' '  obj.Params.Skeletonize.out.FA{ii} ... 
+                            ' -a ' strrep(obj.Params.Skeletonize.in.FA{ii},'FA','RD')  ];
                         obj.RunBash(exec_cmd);
                         fprintf('...done\n');
-                        %RD:
-                        fprintf('\n in RD...');
-                        exec_cmd=strrep(exec_cmd,'_FA.nii','_RD.nii')
-                        obj.RunBash(exec_cmd); fprintf('...done\n');
                         %AxD:
                         fprintf('\n in AxD...');
-                        exec_cmd=strrep(exec_cmd,'_RD.nii','_AxD.nii')
+                       
+                        
+                        
                         obj.RunBash(exec_cmd); fprintf('...done\n');
                         %MD:
                         fprintf('\n in MD...');
-                        exec_cmd=strrep(exec_cmd,'_AxD.nii','_MD.nii')
+                        
+                        
                         obj.RunBash(exec_cmd); fprintf('...done\n');
                         toc
                         fprintf('...done.\n');
+                        
+                        
+%                         exec_cmd=[ 'tbss_skeleton ' ...
+%                             ' -i '  obj.Params.Skeletonize.in.meanFA ...
+%                             ' -p '  obj.Params.Skeletonize.in.thr ...
+%                             ' '  obj.Params.Skeletonize.in.skel_dst ...
+%                             ' '  obj.Params.Skeletonize.in.ref_region  ...
+%                             ' '  obj.Params.Skeletonize.in.FA{ii} ...
+%                             ' '  obj.Params.Skeletonize.out.FA{ii}];
+%                         obj.RunBash(exec_cmd);
+%                         fprintf('...done\n');
+%                         %RD:
+%                         fprintf('\n in RD...');
+%                         exec_cmd=strrep(exec_cmd,'_FA.nii','_RD.nii')
+%                         obj.RunBash(exec_cmd); fprintf('...done\n');
+%                         %AxD:
+%                         fprintf('\n in AxD...');
+%                         exec_cmd=strrep(exec_cmd,'_RD.nii','_AxD.nii')
+%                         obj.RunBash(exec_cmd); fprintf('...done\n');
+%                         %MD:
+%                         fprintf('\n in MD...');
+%                         exec_cmd=strrep(exec_cmd,'_AxD.nii','_MD.nii')
+%                         obj.RunBash(exec_cmd); fprintf('...done\n');
+%                         toc
+%                         fprintf('...done.\n');
                     else
                         fprintf(['\n proc_skeletonize(): ' obj.Params.AntsReg.out.fn{ii} ...
                             ' exists. Skipping...\n\n']) ;
@@ -2132,8 +2166,6 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                                     obj.RunBash(exec_cmd,144);
                                 end
                             end
-                            
-                            
                             wasRun=true;
                             obj.UpdateHist(obj.Trkland.fx,'trkland_fx', obj.Trkland.fx.out.trks_lh,wasRun);
                         end
@@ -2145,37 +2177,27 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     if exist(obj.Trkland.fx.out.QCfile_rh) == 0
                         %Right side trking:
                         if exist(obj.Trkland.fx.out.trks_rh,'file') == 0
-                            exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
-                                ' --seed_count=10000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
-                                ' --seed=' obj.Trkland.fx.in.roi_rh ' --roa=' obj.Trkland.fx.in.roa_rh_hollow ...
-                                ' --step_size=1 --turning_angle=40 --min_length=80 --max_length=250 ' ...
-                                ' --output=' obj.Trkland.fx.out.trks_rh ];
+                            if strcmp(obj.projectID,'ADRC')
+                                exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
+                                    ' --seed_count=10000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
+                                    ' --seed=' obj.Trkland.fx.in.roi_rh ' --roa=' obj.Trkland.fx.in.roa_rh_hollow ...
+                                    ' --threshold_index=nqa  --fa_threshold=0.04 --fiber_count=300' ...
+                                    ' --step_size=1 --turning_angle=40 --min_length=80 --max_length=250 ' ...
+                                    ' --output=' obj.Trkland.fx.out.trks_rh ];
+                            else
+                                exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
+                                    ' --seed_count=10000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
+                                    ' --seed=' obj.Trkland.fx.in.roi_rh ' --roa=' obj.Trkland.fx.in.roa_rh_hollow ...
+                                    ' --step_size=1 --turning_angle=40 --min_length=80 --max_length=250 ' ...
+                                    ' --output=' obj.Trkland.fx.out.trks_rh ];
+                            end
                             %Trying 4 times to get a trk, if not....quit
                             for dd=1:4
                                 if exist(obj.Trkland.fx.out.trks_rh,'file') == 0
                                     obj.RunBash(exec_cmd,144);
                                 end
                             end
-                            %IF it didn't work and you are in the ADRC
-                            %data, then run it again but with NQA0 thresh
-                            %of 0.04
-                            if exist(obj.Trkland.fx.out.trks_rh,'file') == 0
-                                if strcmp(obj.projectID,'ADRC')
-                                    exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
-                                        ' --seed_count=10000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
-                                        ' --seed=' obj.Trkland.fx.in.roi_rh ' --roa=' obj.Trkland.fx.in.roa_rh_hollow ...
-                                        ' --threshold_index=nqa  --fa_threshold=0.04 --fiber_count=300' ...
-                                        ' --step_size=1 --turning_angle=40 --min_length=80 --max_length=250 ' ...
-                                        ' --output=' obj.Trkland.fx.out.trks_rh ];
-                                end
-                                %Trying 4 times to get a trk, if not....quit
-                                for dd=1:4
-                                    if exist(obj.Trkland.fx.out.trks_rh,'file') == 0
-                                        obj.RunBash(exec_cmd,144);
-                                    end
-                                end
-                                
-                            end
+                            
                             wasRun=true;
                             obj.UpdateHist(obj.Trkland.fx,'trkland_fx', obj.Trkland.fx.out.trks_lh,wasRun);
                         end
@@ -3434,7 +3456,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                            obj.Trkland.cingulum.data.(fields_data{ii}) = [];
                         else
                             if ~isempty(strfind(fields_data{ii},direction))
-                                obj.Trkland.cingulum.data(fields_data{ii}) = [] ;
+                                obj.Trkland.cingulum.data.(fields_data{ii}) = [] ;
                             end
                         end
                     end
