@@ -939,23 +939,28 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     obj.RunBash(exec_cmd);
                     fprintf('...done \n');
                     wasRun=true;
-                    
-                    
-                    %Populating the variables needed:
-                    [ ~, obj.Params.EddyMotion.out.vals.initb0_mean{ii} ]  = ...
-                        system([ 'cat ' obj.Params.EddyMotion.out.fn_motion{ii} ' | head -1 | awk '' {print $1} '' ' ]);
-                    [ ~, obj.Params.EddyMotion.out.vals.initb0_std{ii} ]  = ...
-                        system([ 'cat ' obj.Params.EddyMotion.out.fn_motion{ii} ' | head -1 | awk '' {print $2} '' ' ]);
-                    [ ~ , obj.Params.EddyMotion.out.vals.rel_mean{ii} ] = ...
-                        system([ 'cat ' obj.Params.EddyMotion.out.fn_motion{ii} ' | tail -1 | awk '' {print $1} '' ' ]);
-                    [ ~ , obj.Params.EddyMotion.out.vals.rel_std{ii} ] = ...
-                        system([ 'cat ' obj.Params.EddyMotion.out.fn_motion{ii} ' | tail -1 | awk '' {print $2} '' ' ]);
-                    
-                    
-                    obj.UpdateHist(obj.Params.Eddy,'proc_eddy_motion', obj.Params.Eddy.out.fn{ii},wasRun);
                 else
                     fprintf(['\n proc_eddy(): ' obj.Params.Eddy.out.fn{ii} ' exists. Skipping...\n\n']) ;
                 end
+                %Populating the variables needed:
+                if isempty(obj.Params.EddyMotion.out.vals.initb0_mean)
+                    [ ~, obj.Params.EddyMotion.out.vals.initb0_mean{ii} ]  = ...
+                        system([ 'cat ' obj.Params.EddyMotion.out.fn_motion{ii} ' | head -1 | awk '' {print $1} '' ' ]);
+                end
+                if isempty(obj.Params.EddyMotion.out.vals.initb0_std)
+                    [ ~, obj.Params.EddyMotion.out.vals.initb0_std{ii} ]  = ...
+                        system([ 'cat ' obj.Params.EddyMotion.out.fn_motion{ii} ' | head -1 | awk '' {print $2} '' ' ]);
+                end
+                if isempty(obj.Params.EddyMotion.out.vals.rel_mean)
+                    [ ~ , obj.Params.EddyMotion.out.vals.rel_mean{ii} ] = ...
+                        system([ 'cat ' obj.Params.EddyMotion.out.fn_motion{ii} ' | tail -1 | awk '' {print $1} '' ' ]);
+                end
+                if isempty( obj.Params.EddyMotion.out.vals.rel_std)
+                    [ ~ , obj.Params.EddyMotion.out.vals.rel_std{ii} ] = ...
+                        system([ 'cat ' obj.Params.EddyMotion.out.fn_motion{ii} ' | tail -1 | awk '' {print $2} '' ' ]);
+                end
+                
+                obj.UpdateHist(obj.Params.Eddy,'proc_eddy_motion', obj.Params.Eddy.out.fn{ii},wasRun);
             end
         end
         
@@ -3526,7 +3531,8 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             
             %%Skel Values uploading
             TOI_fields=fields(obj.Params.Skel_TOI.out);
-            fprintf('\n');
+            fprintf('\n Uploading: ');
+            
             for ii=1:numel(TOI_fields)
                 dctl_cmd = [ ' SELECT MRI_skelDWI_' TOI_fields{ii} ...
                     ' FROM MRI.skelDWI  WHERE MRI_Session_ID = ' num2str(cur_DC_ID.MRI_Session_ID)  ];
@@ -3535,27 +3541,167 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 
                 check_dctl_cmd = DataCentral(dctl_cmd);
                 
+                %Add 1000 to AxD, RD, and MD
+                if isempty(strfind(TOI_fields{ii},'FA'))
+                    cur_value=strtrim(num2str(str2num(obj.Params.Skel_TOI.out.(TOI_fields{ii}))*1000));
+                else
+                    cur_value=strtrim(obj.Params.Skel_TOI.out.(TOI_fields{ii}));
+                end
+                
                 if isempty(check_dctl_cmd.(['MRI_skelDWI_' TOI_fields{ii}]))
                     fprintf(['Skel TOI ==> Uploading to DataCentral: ' id ' and TOI: ' TOI_fields{ii}  ])
                     %       dctl_cmd = [ 'INSERT INTO rdp20.DWI_TBSS_SKEL_VALS (MRI_Session_ID,  MRI_skelDWI_' TOI_fields{ii} ') ' ...
                     %          ' values ( ' num2str(cur_DC_ID.MRI_Session_ID) ',' strtrim(obj.Params.Skel_TOI.out.(TOI_fields{ii})) ')'   ] ;
                     dctl_cmd = [ 'INSERT INTO MRI.skelDWI (MRI_Session_ID,  MRI_skelDWI_' TOI_fields{ii} ') ' ...
-                        ' values ( ' num2str(cur_DC_ID.MRI_Session_ID) ',' strtrim(obj.Params.Skel_TOI.out.(TOI_fields{ii})) ')'   ] ;
+                        ' values ( ' num2str(cur_DC_ID.MRI_Session_ID) ',' cur_value ')'   ] ;
                     DataCentral(dctl_cmd);
                     fprintf('...done\n');
-                elseif isnan(check_dctl_cmd.(['MRI_skelDWI_' TOI_fields{ii}]))
-                    fprintf(['Skel TOI ==> Uploading to DataCentral: ' id ' and TOI: ' TOI_fields{ii}  ])
+                %elseif isnan(check_dctl_cmd.(['MRI_skelDWI_' TOI_fields{ii}]))
+                else
+                    %fprintf(['Skel TOI ==> Uploading to DataCentral: ' id ' and TOI: ' TOI_fields{ii}  ])
+                    fprintf([TOI_fields{ii} '...' ])
+                    if mod(ii,4) == 0
+                        fprintf('\n');
+                    end
                     %    dctl_cmd = [ 'UPDATE rdp20.DWI_TBSS_SKEL_VALS SET MRI_skelDWI_' TOI_fields{ii} ...
                     %    ' = ''' strtrim(obj.Params.Skel_TOI.out.(TOI_fields{ii})) ''' WHERE MRI_Session_ID =  ' ...
                     %    num2str(cur_DC_ID.MRI_Session_ID)   ] ;
                     dctl_cmd = [ 'UPDATE MRI.skelDWI SET MRI_skelDWI_' TOI_fields{ii} ...
-                        ' = ''' strtrim(obj.Params.Skel_TOI.out.(TOI_fields{ii})) ''' WHERE MRI_Session_ID =  ' ...
+                        ' = ''' cur_value ''' WHERE MRI_Session_ID =  ' ...
                         num2str(cur_DC_ID.MRI_Session_ID)   ] ;
                     DataCentral(dctl_cmd);
-                    fprintf('...done\n');
+                    %fprintf('...done\n');
                 end
                 % DataCentral(['UPDATE PIB.noT1_SUVR_new SET ' Q ' WHERE PIB_Session_ID = "' id '"']);
                 
+                %%% upload ROI data
+                obj.resave;
+            end
+            disp('skelTOIs values have been uploaded to DataCentral');
+        end
+        
+        
+        
+         function obj = UploadData_Trkland(obj)
+            id = obj.sessionname;
+            if isempty(id);
+                disp('No Session_ID.  Cannot upload data');
+                return
+            end
+            
+            if isnumeric(id)
+                id = num2str(id);
+            end
+            
+            %%Select current SessionID
+            dctl_cmd = [ 'SELECT MRI_Session_ID FROM Sessions.MRI  WHERE ' ' MRI_Session_Name = ''' id '''' ];
+            cur_DC_ID = DataCentral(dctl_cmd);
+            
+            %%Creating all the files that will be uploaded:
+            FX_fields = fields(obj.Trkland.fx.data);
+            CING_fields = fields(obj.Trkland.cingulum.data);
+            HIPPOCING_fields=fields(obj.Trkland.hippocing.data);
+            
+            %STARTING THE UPLOADING SEQUENCE:
+            
+            fprintf('\n Uploading: ');
+            
+            %FOR FX:
+            for ii=1:numel(FX_fields)
+                dctl_cmd = [ ' SELECT fx_' FX_fields{ii} ...
+                    ' FROM rdp20.TRKLAND  WHERE MRI_Session_ID = ' num2str(cur_DC_ID.MRI_Session_ID)  ];
+                check_dctl_cmd = DataCentral(dctl_cmd);
+                
+                %Add 1000 to AxD, RD, and MD
+                if ~isempty(obj.Trkland.fx.data.(FX_fields{ii}))
+                    if ~isempty(strfind(FX_fields{ii},'RD')) || ~isempty(strfind(FX_fields{ii},'MD')) || ~isempty(strfind(FX_fields{ii},'AxD'))
+                        cur_value=num2str(obj.Trkland.fx.data.(FX_fields{ii})*1000);
+                    else
+                        cur_value=num2str(obj.Trkland.fx.data.(FX_fields{ii}));
+                    end
+                    
+                    if isempty(check_dctl_cmd.(['fx_' FX_fields{ii}]))
+                        fprintf(['FX Trkland ==> Inserting to DataCentral: ' id ' on: ' FX_fields{ii} '=' cur_value  ])
+                        dctl_cmd = [ 'INSERT INTO rdp20.TRKLAND (MRI_Session_ID,  fx_' FX_fields{ii} ') ' ...
+                            ' values ( ' num2str(cur_DC_ID.MRI_Session_ID) ',' cur_value ')'   ] ;
+                        DataCentral(dctl_cmd);
+                        fprintf('...done\n');
+                    else
+                        fprintf(['FX Trkland ==> Updating to DataCentral: ' id ' on: ' FX_fields{ii} '=' cur_value  ])
+                        dctl_cmd = [ 'UPDATE rdp20.TRKLAND SET fx_' FX_fields{ii} ...
+                            ' = ''' cur_value ''' WHERE MRI_Session_ID =  ' ...
+                            num2str(cur_DC_ID.MRI_Session_ID)   ] ;
+                        DataCentral(dctl_cmd);
+                        fprintf('...done\n');
+                    end
+                end
+                %%% upload ROI data
+                obj.resave;
+            end
+            
+            
+            %FOR CING:
+            for ii=1:numel(CING_fields)
+                dctl_cmd = [ ' SELECT cing_' CING_fields{ii} ...
+                    ' FROM rdp20.TRKLAND  WHERE MRI_Session_ID = ' num2str(cur_DC_ID.MRI_Session_ID)  ];
+                check_dctl_cmd = DataCentral(dctl_cmd);
+                display(num2str(ii))
+                if ~isempty(obj.Trkland.cingulum.data.(CING_fields{ii}))
+                    %Add 1000 to AxD, RD, and MD
+                    if ~isempty(strfind(CING_fields{ii},'RD')) || ~isempty(strfind(CING_fields{ii},'MD')) || ~isempty(strfind(CING_fields{ii},'AxD'))
+                        cur_value=num2str(obj.Trkland.cingulum.data.(CING_fields{ii})*1000);
+                    else
+                        cur_value=num2str(obj.Trkland.cingulum.data.(CING_fields{ii}));
+                    end
+                    
+                    if isempty(check_dctl_cmd.(['cing_' CING_fields{ii}]))
+                        fprintf(['CINGULUM Trkland ==> Inserting to DataCentral: ' id ' on: ' CING_fields{ii} '=' cur_value  ])
+                        dctl_cmd = [ 'INSERT INTO rdp20.TRKLAND (MRI_Session_ID,  cing_' CING_fields{ii} ') ' ...
+                            ' values ( ' num2str(cur_DC_ID.MRI_Session_ID) ',' cur_value ')'   ] ;
+                        DataCentral(dctl_cmd);
+                        fprintf('...done\n');
+                    else
+                        fprintf(['CINGULUM Trkland ==> Updating to DataCentral: ' id ' on: ' CING_fields{ii} '=' cur_value  ])
+                        dctl_cmd = [ 'UPDATE rdp20.TRKLAND SET cing_' CING_fields{ii} ...
+                            ' = ''' cur_value ''' WHERE MRI_Session_ID =  ' ...
+                            num2str(cur_DC_ID.MRI_Session_ID)   ] ;
+                        DataCentral(dctl_cmd);
+                        fprintf('...done\n');
+                    end
+                end
+                %%% upload ROI data
+                obj.resave;
+            end
+            
+            %FOR HIPPOCING:
+            for ii=1:numel(HIPPOCING_fields)
+                dctl_cmd = [ ' SELECT hippocing_' HIPPOCING_fields{ii} ...
+                    ' FROM rdp20.TRKLAND  WHERE MRI_Session_ID = ' num2str(cur_DC_ID.MRI_Session_ID)  ];
+                check_dctl_cmd = DataCentral(dctl_cmd);
+                display(num2str(ii))
+                if ~isempty(obj.Trkland.hippocing.data.(HIPPOCING_fields{ii}))
+                    %Add 1000 to AxD, RD, and MD
+                    if ~isempty(strfind(HIPPOCING_fields{ii},'RD')) || ~isempty(strfind(HIPPOCING_fields{ii},'MD')) || ~isempty(strfind(HIPPOCING_fields{ii},'AxD'))
+                        cur_value=num2str(obj.Trkland.hippocing.data.(HIPPOCING_fields{ii})*1000);
+                    else
+                        cur_value=num2str(obj.Trkland.hippocing.data.(HIPPOCING_fields{ii}));
+                    end
+                    
+                    if isempty(check_dctl_cmd.(['hippocing_' HIPPOCING_fields{ii}]))
+                        fprintf(['HIPPOCINGULUM Trkland ==> Inserting to DataCentral: ' id ' on: ' HIPPOCING_fields{ii} '=' cur_value  ])
+                        dctl_cmd = [ 'INSERT INTO rdp20.TRKLAND (MRI_Session_ID,  hippocing_' HIPPOCING_fields{ii} ') ' ...
+                            ' values ( ' num2str(cur_DC_ID.MRI_Session_ID) ',' cur_value ')'   ] ;
+                        DataCentral(dctl_cmd);
+                        fprintf('...done\n');
+                    else
+                        fprintf(['HIPPOCINGULUM Trkland ==> Updating to DataCentral: ' id ' on: ' HIPPOCING_fields{ii} '=' cur_value  ])
+                        dctl_cmd = [ 'UPDATE rdp20.TRKLAND SET hippocing_' HIPPOCING_fields{ii} ...
+                            ' = ''' cur_value ''' WHERE MRI_Session_ID =  ' ...
+                            num2str(cur_DC_ID.MRI_Session_ID)   ] ;
+                        DataCentral(dctl_cmd);
+                        fprintf('...done\n');
+                    end
+                end
                 %%% upload ROI data
                 obj.resave;
             end

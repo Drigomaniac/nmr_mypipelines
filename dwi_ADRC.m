@@ -731,6 +731,8 @@ classdef dwi_ADRC < dwiMRI_Session
                     obj.Params.AFQ.in.movefiles = ['..' filesep 'post_AFQ' ];
                     obj.Params.AFQ.in.dwi = obj.Params.CoRegMultiple.out.combined_fn ;
                     obj.Params.AFQ.in.T1 = obj.T1 ;
+                case 'UploadData_Trkland'
+                    obj.UploadData_Trkland();
                     
                     %obj.proc_AFQ();
                 otherwise

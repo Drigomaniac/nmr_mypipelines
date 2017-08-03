@@ -26,7 +26,7 @@ classdef dwi_HAB < dwiMRI_Session
         HABn272_meanFA='/cluster/hab/HAB/Project1/DWIs_30b700/DEPENDENCIES/HABn272_MNI_Target/HABn272_meanFA.nii.gz';
         HABn272_meanFA_skel_dst='/cluster/hab/HAB/Project1/DWIs_30b700/DEPENDENCIES/HABn272_MNI_Target/HABn272_meanFA_skeleton_mask_dst.nii.gz';
         ref_region='/usr/pubsw/packages/fsl/5.0.9/data/standard/LowerCingulum_1mm.nii.gz';
-       
+        
         %sh dependencies:
         init_rotate_bvecs_sh='/cluster/sperling/HAB/Project1/Scripts/DWIs/mod_fdt_rotate_bvecs.sh'; %For standarizing the bvecs after proc_dcm2nii
         dependencies_dir='/cluster/hab/HAB/Project1/DWIs_30b700/DEPENDENCIES/';
@@ -88,6 +88,9 @@ classdef dwi_HAB < dwiMRI_Session
                 obj.setMyParams;
             end
             
+            %Assign Project ID:
+            obj.projectID='HAB';
+            
             %Check if *.nii.gz files exist, if not get them from DCM2nii:
             obj.rawfiles = dir_wfp([obj.root 'Orig/*.nii.gz' ] );
             if isempty(obj.rawfiles)
@@ -98,6 +101,9 @@ classdef dwi_HAB < dwiMRI_Session
             if nargin>1
                 if strcmp(opt,'DataCentral')
                     obj.dctl_flag = true ;
+                    obj.proc_get_eddymotion();
+                    obj.UploadData_DWI();
+                    return
                 else
                     if ~strcmpi(oldroot,newroot)
                         obj = replaceObjText(obj,{oldroot},{newroot});
@@ -108,9 +114,10 @@ classdef dwi_HAB < dwiMRI_Session
                 obj.dctl_flag = false ;
             end
             
+            
             %Continue with CommonPreProc
             obj.CommonPreProc();
-            return
+            
             %Continue with CommonPostProc
             obj.CommonPostProc();
             
