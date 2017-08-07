@@ -1894,6 +1894,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 end
             end
         end
+       
         %%%%%%%%%%%%%%%%%%% END Data Pre-Processing Methods %%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
@@ -3249,6 +3250,174 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 end
             end
         end
+        
+        function obj = proc_tracx2thal10(obj)
+            % Make sure you
+            wasRun=false;
+            %Creating Proc specific Directory:
+            obj.Params.tracx_thal2ctx10.in_dir=obj.getPath(obj.Params.tracx_thal2ctx10.in.bedp_dir,obj.Params.tracx_thal2ctx10.in.movefiles);
+            
+            
+            %PREPARING 10 CTX SEGMENTATIONS (per L/H hemispheres)
+            %check if the dependency list exists...
+            if exist(obj.Params.tracx_thal2ctx10.in.prep_segs_list,'file') == 0
+                error(['\n proc_tracx2thal10(): ' obj.Params.tracx_thal2ctx10.in.prep_segs_list ' does not exit' ]);
+            else
+                tmp_readTXT=fileread([ obj.Params.tracx_thal2ctx10.in.prep_segs_list ]);
+                
+            end
+            obj.Params.tracx_thal2ctx10.in.prep_segs_list=textscan(tmp_readTXT,'%s %s %s %s %s %s %s %s %s %s');
+            
+            %Creating segs dir
+            obj.Params.tracx_thal2ctx10.in.segs_dir = [ obj.Params.tracx_thal2ctx10.in_dir 'segs' filesep ]
+            exec_cmd = [ 'mkdir -p ' obj.Params.tracx_thal2ctx10.in.segs_dir ];
+            obj.RunBash(exec_cmd);
+            
+            
+            %Creating segmentations...
+            for ii=1:size(obj.Params.tracx_thal2ctx10.in.prep_segs_list,2)
+                %For loop on every column that makes each iteration
+                temp_seg_L = ' '; temp_seg_R = ' ';
+                cur_FSseg_L = ' ' ; cur_FSseg_R =  ' ' ;
+                for jj=2:size(obj.Params.tracx_thal2ctx10.in.prep_segs_list{ii},1)
+                    %check if current segmentation exists ("NA" no character), if not quit and
+                    %throw error!
+                    if ~strcmp(obj.Params.tracx_thal2ctx10.in.prep_segs_list{ii}{jj},'NA')
+                        cur_FSseg_L = [ obj.Params.tracx_thal2ctx10.in.FSaparc_dir ...
+                            'dwi_ctx-lh-'  obj.Params.tracx_thal2ctx10.in.prep_segs_list{ii}{jj} '.nii.gz'];
+                        %check lh here:
+                        if exist(cur_FSseg_L,'file') == 0
+                            error(['In proc_tracx2thal10(): ' cur_FSseg_L ' does not exist. Needed for merge segmentations']);
+                        end
+                        
+                        cur_FSseg_R = [ obj.Params.tracx_thal2ctx10.in.FSaparc_dir ...
+                            'dwi_ctx-rh-'  obj.Params.tracx_thal2ctx10.in.prep_segs_list{ii}{jj} '.nii.gz' ];
+                        %check rh here:
+                        if exist(cur_FSseg_R,'file') == 0
+                            error(['\nIn proc_tracx2thal10(): ' cur_FSseg_R ' does not exist. Needed for merge segmentations']);
+                        end
+                        %Initial "-add" is not needed for first element
+                        if jj == 2 
+                        temp_seg_L = [ temp_seg_L  ' ' cur_FSseg_L ' '   ];
+                        temp_seg_R = [ temp_seg_R  ' ' cur_FSseg_R ' ' ];
+                        else
+                            temp_seg_L = [ temp_seg_L ' -add ' cur_FSseg_L  ' ' ];
+                            temp_seg_R = [ temp_seg_R ' -add ' cur_FSseg_R  ' ' ];
+                        end
+                    end
+                end
+                
+                %Add all directories in a merge file using fslmaths:
+                %lh:
+                cur_segname_L = [ obj.Params.tracx_thal2ctx10.in.segs_dir 'lh_' ...
+                    obj.Params.tracx_thal2ctx10.in.prep_segs_list{ii}{1} '.nii.gz' ];
+                exec_cmd = ['fslmaths ' temp_seg_L  cur_segname_L] ;
+                if exist(cur_segname_L,'file') == 0
+                    display([' In proc_tracx2thal10(): merging ' cur_segname_L '...']) 
+                    obj.RunBash(exec_cmd);
+                    display('...done');
+                end
+                %rh:
+                cur_segname_R = [ obj.Params.tracx_thal2ctx10.in.segs_dir 'rh_' ...
+                    obj.Params.tracx_thal2ctx10.in.prep_segs_list{ii}{1} '.nii.gz' ];
+                exec_cmd = ['fslmaths ' temp_seg_R cur_segname_R ] ;
+                if exist(cur_segname_R) == 0
+                    display([' In proc_tracx2thal10(): merging ' cur_segname_R '...']) 
+                    obj.RunBash(exec_cmd);
+                    display('...done');
+                end
+            end
+            
+            %Creating the txt files:
+            %lh:
+            obj.Params.tracx_thal2ctx10.in.lh_txt =  [ obj.Params.tracx_thal2ctx10.in.segs_dir 'segs_lh.txt' ];
+            exec_cmd = [ ' ls -1 ' obj.Params.tracx_thal2ctx10.in.segs_dir ...
+                'lh_* > ' obj.Params.tracx_thal2ctx10.in.lh_txt  ];
+            obj.RunBash(exec_cmd);
+            %rh:
+            obj.Params.tracx_thal2ctx10.in.rh_txt =  [ obj.Params.tracx_thal2ctx10.in.segs_dir 'segs_rh.txt' ];
+            exec_cmd = [ ' ls -1 ' obj.Params.tracx_thal2ctx10.in.segs_dir ...
+                'rh_* > ' obj.Params.tracx_thal2ctx10.in.rh_txt  ];
+            obj.RunBash(exec_cmd);
+            
+            
+            
+            %Now ready to perform probablistic tractograhy with the
+            %parameters of interest:
+            %Selecingt our seeds of interes:
+            obj.Params.tracx_thal2ctx10.in.lh_seed = strrep(obj.Params.tracx_thal2ctx10.in.FSaparc_dir,['_aseg' filesep'],['2009_aseg' filesep 'dwi_fs_Left-Thalamus-Proper.nii.gz']);
+            obj.Params.tracx_thal2ctx10.in.rh_seed = strrep(obj.Params.tracx_thal2ctx10.in.FSaparc_dir,['_aseg' filesep'],['2009_aseg' filesep 'dwi_fs_Right-Thalamus-Proper.nii.gz']);
+            
+            %lh:
+            exec_cmd = ['probtrackx2 -x ' obj.Params.tracx_thal2ctx10.in.lh_seed ...
+                ' -l --loopcheck -c 0.2 -S 2000 --steplength=0.5 -P 5000' ...
+                ' --fibthresh=0.01 --distthresh=0.0 --sampvox=0.0 --forcedir --opd -s ' ...
+                ' ' obj.Params.tracx_thal2ctx10.in.bedp_dir filesep 'merged' ...
+                ' -m ' obj.Params.tracx_thal2ctx10.in.bedp_dir filesep 'nodif_brain_mask' ...
+                ' --dir=' obj.Params.tracx_thal2ctx10.in_dir ' --otargetpaths' ...
+                ' --targetmasks=' obj.Params.tracx_thal2ctx10.in.lh_txt ' --os2t'];
+            
+           
+            
+            obj.Params.tracx_thal2ctx10.out.seed2temporal_lh = [ obj.Params.tracx_thal2ctx10.in_dir 'seeds_to_lh_temporal.nii.gz'] ; 
+            if exist(obj.Params.tracx_thal2ctx10.out.seed2temporal_lh) == 0
+                obj.RunBash(exec_cmd,44);
+            end
+            %rh:
+            exec_cmd = ['probtrackx2 -x ' obj.Params.tracx_thal2ctx10.in.rh_seed ...
+                ' -l --loopcheck -c 0.2 -S 2000 --steplength=0.5 -P 5000' ...
+                ' --fibthresh=0.01 --distthresh=0.0 --sampvox=0.0 --forcedir --opd -s ' ...
+                ' ' obj.Params.tracx_thal2ctx10.in.bedp_dir filesep 'merged' ...
+                ' -m ' obj.Params.tracx_thal2ctx10.in.bedp_dir filesep 'nodif_brain_mask' ...
+                ' --dir=' obj.Params.tracx_thal2ctx10.in_dir ' --otargetpaths' ...
+                ' --targetmasks=' obj.Params.tracx_thal2ctx10.in.rh_txt ' --os2t'];
+            
+            obj.Params.tracx_thal2ctx10.out.seed2temporal_rh = [ obj.Params.tracx_thal2ctx10.in_dir 'seeds_to_lh_temporal.nii.gz'] ; 
+            if exist(obj.Params.tracx_thal2ctx10.out.seed2temporal_rh,'file') == 0
+                obj.RunBash(exec_cmd,44);
+            end
+            
+            %Now find the biggest
+            %lh:
+            obj.Params.tracx_thal2ctx10.out.biggest_lh = [ obj.Params.tracx_thal2ctx10.in_dir 'lh_thal2ctx10.nii.gz'] ;
+            if exist(obj.Params.tracx_thal2ctx10.out.biggest_lh,'file') == 0
+                exec_cmd = ['find_the_biggest ' obj.Params.tracx_thal2ctx10.in_dir  ... 
+                    'seeds_to_lh_* '  obj.Params.tracx_thal2ctx10.out.biggest_lh ]
+                obj.RunBash(exec_cmd,44);
+            end
+            %Extracting the values and uploading data
+            [check_ok , obj.Params.tracx_thal2ctx10.out.biggest_vals_lh] = system(['fslstats ' ...
+                obj.Params.tracx_thal2ctx10.out.biggest_lh  ' -h 10 '])
+            if check_ok == 0
+                error('In  proc_tracx2thal10(): failed to parcellate find_the_biggest for thal2ctx10_lh' 
+            end
+                
+            
+            %rh
+            obj.Params.tracx_thal2ctx10.out.biggest_rh = [ obj.Params.tracx_thal2ctx10.in_dir 'rh_thal2ctx10.nii.gz'] ; 
+            if exist(obj.Params.tracx_thal2ctx10.out.biggest_rh,'file') == 0
+                exec_cmd = ['find_the_biggest ' obj.Params.tracx_thal2ctx10.in_dir  ...
+                    'seeds_to_rh_* '  obj.Params.tracx_thal2ctx10.out.biggest_rh ]
+                obj.RunBash(exec_cmd,44);
+            end
+            
+            
+            %Extracting the values and uploading data
+            [check_ok , obj.Params.tracx_thal2ctx10.out.biggest_vals_rh] = system(['fslstats ' ...
+                obj.Params.tracx_thal2ctx10.out.biggest_rh  ' -h 10 '])
+            if check_ok == 0
+                error('In  proc_tracx2thal10(): failed to parcellate find_the_biggest for thal2ctx10_lh' 
+            end
+            
+            
+            
+            
+            
+            %Saving object:
+            obj.resave
+            
+        end
+        
           
         %%%%%%%%%%%%%%%%%%% END Data Post-Processing Methods %%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

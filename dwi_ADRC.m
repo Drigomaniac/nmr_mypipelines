@@ -408,7 +408,21 @@ classdef dwi_ADRC < dwiMRI_Session
             obj.Params.Tracula.in.nb0 = 28;
             obj.Params.Tracula.in.prefix = 'adrc';
             
-            %obj.proc_tracula();
+            obj.proc_tracula();
+            
+            end
+            
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %TRACX THAL_2_CORTEX10:
+            for tohide=1:1
+                obj.Params.tracx_thal2ctx10.in.bedp_dir = fileparts(obj.Params.Tracula.out.bedp_check);
+                obj.Params.tracx_thal2ctx10.in.FSaparc_dir = [ fileparts(obj.Params.FS2dwi.out.fn_aparc2009)  filesep 'aparc_aseg' filesep];
+                obj.Params.tracx_thal2ctx10.in.movefiles = ['..' filesep '..' filesep '..' filesep 'post_tracx' filesep 'thal2ctx10' ];
+                obj.Params.tracx_thal2ctx10.in.prep_segs_list = [ obj.dependencies_dir  'THALX_CTX10.txt' ];  
+                obj.Params.tracx_thal2ctx10.in.T1 = obj.T1 ;
+                
+                obj.proc_tracx2thal10();
             end
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
