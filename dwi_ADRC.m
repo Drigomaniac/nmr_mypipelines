@@ -29,6 +29,9 @@ classdef dwi_ADRC < dwiMRI_Session
         fx_template_dir= '/space/public_html/rdp20/fornix_ROA/FX_1.8mm_orig/';
         
         
+        %frois dependencies
+        FROIS_dir = '/eris/bang/ADRC/TEMPLATES/FROIS/'
+        
     end
     methods
         function obj = dwi_ADRC(sessionname,opt)
@@ -240,10 +243,7 @@ classdef dwi_ADRC < dwiMRI_Session
             
             
             obj.proc_coreg_multiple();
-            
-            
-            
-            
+        
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %For DWI combined DTIFIT:
             %We will use the --wls option as it seems to improve the fit of
@@ -253,7 +253,7 @@ classdef dwi_ADRC < dwiMRI_Session
             %diverge for linearity (2.5k is close to linearity than
             %non-linear signal drop at 7.5k)
             obj.Params.Dtifit.in.movefiles = [ '..' filesep '06_2k5DTIFIT' ];
-            obj.Params.Dtifit.in.fn ={obj.Params.Eddy.in.fn{1}} %{obj.Params.CoRegMultiple.out.combined_fn};
+            obj.Params.Dtifit.in.fn ={obj.Params.Eddy.in.fn{1}}; %{obj.Params.CoRegMultiple.out.combined_fn};
             obj.Params.Dtifit.in.prefix = 'DTIFIT_FSLv509' ; %Double check this so you prefix the version of FSL!
             obj.Params.Dtifit.in.bvecs = {obj.Params.Eddy.out.bvecs{1}};
             obj.Params.Dtifit.in.bvals = {obj.Params.Eddy.in.bvals{1}};
@@ -297,10 +297,25 @@ classdef dwi_ADRC < dwiMRI_Session
                 strtrim(strrep(obj.Params.FreeSurfer.out.aparcaseg,'aparc+aseg','rh.hippoSfLabels-T1-T2.v10')); 
           
             obj.proc_FS2dwi();
-        end
-        function obj = CommonPostProc(obj)
             
-   
+            
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %FROIS2dwi:
+            obj.Params.FROIS2dwi.in.movefiles = [ '..' filesep '07_FROIS2dwi' ];
+            obj.Params.FROIS2dwi.in.fn = obj.Params.CoRegMultiple.out.combined_bet;
+            obj.Params.FROIS2dwi.in.prefix = 'MNIT1_2_dwi' ; %Double check this so you prefix the version of DSISTUDIO!
+            obj.Params.FROIS2dwi.in.FROIS_dir = obj.FROIS_dir;
+            obj.Params.FROIS2dwi.in.MNI_T1 = [ obj.FROIS_dir 'template' filesep 'MNI152_T1_1mm_brain.nii.gz' ] ;
+          
+           %On the works.... 
+           %obj.proc_FROIS2dwi();
+        end
+        
+        
+        
+        
+        function obj = CommonPostProc(obj)
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %Creating Fornix TRKLAND
@@ -408,21 +423,43 @@ classdef dwi_ADRC < dwiMRI_Session
             obj.Params.Tracula.in.nb0 = 28;
             obj.Params.Tracula.in.prefix = 'adrc';
             
-            obj.proc_tracula();
+          %  obj.proc_tracula();
             
+            end
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %TRACX THAL_2_CORTEX11:
+            for tohide=1:1
+                obj.Params.tracx_thal2ctx11.in.bedp_dir = fileparts(obj.Params.Tracula.out.bedp_check);
+                obj.Params.tracx_thal2ctx11.in.FSaparc_dir = [ fileparts(obj.Params.FS2dwi.out.fn_aparc2009)  filesep 'aparc_aseg' filesep];
+                obj.Params.tracx_thal2ctx11.in.movefiles = ['..' filesep '..' filesep '..' filesep 'post_tracx' filesep 'thal2ctx11' ];
+                obj.Params.tracx_thal2ctx11.in.prep_segs_list = [ obj.dependencies_dir  'THALX_CTX11.txt' ];
+              
+               %obj.proc_tracx2thal11();
             end
             
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %TRACX THAL_2_CORTEX10:
+            %TRACX THAL_2_PAPEZ (2 frontals, 1 cingualte, 3 temporals):
             for tohide=1:1
-                obj.Params.tracx_thal2ctx10.in.bedp_dir = fileparts(obj.Params.Tracula.out.bedp_check);
-                obj.Params.tracx_thal2ctx10.in.FSaparc_dir = [ fileparts(obj.Params.FS2dwi.out.fn_aparc2009)  filesep 'aparc_aseg' filesep];
-                obj.Params.tracx_thal2ctx10.in.movefiles = ['..' filesep '..' filesep '..' filesep 'post_tracx' filesep 'thal2ctx10' ];
-                obj.Params.tracx_thal2ctx10.in.prep_segs_list = [ obj.dependencies_dir  'THALX_CTX10.txt' ];  
-                obj.Params.tracx_thal2ctx10.in.T1 = obj.T1 ;
+                obj.Params.tracx_thal2papez.in.bedp_dir = fileparts(obj.Params.Tracula.out.bedp_check);
+                obj.Params.tracx_thal2papez.in.FSaparc_dir = [ fileparts(obj.Params.FS2dwi.out.fn_aparc2009)  filesep 'aparc_aseg' filesep];
+                obj.Params.tracx_thal2papez.in.movefiles = ['..' filesep '..' filesep '..' filesep 'post_tracx' filesep 'thal2papez' ];
+                obj.Params.tracx_thal2papez.in.prep_segs_list = [ obj.dependencies_dir  'THALX_PAPEZ.txt' ];
                 
-                obj.proc_tracx2thal10();
+                %obj.proc_tracx2papez();
+            end
+            
+            
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %TRACX THAL_2_DMN:
+            for tohide=1:1
+%                 obj.Params.tracx_thal2dmn.in.bedp_dir = fileparts(obj.Params.Tracula.out.bedp_check);
+%                 obj.Params.tracx_thal2dmn.in.DMN_dir = obj.FROIS_dir ; 
+%                 obj.Params.tracx_thal2dmn.in.movefiles = ['..' filesep '..' filesep '..' filesep 'post_tracx' filesep 'thal2ctx10' ];
+%                 obj.Params.tracx_thal2dmn.in.prep_segs_list = [ obj.dependencies_dir  'THALX_CTX10.txt' ];  
+%                 
+%                 obj.proc_tracx2DMN();
             end
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

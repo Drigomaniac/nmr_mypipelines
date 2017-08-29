@@ -1,4 +1,4 @@
-function QuickCoReg(ref,mov,list_applyxforms, prefix)
+function QuickCoReg(ref,mov,list_applyxforms, opt)
 %%% map ref to mov
 
 clear flags
@@ -23,8 +23,7 @@ end
 [ ~, ~, ext_ref ] = fileparts(ref);
 if strcmp(ext_ref,'.gz')
     system(['gunzip ' ref ] );
-    ref = strrep(ref,'.gz',''); 
-    VF = spm_vol(ref);
+    VF = spm_vol(strrep(ref,'.gz',''));
 elseif strcmp(ext_ref,'.nii');
     VF = spm_vol(ref);
 else
@@ -33,9 +32,8 @@ end
 
 [ ~, ~, ext_mov ] = fileparts(mov);
 if strcmp(ext_mov,'.gz')
-    system(['gunzip ' mov ] );
-    mov = strrep(mov,'.gz','');
-    VG = spm_vol(mov);
+    system(['gunzip ' mov ] )
+    VG = spm_vol(strrep(mov,'.gz',''));
 elseif strcmp(ext_mov,'.nii')
     VG = spm_vol(mov);
 else
@@ -66,18 +64,23 @@ flags.which  = 1;
 flags.wrap   = [0 0 0];
 flags.prefix = 'r';
 
-
-spm_reslice(P,flags);
+if opt==1
+    spm_reslice(P,flags);
+end
 
 
 %%GZIP check
 if strcmp(ext_ref,'.gz')
-    system(['gzip ' ref ] );
+    system(['gzip ' strrep(ref,'.gz','') ] )
 end
 
 if strcmp(ext_mov,'.gz')
-    system(['gzip ' mov ]);
+    system(['gzip ' strrep(mov,'.gz','') ] )
 end
+
+
+
+
 
 if nargin==3 && ~isempty(list_applyxforms)
     for ii=1:numel(list_applyxforms)

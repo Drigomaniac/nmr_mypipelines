@@ -245,7 +245,6 @@ classdef dwi_HAB < dwiMRI_Session
            
             obj.proc_getskeltois();
             
-            return
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         
             
@@ -289,7 +288,7 @@ classdef dwi_HAB < dwiMRI_Session
             obj.Params.FreeSurfer.out.aparcaseg = [ obj.Params.FreeSurfer.dir ...
                 filesep obj.sessionname filesep 'mri' filesep 'aparc+aseg.mgz' ] ;
             
-            %obj.proc_getFreeSurfer();
+            obj.proc_getFreeSurfer();
              
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %FS2dwi (move aparc and aparc2009 segmes to dwi space):
@@ -319,18 +318,7 @@ classdef dwi_HAB < dwiMRI_Session
         
         function obj = CommonPostProc(obj) 
             
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %TRACULA (and implicit functionality of bedpostx):
-            obj.Params.Tracula.in.movefiles = ['..' filesep 'post_TRACULA' ];
-            obj.Params.Tracula.in.fn = obj.Params.Eddy.out.fn{1} ; 
-            obj.Params.Tracula.in.dcmrirc = [obj.dependencies_dir 'dcmrirc.template' ];
-            obj.Params.Tracula.in.FSDIR = obj.Params.FreeSurfer.dir;
-            obj.Params.Tracula.in.bvec = obj.Params.Eddy.out.bvecs{1};  
-            obj.Params.Tracula.in.bval = obj.Params.Eddy.in.bvals{1};
-            obj.Params.Tracula.in.nb0 = 5;
-            obj.Params.Tracula.in.prefix = 'hab';
-            
-            %obj.proc_tracula();
+        
             
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -405,6 +393,19 @@ classdef dwi_HAB < dwiMRI_Session
             
             trkland_cingulum(obj)
             end
+            
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %TRACULA (and implicit functionality of bedpostx):
+            obj.Params.Tracula.in.movefiles = ['..' filesep 'post_TRACULA' ];
+            obj.Params.Tracula.in.fn = obj.Params.Eddy.out.fn{1} ; 
+            obj.Params.Tracula.in.dcmrirc = [obj.dependencies_dir 'dcmrirc.template' ];
+            obj.Params.Tracula.in.FSDIR = obj.Params.FreeSurfer.dir;
+            obj.Params.Tracula.in.bvec = obj.Params.Eddy.out.bvecs{1};  
+            obj.Params.Tracula.in.bval = obj.Params.Eddy.in.bvals{1};
+            obj.Params.Tracula.in.nb0 = 5;
+            obj.Params.Tracula.in.prefix = 'hab';
+            
+            obj.proc_tracula();
             
             
         end
