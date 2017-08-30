@@ -2068,6 +2068,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 obj.Trkland.fx.out.QCfile_lh = [outpath 'QC_fx_lh.flag'] ;
                 obj.Trkland.fx.out.QCfile_rh = [outpath 'QC_fx_rh.flag'] ;
                 obj.Trkland.fx.out.QCfile_bil = [outpath 'QC_fx_bil.flag'] ;
+                
             end
             
             
@@ -2090,9 +2091,6 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         ' -out ' obj.Trkland.fx.in.fn_tmp2b0 ];
                     obj.RunBash(exec_cmd);
                     fprintf('...done \n');
-                else
-                   [~, bb, cc ] = fileparts( ) 
-                   fprintf('The file ' bb cc 'exist\n');
                 end
             end
             %%%%%%%%%%%%%%%%%%%%%
@@ -2106,9 +2104,6 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         ' -interp  nearestneighbour -out ' obj.Trkland.fx.in.roi_bil ];
                     obj.RunBash(exec_cmd);
                     fprintf('...done \n');
-                else
-                    [~, bb, cc ] = fileparts( )
-                    fprintf('The file ' bb cc 'exist\n');
                 end
                 %Apply the matfile to the dilated solid fx:
                 if exist(obj.Trkland.fx.in.roa_bil_solid, 'file') == 0
@@ -2240,18 +2235,18 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         %Left side trking:
                         if exist(obj.Trkland.fx.out.trks_lh,'file') == 0
                             if strcmp(obj.projectID,'ADRC')
-                                    exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
-                                        ' --seed_count=10000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
-                                        ' --seed=' obj.Trkland.fx.in.roi_lh ' --roa=' obj.Trkland.fx.in.roa_lh_hollow ...
-                                        ' --threshold_index=nqa  --fa_threshold=0.04 --fiber_count=300' ...
-                                        ' --step_size=1 --turning_angle=40 --min_length=80 --max_length=250 ' ...
-                                        ' --output=' obj.Trkland.fx.out.trks_lh ];
+                                exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
+                                    ' --seed_count=10000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
+                                    ' --seed=' obj.Trkland.fx.in.roi_lh ' --roa=' obj.Trkland.fx.in.roa_lh_hollow ...
+                                    ' --threshold_index=nqa  --fa_threshold=0.04 --fiber_count=300' ...
+                                    ' --step_size=1 --turning_angle=40 --min_length=80 --max_length=250 ' ...
+                                    ' --output=' obj.Trkland.fx.out.trks_lh ];
                             else
-                            exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
-                                ' --seed_count=10000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
-                                ' --seed=' obj.Trkland.fx.in.roi_lh ' --roa=' obj.Trkland.fx.in.roa_lh_hollow ...
-                                ' --step_size=1 --turning_angle=40 --min_length=80 --max_length=250 ' ...
-                                ' --output=' obj.Trkland.fx.out.trks_lh ];
+                                exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
+                                    ' --seed_count=10000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
+                                    ' --seed=' obj.Trkland.fx.in.roi_lh ' --roa=' obj.Trkland.fx.in.roa_lh_hollow ...
+                                    ' --step_size=1 --turning_angle=40 --min_length=80 --max_length=250 ' ...
+                                    ' --output=' obj.Trkland.fx.out.trks_lh ];
                             end
                             for dd=1:4 %trying 4 times to get a trk. If not, quit!
                                 if exist(obj.Trkland.fx.out.trks_lh,'file') == 0
@@ -2260,6 +2255,9 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             end
                             wasRun=true;
                             obj.UpdateHist(obj.Trkland.fx,'trkland_fx', obj.Trkland.fx.out.trks_lh,wasRun);
+                        else
+                            [~, bb, cc ] = fileparts(obj.Trkland.fx.in.roa_lh_hollow);
+                            fprintf(['The file ' bb cc ' exists. \n']);
                         end
                     else
                         display('QC_flag_lh found in trklnad_fx. Skipping and removing data points...')
@@ -2292,6 +2290,9 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             
                             wasRun=true;
                             obj.UpdateHist(obj.Trkland.fx,'trkland_fx', obj.Trkland.fx.out.trks_lh,wasRun);
+                        else
+                            [~, bb, cc ] = fileparts(obj.Trkland.fx.out.trks_rh);
+                            fprintf(['The file ' bb cc ' exists. \n']);
                         end
                     else
                         display('QC_flag_rh found in trklnad_fx. Skipping and removing data points...')
@@ -2457,6 +2458,8 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         
         function obj = trkland_hippocing(obj)
             wasRun = false;
+            fprintf('\n%s\n', 'PERFORMING TRKLAND HIPPOCAMPAL CINGULUM: TRKLAND_HIPPOCING():');
+            
             %Create trkland directory (if doesn't exist)
             exec_cmd = [ 'mkdir -p ' obj.Trkland.root ];
             obj.RunBash(exec_cmd);
@@ -2464,8 +2467,6 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             %Creating root directory:
             for tohide=1:1
                 outpath=obj.Trkland.root;
-                
-              
             end
             
             %ROIs/SEEDs PREPARATION

@@ -1958,7 +1958,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 if strcmp(obj.projectID,'HAB')
                     replaced_outpath = outpath ;
                     outpath = [ '/eris/bang/HAB_Project1/TRACULA' filesep obj.sessionname filesep ];
-                    system(['mkdir -p ' outpath ])
+                    system(['mkdir -p ' outpath ]);
                     system(['ln -s ' outpath ' ' replaced_outpath filesep obj.sessionname ]);
                 end
             end
@@ -1973,6 +1973,9 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         '%g | sed s%''<NB0>''%' num2str(obj.Params.Tracula.in.nb0) ...
                         '%g > ' obj.Params.Tracula.out.dcmirc ];
                     obj.RunBash(exec_cmd);
+                 else
+                     [~, bb, cc ] = fileparts(obj.Params.Tracula.out.dcmirc);
+                     fprintf(['The file ' bb cc ' exists.\n']);
                 end
             end
             %Run the three necessary steps for TRACULA (and bedpostx)
@@ -1995,7 +1998,8 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     exec_cmd = ['trac-all -prep -c ' obj.Params.Tracula.out.dcmirc ' -i ' obj.Params.Tracula.in.fn ];
                     obj.RunBash(exec_cmd,44);
                 else
-                    display(['In proc_tracula(). Skipping trac-all -prep ...']);
+                     [~, bb, cc ] = fileparts(obj.Params.Tracula.out.prep_check);
+                     fprintf(['trac-all -prep filecheck ' bb cc ' exists.\n']);
                 end
                 %Step 2: Trac-all -prep
                 obj.Params.Tracula.out.bedp_check = [ obj.Params.Tracula.out.dir  obj.sessionname ...
@@ -2008,7 +2012,8 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     exec_cmd = ['trac-all -bedp -c ' obj.Params.Tracula.out.dcmirc ' -i ' obj.Params.Tracula.in.fn ];
                     obj.RunBash(exec_cmd,44);
                 else
-                    display(['In proc_tracula(). Skipping trac-all -bedp ...']);
+                    [~, bb, cc ] = fileparts(obj.Params.Tracula.out.bedp_check);
+                    fprintf(['trac-all -bedp file ' bb cc ' exists.\n']);
                 end
                 %Step 3: Trac-all -path
                 obj.Params.Tracula.out.path_check = [ obj.Params.Tracula.out.dir  obj.sessionname ...
@@ -2018,17 +2023,14 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     if exist( obj.Params.Tracula.out.isrunning, 'file') ~= 0 
                         system(['rm '  obj.Params.Tracula.out.isrunning ]);
                     end
-                    exec_cmd = ['trac-all -path -c ' obj.Params.Tracula.out.dcmirc ' -i ' obj.Params.Tracula.in.fn ];
+                    exec_cmd = ['tractall -path -c ' obj.Params.Tracula.out.dcmirc ' -i ' obj.Params.Tracula.in.fn ];
                     obj.RunBash(exec_cmd,44);
                 else
-                    display(['In proc_tracula(). Skipping trac-all -path ...']);
+                    [~, bb, cc ] = fileparts(obj.Params.Tracula.out.path_check);
+                    fprintf(['trac-all -path ' bb cc ' exists.\n']);
                 end
                    
             end
-            
-            %catch
-            %    error('Error occur in proc_tracula(). Please check!');
-            %end
         end
         
         function obj = proc_AFQ(obj)
@@ -2459,7 +2461,6 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         function obj = trkland_hippocing(obj)
             wasRun = false;
             fprintf('\n%s\n', 'PERFORMING TRKLAND HIPPOCAMPAL CINGULUM: TRKLAND_HIPPOCING():');
-            
             %Create trkland directory (if doesn't exist)
             exec_cmd = [ 'mkdir -p ' obj.Trkland.root ];
             obj.RunBash(exec_cmd);
@@ -2467,8 +2468,6 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             %Creating root directory:
             for tohide=1:1
                 outpath=obj.Trkland.root;
-                
-              
             end
             
             %ROIs/SEEDs PREPARATION
@@ -2611,8 +2610,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             obj.UpdateHist(obj.Trkland.hippocing,'trkland_hippocing', obj.Trkland.hippocing.out.trk_lh,wasRun);
                         end
                     else
-                        display('QC_flag_lh found in trkland_hippocing. Skipping and removing data points...')
-                        RefreshFields(obj,'hippocing','lh')
+                        RefreshFields(obj,'hippocing','lh');
                     end
                     
                     %Right side trking:
@@ -2632,7 +2630,6 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             obj.UpdateHist(obj.Trkland.hippocing,'trkland_hippocing', obj.Trkland.hippocing.out.trk_rh,wasRun);
                         end
                     else
-                        display('QC_flag_rh found in trkland_hippocing. Skipping and removing data points...')
                         RefreshFields(obj,'hippocing','rh')
                     end
                 else
@@ -2717,7 +2714,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     obj.Trkland.hippocing.data.lh_cline_MD_HDorff = mean(obj.Trkland.Trks.hippocing_clineHDorff_lh.unique_voxels(:,7));
                                           catch
                                            warning('No cleanup for hippocing_lh was finished correctly. Maybe the specific tract cant be reached? Check raw tracts...')
-                                          end
+                  end
                 end
             end
             
@@ -2805,6 +2802,8 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         
         function obj = trkland_cingulum(obj)
             wasRun = false;
+            fprintf('\n%s\n', 'PERFORMING TRKLAND CINGULUM: TRKLAND_CINGULUM():');
+            
             %Create trkland directory (if doesn't exist)
             exec_cmd = [ 'mkdir -p ' obj.Trkland.root ];
             obj.RunBash(exec_cmd);
@@ -2901,7 +2900,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         end
                     else
                         display('QC_flag_lh found in trkland_cingulum. Skipping and removing data points...')
-                        RefreshFields(obj,'cingulum','lh')
+                        RefreshFields(obj,'cingulum','lh');
                     end
                     
                     %Right side trking:
@@ -2924,11 +2923,11 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         end
                     else
                         display('QC_flag_rh found in trkland_cingulum. Skipping and removing data points...')
-                        RefreshFields(obj,'cingulum','rh')
+                        RefreshFields(obj,'cingulum','rh');
                     end
                 else
                       display('QC_flag_bil found in trkland_cingulum. Skipping and removing data points...')
-                      RefreshFields(obj,'cingulum','bil')
+                      RefreshFields(obj,'cingulum','bil');
                 end
             end
             
