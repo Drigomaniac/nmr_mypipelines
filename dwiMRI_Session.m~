@@ -1404,7 +1404,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     obj.UpdateHist(obj.Params.GQI,'proc_gqi_src', obj.Params.GQI.out.src_fn{ii},wasRun);
                 else
                     [~, bb, cc ] = fileparts(obj.Params.GQI.out.src_fn{ii});
-                    fprintf(['The src file ' bb cc ' is complete\n']);
+                    fprintf(['The file ' bb cc ' is complete\n']);
                 end
                 
                 try
@@ -1435,7 +1435,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     
                 else
                     [~, bb, cc ] = fileparts(obj.Params.GQI.out.fibs_fn{ii}); 
-                    fprintf(['The fib.gz file ' bb strtrim(cc) ' is complete \n']);
+                    fprintf(['The file ' bb strtrim(cc) ' is complete \n']);
                 end
                 obj.Params.GQI.out.fibs_GFA{ii} = [ strtrim(obj.Params.GQI.out.fibs_fn{ii}) '.gfa.nii.gz' ];
                 
@@ -1453,7 +1453,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         
         function obj = proc_antsreg(obj)
             wasRun=false;
-            fprintf('\n\n\n \t In proc_antsreg(): ... \n ');
+            fprintf('\n%s\n', 'PERFORMING PROC_ANTSREG():');
             for ii=1:numel(obj.Params.AntsReg.in.fn)
                 clear cur_fn;
                 if iscell(obj.Params.AntsReg.in.fn{ii})
@@ -1484,8 +1484,8 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     obj.UpdateHist(obj.Params.GQI,'proc_antsreg', obj.Params.AntsReg.out.fn{ii},wasRun);
                     
                 else
-                    fprintf(['\n proc_antsreg(): ' obj.Params.AntsReg.out.fn{ii} ...
-                        ' exists. Skipping...\n\n']) ;
+                    [~, bb,cc ] = fileparts(obj.Params.AntsReg.out.fn{ii} );
+                    fprintf(['The file ' bb cc ' is complete\n']) ;
                 end
                 for tocomment=1:1
                     obj.Params.AntsReg.out.FA{ii} = [ outpath obj.Params.AntsReg.in.prefix 'FA.nii.gz' ];
@@ -1532,7 +1532,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         
         function obj = proc_skeletonize(obj)
             wasRun=false;
-            fprintf('\n\n\n \t In proc_skeletonize(): ... \n ');
+            fprintf('\n%s\n', 'PERFORMING PROC_SKELETONIZE():');
             for ii=1:numel(obj.Params.Skeletonize.in.fn)
                 clear cur_fn;
                 if iscell(obj.Params.Skeletonize.in.fn{ii})
@@ -1540,7 +1540,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 else
                     cur_fn=obj.Params.Skeletonize.in.fn{ii};
                 end
-                [a b c ] = fileparts(cur_fn);
+                [a, b, c ] = fileparts(cur_fn);
                 outpath=obj.getPath(a,obj.Params.Skeletonize.in.movefiles);
                 clear outfile
                 obj.Params.Skeletonize.out.fn{ii} = [ outpath obj.Params.Skeletonize.in.prefix '.nii.gz' ];
@@ -1560,8 +1560,8 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     wasRun=true;
                     obj.UpdateHist(obj.Params.Skeletonize,'proc_skeletonize', obj.Params.Skeletonize.out.fn{ii},wasRun);
                 else
-                    fprintf(['\n proc_skeletonize(): ' obj.Params.AntsReg.out.fn{ii} ...
-                        ' exists. Skipping...\n\n']) ;
+                    [ ~ , bb, cc ] = fileparts(obj.Params.AntsReg.out.fn{ii}); 
+                    fprintf(['The file ' bb cc ' is comeplete.\n']) ;
                 end
                 
                 
@@ -1621,34 +1621,9 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         obj.RunBash(exec_cmd); fprintf('...done\n');
                         toc
                         fprintf('...done.\n');
-                        
-                        
-%                         exec_cmd=[ 'tbss_skeleton ' ...
-%                             ' -i '  obj.Params.Skeletonize.in.meanFA ...
-%                             ' -p '  obj.Params.Skeletonize.in.thr ...
-%                             ' '  obj.Params.Skeletonize.in.skel_dst ...
-%                             ' '  obj.Params.Skeletonize.in.ref_region  ...
-%                             ' '  obj.Params.Skeletonize.in.FA{ii} ...
-%                             ' '  obj.Params.Skeletonize.out.FA{ii}];
-%                         obj.RunBash(exec_cmd);
-%                         fprintf('...done\n');
-%                         %RD:
-%                         fprintf('\n in RD...');
-%                         exec_cmd=strrep(exec_cmd,'_FA.nii','_RD.nii')
-%                         obj.RunBash(exec_cmd); fprintf('...done\n');
-%                         %AxD:
-%                         fprintf('\n in AxD...');
-%                         exec_cmd=strrep(exec_cmd,'_RD.nii','_AxD.nii')
-%                         obj.RunBash(exec_cmd); fprintf('...done\n');
-%                         %MD:
-%                         fprintf('\n in MD...');
-%                         exec_cmd=strrep(exec_cmd,'_AxD.nii','_MD.nii')
-%                         obj.RunBash(exec_cmd); fprintf('...done\n');
-%                         toc
-%                         fprintf('...done.\n');
                     else
-                        fprintf(['\n proc_skeletonize(): ' obj.Params.AntsReg.out.fn{ii} ...
-                            ' exists. Skipping...\n\n']) ;
+                        [~, bb, cc ] = fileparts(obj.Params.AntsReg.out.fn{ii});
+                        fprintf(['The file ' bb cc ' is complete.\n']) ;
                         
                     end
                 end
@@ -1658,8 +1633,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         
         function obj = proc_getskeltois(obj)
             wasRun=false;
-            fprintf('\n\n\n \t In proc_getskeltois(): ... \n ');
-            fprintf('\n Fslstating tracts of interest...');
+            fprintf('\n%s\n', 'PERFORMING PROC_GETSKELTOIS():');
             for kk=1:numel(obj.Params.Skeletonize.out.FA)
                 for jj=1:numel( obj.Params.Skeletonize.out.diffmetrics)
                     for ii=1:numel(obj.Params.Skel_TOI.in.masks)
@@ -1685,8 +1659,9 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 wasRun=true;
                 obj.UpdateHist(obj.Params.Skel_TOI,'proc_getskeltois', '',wasRun);
                 clear last_cur_name;
-                fprintf('....done\n');
+                fprintf('...done\n');
             end
+            fprintf('proc_getskeltois() is complete.\n')
         end
         
         function obj = proc_getFreeSurfer(obj)
@@ -1739,6 +1714,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         
         function obj = proc_FS2dwi(obj)
             wasRun=false;
+            fprintf('\n%s\n', 'PERFORMING PROC_FS2DWI():');
             
             %INIT SPECS:
             for tohide=1:1
@@ -1812,10 +1788,12 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             obj.RunBash(exec_cmd);
                         end
                     end
+                    fprintf('aparc+aseg extraction complete\n')
                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     else
                     error([ 'in proc_FS2dwi(obj): FS aparc_aseg (supposely) located in: ' obj.Params.FS2dwi.in.aparcaseg ' does not exist'])
                 end
+                fprintf('aparc+aseg extraction complete. \n')
             end
             %APARCASEGa2009 EXTRACTION:
             for tohide=1:1
@@ -1851,6 +1829,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 else
                     error([ 'in proc_FS2dwi(obj): FS aparc_aseg (supposely) located in: ' obj.Params.FS2dwi.out.fn_aparc2009 ' does not exist'])
                 end
+                fprintf('aparc+aseg2009 extraction complete. \n')
             end
             %HIPPOFIELD_LEFT EXTRACTION:
             for tohide=1:1
@@ -1884,6 +1863,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 else
                     error([ 'in proc_FS2dwi(obj): FS hippofield_left (supposely) located in: ' obj.Params.FS2dwi.in.hippofield_left ' does not exist'])
                 end
+                fprintf('hippofield_lh extraction complete\n')
             end
             
             %HIPPOFIELD_RIGHT EXTRACTION:
@@ -1919,41 +1899,41 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 else
                     error([ 'in proc_FS2dwi(obj): FS hippofield_right (supposely) located in: ' obj.Params.FS2dwi.in.hippofield_right ' does not exist'])
                 end
+                fprintf('hippofield_rh extraction complete\n')
             end
         end
        
         function obj = proc_FROIS2dwi(obj)
             wasRun=false;
-            fprintf('\n\n\n \t In proc_FROIS2dwi(): ... \n ');
-           
-                [a, ~, ~ ] = fileparts(obj.Params.FROIS2dwi.in.fn);
-                outpath=obj.getPath(a,obj.Params.FROIS2dwi.in.movefiles);
-                
-                %make a list of all *.gz that exist in that direcotry
-                [ok_check, tmp_frois_list ]  = system(['ls -1 '  ...
-                    obj.Params.FROIS2dwi.in.FROIS_dir '*.nii.gz']);
-                if ok_check ~= 0
-                    error(['In proc_FROIS2dwi(): cannot find any *.nii.gz images in:'...
-                        obj.Params.FROIS2dwi.in.FROIS_dir 'Double check']);
-                end
-                
-                tmp_cellarray=textscan(tmp_frois_list,'%s');
-                obj.Params.FROIS2dwi.in.FROIS_list=tmp_cellarray{1};
-                
-                
-                %Check if the MNI_T1 exists....
-                if exist(obj.Params.FROIS2dwi.in.MNI_T1,'file') == 0
-                    error(['In proc_FROIS2dwi(): Cannnot find the MNI_T1 in:' obj.Params.FROIS2dwi.in.MNI_T1 ] );
-                end
-                
-                %Assigend outpath of coreg using ants
-                obj.Params.FROIS2dwi.out.MNI_2_dwi = [ outpath obj.Params.FROIS2dwi.in.prefix 'Warped.nii.gz' ];
-                if exist(obj.Params.FROIS2dwi.out.MNI_2_dwi ,'file')==0
-                    fprintf('\n In proc_FROIS(): Coregistering Ants to reference... ');
-                    aa=1;
-                    %obj.proc_as_coreg(obj.Params.FROIS2dwi.in.FROIS_list
-                    fprintf('...done.\n');
-                end
+            fprintf('\n%s\n', 'PERFORMING PROC_FROIS2DWI():');
+            [a, ~, ~ ] = fileparts(obj.Params.FROIS2dwi.in.fn);
+            outpath=obj.getPath(a,obj.Params.FROIS2dwi.in.movefiles);
+            
+            %make a list of all *.gz that exist in that direcotry
+            [ok_check, tmp_frois_list ]  = system(['ls -1 '  ...
+                obj.Params.FROIS2dwi.in.FROIS_dir '*.nii.gz']);
+            if ok_check ~= 0
+                error(['In proc_FROIS2dwi(): cannot find any *.nii.gz images in:'...
+                    obj.Params.FROIS2dwi.in.FROIS_dir 'Double check']);
+            end
+            
+            tmp_cellarray=textscan(tmp_frois_list,'%s');
+            obj.Params.FROIS2dwi.in.FROIS_list=tmp_cellarray{1};
+            
+            
+            %Check if the MNI_T1 exists....
+            if exist(obj.Params.FROIS2dwi.in.MNI_T1,'file') == 0
+                error(['In proc_FROIS2dwi(): Cannnot find the MNI_T1 in:' obj.Params.FROIS2dwi.in.MNI_T1 ] );
+            end
+            
+            %Assigend outpath of coreg using ants
+            obj.Params.FROIS2dwi.out.MNI_2_dwi = [ outpath obj.Params.FROIS2dwi.in.prefix 'Warped.nii.gz' ];
+            if exist(obj.Params.FROIS2dwi.out.MNI_2_dwi ,'file')==0
+                fprintf('\n In proc_FROIS(): Coregistering Ants to reference... ');
+                aa=1;
+                %obj.proc_as_coreg(obj.Params.FROIS2dwi.in.FROIS_list
+                fprintf('...done.\n');
+            end
         end
         
         
@@ -1968,7 +1948,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         function obj = proc_tracula(obj)
             % try
             wasRun=false;
-            fprintf('\n\n\n \t In proc_tracula(): ... \n ');
+            fprintf('\n%s\n', 'PERFORMING PROC_TRACULA():');
             %Creating root directory:
             for tohide=1:1
                 [a b c ] = fileparts(obj.Params.Tracula.in.fn);
@@ -2054,7 +2034,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         function obj = proc_AFQ(obj)
             % try
             wasRun=false;
-            fprintf('\n\n\n \t In proc_AFQ() ... \n ');
+            fprintf('\n%s\n', 'PERFORMING PROC_AFQ():');
             %Creating root directory:
             for tohide=1:1
                 [a b c ] = fileparts(obj.Params.AFQ.in.dwi);
@@ -2074,8 +2054,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         
         function obj = trkland_fx(obj)
             wasRun = false;
-            fprintf('\n\n\n \t In trkland_fx() ... \n ');
-            
+            fprintf('\n%s\n', 'PERFORMING TRKLAND FORNIX: TRKLAND_FX():');
             %Initialize which image you'll use for FLIRT (either FA or b0)
             %This is changeable!
             
@@ -2084,18 +2063,17 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             
             %Creating root directory:
             for tohide=1:1
-                [a b c ] = fileparts(obj.Trkland.fx.in.b0);
+                [a, b, c ] = fileparts(obj.Trkland.fx.in.b0);
                 outpath=obj.getPath(a,obj.Trkland.fx.in.movefiles);
                 obj.Trkland.fx.out.QCfile_lh = [outpath 'QC_fx_lh.flag'] ;
                 obj.Trkland.fx.out.QCfile_rh = [outpath 'QC_fx_rh.flag'] ;
                 obj.Trkland.fx.out.QCfile_bil = [outpath 'QC_fx_bil.flag'] ;
-                
             end
             
             
             %Remove a field that is not being used anymore:
             if isfield(obj.Trkland.fx.out,'QC')
-                rmfield(obj.Trkland.fx.out,'QC')
+                rmfield(obj.Trkland.fx.out,'QC');
             end
             %MATFILE TRANSFORMATION SECTION:
             for tohide=1:1
@@ -2112,6 +2090,9 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         ' -out ' obj.Trkland.fx.in.fn_tmp2b0 ];
                     obj.RunBash(exec_cmd);
                     fprintf('...done \n');
+                else
+                   [~, bb, cc ] = fileparts( ) 
+                   fprintf('The file ' bb cc 'exist\n');
                 end
             end
             %%%%%%%%%%%%%%%%%%%%%
@@ -2125,6 +2106,9 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         ' -interp  nearestneighbour -out ' obj.Trkland.fx.in.roi_bil ];
                     obj.RunBash(exec_cmd);
                     fprintf('...done \n');
+                else
+                    [~, bb, cc ] = fileparts( )
+                    fprintf('The file ' bb cc 'exist\n');
                 end
                 %Apply the matfile to the dilated solid fx:
                 if exist(obj.Trkland.fx.in.roa_bil_solid, 'file') == 0
