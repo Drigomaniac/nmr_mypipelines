@@ -926,6 +926,8 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         
         function obj = proc_get_eddymotion(obj)
             wasRun=false;
+            fprintf('\n%s\n', 'PERFORMING MOTION EXTRACTION (from eddy) - PROC_GET_EDDYMOTION():');
+            
             for ii=1:numel(obj.Params.EddyMotion.in.fn_eddy)
                 clear cur_fn;
                 %Dealing with INPUT:
@@ -960,7 +962,8 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     fprintf('...done \n');
                     wasRun=true;
                 else
-                    fprintf(['\n proc_eddy(): ' obj.Params.Eddy.out.fn{ii} ' exists. Skipping...\n\n']) ;
+                    [~, bb, cc ] =  fileparts(obj.Params.EddyMotion.out.fn_motion{ii});
+                    fprintf(['File ' bb cc 'exists\n']) ;
                 end
                 %Populating the variables needed:
                 if isempty(obj.Params.EddyMotion.out.vals.initb0_mean)
@@ -986,6 +989,8 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         
         function obj = proc_meanb0(obj)
             wasRun=false;
+            fprintf('\n%s\n', 'PERFORMING PROC_MEANB0():');
+          
             for ii=1:numel(obj.Params.B0mean.in.fn)
                 clear cur_fn;
                 if iscell(obj.Params.B0mean.in.fn{ii})
@@ -1018,7 +1023,8 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         wasRun=true;
                         obj.UpdateHist(obj.Params.B0mean,'proc_b0mean', obj.Params.B0mean.out.fn{ii},wasRun);
                     else
-                        fprintf(['\n proc_b0mean(): ' obj.Params.B0mean.out.fn{ii} ' exists. Skipping...\n\n']) ;
+                        [~, bb, cc] = fileparts(obj.Params.B0mean.out.fn{ii});
+                        fprintf(['The file ' bb cc ' is complete. \n']);
                     end
                 catch
                     errormsg=['PROC_B0MEAN: Cannnot create the following meanB0 from:'  ...
