@@ -2029,7 +2029,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     if exist( obj.Params.Tracula.out.isrunning, 'file') ~= 0 
                         system(['rm '  obj.Params.Tracula.out.isrunning ]);
                     end
-                    exec_cmd = ['tractall -path -c ' obj.Params.Tracula.out.dcmirc ' -i ' obj.Params.Tracula.in.fn ];
+                    exec_cmd = ['trac-all -path -c ' obj.Params.Tracula.out.dcmirc ' -i ' obj.Params.Tracula.in.fn ];
                     obj.RunBash(exec_cmd,44);
                 else
                     [~, bb, cc ] = fileparts(obj.Params.Tracula.out.path_check);
@@ -2425,9 +2425,10 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             %Volume:
                             obj.Trkland.fx.data.rh_unclean_vol = obj.Trkland.Trks.fx_raw_rh.num_uvox;
                             obj.Trkland.fx.data.rh_clean_vol = obj.Trkland.Trks.fx_cleantrimmed_rh.num_uvox;
-                            obj.Trkland.fx.data.rh_unclean_vol = obj.Trkland.Trks.fx_raw_rh.num_uvox;
+                            obj.Trkland.fx.data.rh_trimmedclean_vol = obj.Trkland.Trks.fx_trimmed_rh.num_uvox;
                             obj.Trkland.fx.data.rh_cline_HighFA_vol = obj.Trkland.Trks.fx_clinehighFA_rh.num_uvox;
                             obj.Trkland.fx.data.rh_cline_HDorff_vol = obj.Trkland.Trks.fx_clineHDorff_rh.num_uvox;
+                            
                             %METRICS DATA NOW
                             %unclean_fx_rh
                             obj.Trkland.fx.data.rh_unclean_FA = mean(obj.Trkland.Trks.fx_raw_rh.unique_voxels(:,4));
