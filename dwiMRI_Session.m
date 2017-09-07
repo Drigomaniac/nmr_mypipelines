@@ -4036,7 +4036,6 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 obj.FSdata.(labs{zz}) = cell2table(T(2:end,:),'VariableName',T(1,:));
             end
         end
-            vzcxvc
         
         function obj = getdata_trkland_fx(obj)
             %Get volume data of unclean/cleaned tracts:
