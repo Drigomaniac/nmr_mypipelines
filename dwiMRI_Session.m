@@ -2235,10 +2235,11 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %STARTING THE ACTUAL TRACKING NOW:
             for tohide=1:1
+                %Init outputs:
+                obj.Trkland.fx.out.trks_lh = [ obj.Trkland.root  'trkk_fx_lh.trk.gz'];
+                obj.Trkland.fx.out.trks_rh = [ obj.Trkland.root  'trkk_fx_rh.trk.gz'];
+                
                 if exist(obj.Trkland.fx.out.QCfile_bil,'file') == 0
-                    %Init outputs:
-                    obj.Trkland.fx.out.trks_lh = [ obj.Trkland.root  'trkk_fx_lh.trk.gz'];
-                    obj.Trkland.fx.out.trks_rh = [ obj.Trkland.root  'trkk_fx_rh.trk.gz'];
                     if exist(obj.Trkland.fx.out.QCfile_lh) == 0
                         %Left side trking:
                         if exist(obj.Trkland.fx.out.trks_lh,'file') == 0
@@ -2269,7 +2270,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         end
                     else
                         display('QC_flag_lh found in trklnad_fx. Skipping and removing data points...')
-                        RefreshFields(obj,'fx','lh')
+                        %RefreshFields(obj,'fx','lh')
                     end
                     
                     if exist(obj.Trkland.fx.out.QCfile_rh) == 0
@@ -2304,11 +2305,11 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         end
                     else
                         display('QC_flag_rh found in trklnad_fx. Skipping and removing data points...')
-                        RefreshFields(obj,'fx','rh')
+%                         RefreshFields(obj,'fx','rh')
                     end
                 else
                     display('QC_flag_bil found in trklnad_fx. Skipping and removing data points...')
-                    RefreshFields(obj,'fx','bil')
+%                     RefreshFields(obj,'fx','bil')
                 end
             end
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2348,12 +2349,25 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     end
                     
                     %Get data of unclean trks:
-                    obj.Trkland.fx.data.lh_unclean_vol = obj.Trkland.Trks.fx_raw_lh.num_uvox;
-                    obj.Trkland.fx.data.lh_unclean_FA = mean(obj.Trkland.Trks.fx_raw_lh.unique_voxels(:,4));
-                    obj.Trkland.fx.data.lh_unclean_RD = mean(obj.Trkland.Trks.fx_raw_lh.unique_voxels(:,5));
-                    obj.Trkland.fx.data.lh_unclean_AxD = mean(obj.Trkland.Trks.fx_raw_lh.unique_voxels(:,6));
-                    obj.Trkland.fx.data.lh_unclean_MD = mean(obj.Trkland.Trks.fx_raw_lh.unique_voxels(:,7));
-                    
+                    if  exist(obj.Trkland.fx.out.trks_lh,'file') ~= 0
+                        obj.Trkland.fx.data.lh_unclean_vol = obj.Trkland.Trks.fx_raw_lh.num_uvox;
+                        obj.Trkland.fx.data.lh_unclean_FA = mean(obj.Trkland.Trks.fx_raw_lh.unique_voxels(:,4));
+                        obj.Trkland.fx.data.lh_unclean_RD = mean(obj.Trkland.Trks.fx_raw_lh.unique_voxels(:,5));
+                        obj.Trkland.fx.data.lh_unclean_AxD = mean(obj.Trkland.Trks.fx_raw_lh.unique_voxels(:,6));
+                        obj.Trkland.fx.data.lh_unclean_MD = mean(obj.Trkland.Trks.fx_raw_lh.unique_voxels(:,7));
+                    else
+                        obj.Trkland.fx.data.lh_unclean_vol = [];
+                        obj.Trkland.fx.data.lh_unclean_FA = [];
+                        obj.Trkland.fx.data.lh_unclean_RD = [];
+                        obj.Trkland.fx.data.lh_unclean_AxD = [];
+                        obj.Trkland.fx.data.lh_unclean_MD = [];
+                        
+                        %Fill dependency trks to []:
+                        obj.Trkland.Trks.fx_trimmed_lh.sstr=[];
+                        obj.Trkland.Trks.fx_cleantrimmed_lh.sstr=[];
+                        obj.Trkland.Trks.fx_clinehighFA_lh.sstr=[];
+                        obj.Trkland.Trks.fx_clineHDorff_lh.sstr=[];
+                    end
                     
                     %Get data of trimmed values
                     if numel(obj.Trkland.Trks.fx_trimmed_lh.sstr) ~=0
@@ -2456,12 +2470,25 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         
                     end
                     %Get data of unclean trks:
-                    obj.Trkland.fx.data.rh_unclean_vol = obj.Trkland.Trks.fx_raw_rh.num_uvox;
-                    obj.Trkland.fx.data.rh_unclean_FA = mean(obj.Trkland.Trks.fx_raw_rh.unique_voxels(:,4));
-                    obj.Trkland.fx.data.rh_unclean_RD = mean(obj.Trkland.Trks.fx_raw_rh.unique_voxels(:,5));
-                    obj.Trkland.fx.data.rh_unclean_AxD = mean(obj.Trkland.Trks.fx_raw_rh.unique_voxels(:,6));
-                    obj.Trkland.fx.data.rh_unclean_MD = mean(obj.Trkland.Trks.fx_raw_rh.unique_voxels(:,7));
-                    
+                    if  exist(obj.Trkland.fx.out.trks_rh,'file') ~= 0
+                        obj.Trkland.fx.data.rh_unclean_vol = obj.Trkland.Trks.fx_raw_rh.num_uvox;
+                        obj.Trkland.fx.data.rh_unclean_FA = mean(obj.Trkland.Trks.fx_raw_rh.unique_voxels(:,4));
+                        obj.Trkland.fx.data.rh_unclean_RD = mean(obj.Trkland.Trks.fx_raw_rh.unique_voxels(:,5));
+                        obj.Trkland.fx.data.rh_unclean_AxD = mean(obj.Trkland.Trks.fx_raw_rh.unique_voxels(:,6));
+                        obj.Trkland.fx.data.rh_unclean_MD = mean(obj.Trkland.Trks.fx_raw_rh.unique_voxels(:,7));
+                    else
+                        obj.Trkland.fx.data.rh_unclean_vol = [];
+                        obj.Trkland.fx.data.rh_unclean_FA = [];
+                        obj.Trkland.fx.data.rh_unclean_RD = [];
+                        obj.Trkland.fx.data.rh_unclean_AxD = [];
+                        obj.Trkland.fx.data.rh_unclean_MD = [];
+                        
+                        %Fill dependency trks to []:
+                        obj.Trkland.Trks.fx_trimmed_rh.sstr=[];
+                        obj.Trkland.Trks.fx_cleantrimmed_rh.sstr=[];
+                        obj.Trkland.Trks.fx_clinehighFA_rh.sstr=[];
+                        obj.Trkland.Trks.fx_clineHDorff_rh.sstr=[];
+                    end
                     
                     %Get data of trimmed values
                     if numel(obj.Trkland.Trks.fx_trimmed_rh.sstr) ~=0
@@ -2656,18 +2683,18 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 obj.Trkland.hippocing.out.clineFA_rh_highFA = [ obj.Trkland.root  'cline_hippocing_highFA_rh.trk.gz'];
                 obj.Trkland.hippocing.out.clineFA_rh_HDorff = [ obj.Trkland.root  'cline_hippocing_HDorff_rh.trk.gz'];
                 
-                obj.Trkland.fx.hippocing.QCfile_lh = [outpath 'QC_hcing_lh.flag'] ;
-                obj.Trkland.fx.hippocing.QCfile_rh = [outpath 'QC_hcing_rh.flag'] ;
-                obj.Trkland.fx.hippocing.QCfile_bil = [outpath 'QC_hcing_bil.flag'] ;
+                obj.Trkland.hippocing.QCfile_lh = [outpath 'QC_hcing_lh.flag'] ;
+                obj.Trkland.hippocing.QCfile_rh = [outpath 'QC_hcing_rh.flag'] ;
+                obj.Trkland.hippocing.QCfile_bil = [outpath 'QC_hcing_bil.flag'] ;
             end
             
             %TRACKING STARS HERE:
             for tohide=1:1
                 obj.Trkland.hippocing.out.trk_lh = [ obj.Trkland.root  'trkk_hippocing_lh.trk.gz'];
                 obj.Trkland.hippocing.out.trk_rh = [ obj.Trkland.root  'trkk_hippocing_rh.trk.gz'];
-                 if exist(obj.Trkland.fx.hippocing.QCfile_bil, 'file') == 0
+                 if exist(obj.Trkland.hippocing.QCfile_bil, 'file') == 0
                      %Left side trking:
-                    if exist(obj.Trkland.fx.hippocing.QCfile_lh, 'file') == 0
+                    if exist(obj.Trkland.hippocing.QCfile_lh, 'file') == 0
                         if exist(obj.Trkland.hippocing.out.trk_lh,'file') == 0
                             exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
                                 ' --seed_count=20000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
@@ -2683,11 +2710,11 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             obj.UpdateHist(obj.Trkland.hippocing,'trkland_hippocing', obj.Trkland.hippocing.out.trk_lh,wasRun);
                         end
                     else
-                        RefreshFields(obj,'hippocing','lh');
+                        display('QC_flag_lh found in trkland_hippocing. Skipping tracking...')
                     end
                     
                     %Right side trking:
-                    if exist(obj.Trkland.fx.hippocing.QCfile_rh, 'file') == 0
+                    if exist(obj.Trkland.hippocing.QCfile_rh, 'file') == 0
                         if exist(obj.Trkland.hippocing.out.trk_rh,'file') == 0
                             exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
                                 ' --seed_count=20000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
@@ -2703,10 +2730,10 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             obj.UpdateHist(obj.Trkland.hippocing,'trkland_hippocing', obj.Trkland.hippocing.out.trk_rh,wasRun);
                         end
                     else
-                        RefreshFields(obj,'hippocing','rh')
+                        display('QC_flag_rh found in trkland_hippocing. Skipping tracking...')
                     end
                 else
-                    display('QC_flag_bil found in trkland_hippocing. Skipping and removing data points...')
+                    display('QC_flag_bil found in trkland_hippocing. Skiping tracking...')
                 end
             end
             
@@ -2752,11 +2779,25 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 %GETTING DATA NOW:
                 
                 %Unclean tracts:
-                obj.Trkland.hippocing.data.lh_unclean_vol = obj.Trkland.Trks.raw_hippocing_lh.num_uvox;
-                obj.Trkland.hippocing.data.lh_unclean_FA = mean(obj.Trkland.Trks.raw_hippocing_lh.unique_voxels(:,4));
-                obj.Trkland.hippocing.data.lh_unclean_RD = mean(obj.Trkland.Trks.raw_hippocing_lh.unique_voxels(:,5));
-                obj.Trkland.hippocing.data.lh_unclean_AxD = mean(obj.Trkland.Trks.raw_hippocing_lh.unique_voxels(:,6));
-                obj.Trkland.hippocing.data.lh_unclean_MD = mean(obj.Trkland.Trks.raw_hippocing_lh.unique_voxels(:,7));
+                if exist(obj.Trkland.hippocing.out.trk_lh,'file') ~= 0
+                    obj.Trkland.hippocing.data.lh_unclean_vol = obj.Trkland.Trks.raw_hippocing_lh.num_uvox;
+                    obj.Trkland.hippocing.data.lh_unclean_FA = mean(obj.Trkland.Trks.raw_hippocing_lh.unique_voxels(:,4));
+                    obj.Trkland.hippocing.data.lh_unclean_RD = mean(obj.Trkland.Trks.raw_hippocing_lh.unique_voxels(:,5));
+                    obj.Trkland.hippocing.data.lh_unclean_AxD = mean(obj.Trkland.Trks.raw_hippocing_lh.unique_voxels(:,6));
+                    obj.Trkland.hippocing.data.lh_unclean_MD = mean(obj.Trkland.Trks.raw_hippocing_lh.unique_voxels(:,7));
+                else
+                    obj.Trkland.hippocing.data.lh_unclean_vol =  []; 
+                    obj.Trkland.hippocing.data.lh_unclean_FA = [];
+                    obj.Trkland.hippocing.data.lh_unclean_RD = [];
+                    obj.Trkland.hippocing.data.lh_unclean_AxD = [];
+                    obj.Trkland.hippocing.data.lh_unclean_MD = [];
+                    
+                    %Fill dependenc trks to[]:
+                    obj.Trkland.Trks.hippocing_trimmed_lh.sstr=[];
+                    obj.Trkland.Trks.hippocing_cleantrimmed_lh.sstr=[];
+                    obj.Trkland.Trks.hippocing_clinehighFA_lh.sstr=[];
+                    obj.Trkland.Trks.hippocing_clineHDorff_lh.sstr=[];
+                 end
                 
                 
                 %Trimmed_clean_hippocing:
@@ -2871,12 +2912,25 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 
                 %Get volume data of unclean/cleaned tracts:
                 %Unclean tracts:
-                obj.Trkland.hippocing.data.rh_unclean_vol = obj.Trkland.Trks.raw_hippocing_rh.num_uvox;
-                obj.Trkland.hippocing.data.rh_unclean_FA = mean(obj.Trkland.Trks.raw_hippocing_rh.unique_voxels(:,4));
-                obj.Trkland.hippocing.data.rh_unclean_RD = mean(obj.Trkland.Trks.raw_hippocing_rh.unique_voxels(:,5));
-                obj.Trkland.hippocing.data.rh_unclean_AxD = mean(obj.Trkland.Trks.raw_hippocing_rh.unique_voxels(:,6));
-                obj.Trkland.hippocing.data.rh_unclean_MD = mean(obj.Trkland.Trks.raw_hippocing_rh.unique_voxels(:,7));
-                
+                if exist(obj.Trkland.hippocing.out.trk_rh,'file') ~= 0
+                    obj.Trkland.hippocing.data.rh_unclean_vol = obj.Trkland.Trks.raw_hippocing_rh.num_uvox;
+                    obj.Trkland.hippocing.data.rh_unclean_FA = mean(obj.Trkland.Trks.raw_hippocing_rh.unique_voxels(:,4));
+                    obj.Trkland.hippocing.data.rh_unclean_RD = mean(obj.Trkland.Trks.raw_hippocing_rh.unique_voxels(:,5));
+                    obj.Trkland.hippocing.data.rh_unclean_AxD = mean(obj.Trkland.Trks.raw_hippocing_rh.unique_voxels(:,6));
+                    obj.Trkland.hippocing.data.rh_unclean_MD = mean(obj.Trkland.Trks.raw_hippocing_rh.unique_voxels(:,7));
+                else
+                    obj.Trkland.hippocing.data.rh_unclean_vol = [];
+                    obj.Trkland.hippocing.data.rh_unclean_FA = [];
+                    obj.Trkland.hippocing.data.rh_unclean_RD = [];
+                    obj.Trkland.hippocing.data.rh_unclean_AxD = [];
+                    obj.Trkland.hippocing.data.rh_unclean_MD = [];
+                    
+                    %Fill dependenc trks to[]:
+                    obj.Trkland.Trks.hippocing_trimmed_rh.sstr=[];
+                    obj.Trkland.Trks.hippocing_cleantrimmed_rh.sstr=[];
+                    obj.Trkland.Trks.hippocing_clinehighFA_rh.sstr=[];
+                    obj.Trkland.Trks.hippocing_clineHDorff_rh.sstr=[];
+                end
                 
                 %Trimmed_clean_hippocing:
                 if numel(obj.Trkland.Trks.hippocing_trimmed_rh.sstr) ~= 0
@@ -3016,9 +3070,9 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 obj.Trkland.cingulum.out.clineFA_rh_highFA = [ obj.Trkland.root  'cline_cingulum_highFArh.trk.gz'];
                 obj.Trkland.cingulum.out.clineFA_rh_HDorff = [ obj.Trkland.root  'cline_cingulum_HDorffrh.trk.gz'];
                 
-                obj.Trkland.fx.cingulum.QCfile_lh = [outpath 'QC_cingulum_lh.flag'] ;
-                obj.Trkland.fx.cingulum.QCfile_rh = [outpath 'QC_cingulum_rh.flag'] ;
-                obj.Trkland.fx.cingulum.QCfile_bil = [outpath 'QC_cingulum_bil.flag'] ;
+                obj.Trkland.cingulum.QCfile_lh = [outpath 'QC_cingulum_lh.flag'] ;
+                obj.Trkland.cingulum.QCfile_rh = [outpath 'QC_cingulum_rh.flag'] ;
+                obj.Trkland.cingulum.QCfile_bil = [outpath 'QC_cingulum_bil.flag'] ;
                 
             end
             
@@ -3026,9 +3080,9 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             for tohide=1:1
                 obj.Trkland.cingulum.out.trk_lh = [ obj.Trkland.root  'trkk_cingulum_lh.trk.gz'];
                 obj.Trkland.cingulum.out.trk_rh = [ obj.Trkland.root  'trkk_cingulum_rh.trk.gz'];
-                if exist(obj.Trkland.fx.cingulum.QCfile_bil, 'file') == 0
+                if exist(obj.Trkland.cingulum.QCfile_bil, 'file') == 0
                     %Left side trking:
-                    if exist(obj.Trkland.fx.cingulum.QCfile_lh, 'file') == 0
+                    if exist(obj.Trkland.cingulum.QCfile_lh, 'file') == 0
                         if exist(obj.Trkland.cingulum.out.trk_lh,'file') == 0
                             exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
                                 ' --seed_count=20000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
@@ -3045,11 +3099,10 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         end
                     else
                         display('QC_flag_lh found in trkland_cingulum. Skipping and removing data points...')
-                        RefreshFields(obj,'cingulum','lh');
-                    end
+                   end
                     
                     %Right side trking:
-                    if exist(obj.Trkland.fx.cingulum.QCfile_rh, 'file') == 0
+                    if exist(obj.Trkland.cingulum.QCfile_rh, 'file') == 0
                         
                         if exist(obj.Trkland.cingulum.out.trk_rh,'file') == 0
                             exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
@@ -3064,16 +3117,14 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                                 end
                             end
                             wasRun=true;
-                            obj.UpdateHist(obj.Trkland.cingulum,'trkland_cingulum', obj.Trkland.cingulum.out.trk_rh,wasRun);
+                             obj.UpdateHist(obj.Trkland.cingulum,'trkland_cingulum', obj.Trkland.cingulum.out.trk_rh,wasRun);
                         end
                     else
                         display('QC_flag_rh found in trkland_cingulum. Skipping and removing data points...')
-                        RefreshFields(obj,'cingulum','rh');
-                    end
+                   end
                 else
                     display('QC_flag_bil found in trkland_cingulum. Skipping and removing data points...')
-                    RefreshFields(obj,'cingulum','bil');
-                end
+               end
             end
             
             
@@ -3120,12 +3171,26 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 
                 %GET THE DATA VALUES NOW:
                 %Unclean TRKS:
-                obj.Trkland.cingulum.data.lh_unclean_vol = obj.Trkland.Trks.raw_cingulum_lh.num_uvox;
-                obj.Trkland.cingulum.data.lh_unclean_FA = mean(obj.Trkland.Trks.raw_cingulum_lh.unique_voxels(:,4));
-                obj.Trkland.cingulum.data.lh_unclean_RD = mean(obj.Trkland.Trks.raw_cingulum_lh.unique_voxels(:,5));
-                obj.Trkland.cingulum.data.lh_unclean_AxD = mean(obj.Trkland.Trks.raw_cingulum_lh.unique_voxels(:,6));
-                obj.Trkland.cingulum.data.lh_unclean_MD = mean(obj.Trkland.Trks.raw_cingulum_lh.unique_voxels(:,7));
-                
+                if  exist(obj.Trkland.cingulum.out.trk_lh,'file') ~= 0
+                    obj.Trkland.cingulum.data.lh_unclean_vol = obj.Trkland.Trks.raw_cingulum_lh.num_uvox;
+                    obj.Trkland.cingulum.data.lh_unclean_FA = mean(obj.Trkland.Trks.raw_cingulum_lh.unique_voxels(:,4));
+                    obj.Trkland.cingulum.data.lh_unclean_RD = mean(obj.Trkland.Trks.raw_cingulum_lh.unique_voxels(:,5));
+                    obj.Trkland.cingulum.data.lh_unclean_AxD = mean(obj.Trkland.Trks.raw_cingulum_lh.unique_voxels(:,6));
+                    obj.Trkland.cingulum.data.lh_unclean_MD = mean(obj.Trkland.Trks.raw_cingulum_lh.unique_voxels(:,7));
+                else
+                    
+                    obj.Trkland.cingulum.data.lh_unclean_vol = [];
+                    obj.Trkland.cingulum.data.lh_unclean_FA = [];
+                    obj.Trkland.cingulum.data.lh_unclean_RD = [];
+                    obj.Trkland.cingulum.data.lh_unclean_AxD = [];
+                    obj.Trkland.cingulum.data.lh_unclean_MD = [];
+                    
+                    %Fill dependency trks to []:
+                    obj.Trkland.Trks.cingulum_trimmed_lh.sstr=[];
+                    obj.Trkland.Trks.cingulum_cleantrimmed_lh.sstr=[];
+                    obj.Trkland.Trks.cingulum_clinehighFA_lh.sstr=[];
+                    obj.Trkland.Trks.cingulum_clineHDorff_lh.sstr=[];
+                end
                 %Trimmed_clean_cingulum:
                 if numel(obj.Trkland.Trks.cingulum_trimmed_lh.sstr) ~= 0
                     obj.Trkland.cingulum.data.lh_trimmedclean_vol = obj.Trkland.Trks.cingulum_trimmed_lh.num_uvox;
@@ -3236,12 +3301,26 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 end
                 
                 %GET THE DATA VALUES NOW:
-                %Unclean TRKS:
-                obj.Trkland.cingulum.data.rh_unclean_vol = obj.Trkland.Trks.raw_cingulum_rh.num_uvox;
-                obj.Trkland.cingulum.data.rh_unclean_FA = mean(obj.Trkland.Trks.raw_cingulum_rh.unique_voxels(:,4));
-                obj.Trkland.cingulum.data.rh_unclean_RD = mean(obj.Trkland.Trks.raw_cingulum_rh.unique_voxels(:,5));
-                obj.Trkland.cingulum.data.rh_unclean_AxD = mean(obj.Trkland.Trks.raw_cingulum_rh.unique_voxels(:,6));
-                obj.Trkland.cingulum.data.rh_unclean_MD = mean(obj.Trkland.Trks.raw_cingulum_rh.unique_voxels(:,7));
+                if exist(obj.Trkland.cingulum.out.trk_rh,'file') ~= 0
+                    %Unclean TRKS:
+                    obj.Trkland.cingulum.data.rh_unclean_vol = obj.Trkland.Trks.raw_cingulum_rh.num_uvox;
+                    obj.Trkland.cingulum.data.rh_unclean_FA = mean(obj.Trkland.Trks.raw_cingulum_rh.unique_voxels(:,4));
+                    obj.Trkland.cingulum.data.rh_unclean_RD = mean(obj.Trkland.Trks.raw_cingulum_rh.unique_voxels(:,5));
+                    obj.Trkland.cingulum.data.rh_unclean_AxD = mean(obj.Trkland.Trks.raw_cingulum_rh.unique_voxels(:,6));
+                    obj.Trkland.cingulum.data.rh_unclean_MD = mean(obj.Trkland.Trks.raw_cingulum_rh.unique_voxels(:,7));
+                else
+                    obj.Trkland.cingulum.data.rh_unclean_vol =  [];
+                    obj.Trkland.cingulum.data.rh_unclean_FA = [];
+                    obj.Trkland.cingulum.data.rh_unclean_RD = [];
+                    obj.Trkland.cingulum.data.rh_unclean_AxD = [];
+                    obj.Trkland.cingulum.data.rh_unclean_MD = [];
+                    
+                    %Fill dependency trks to []:
+                    obj.Trkland.Trks.cingulum_trimmed_rh.sstr=[];
+                    obj.Trkland.Trks.cingulum_cleantrimmed_rh.sstr=[];
+                    obj.Trkland.Trks.cingulum_clinehighFA_rh.sstr=[];
+                    obj.Trkland.Trks.cingulum_clineHDorff_rh.sstr=[];
+                end
                 
                 %Trimmed_clean_cingulum:
                 if numel(obj.Trkland.Trks.cingulum_trimmed_rh.sstr) ~= 0
@@ -3266,11 +3345,11 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     obj.Trkland.cingulum.data.rh_clean_AxD = mean(obj.Trkland.Trks.cingulum_cleantrimmed_rh.unique_voxels(:,6));
                     obj.Trkland.cingulum.data.rh_clean_MD = mean(obj.Trkland.Trks.cingulum_cleantrimmed_rh.unique_voxels(:,7));
                 else
-                    obj.Trkland.cingulum.data.rh_clean_vol = obj.Trkland.Trks.cingulum_cleantrimmed_rh.num_uvox;
-                    obj.Trkland.cingulum.data.rh_clean_FA = mean(obj.Trkland.Trks.cingulum_cleantrimmed_rh.unique_voxels(:,4));
-                    obj.Trkland.cingulum.data.rh_clean_RD = mean(obj.Trkland.Trks.cingulum_cleantrimmed_rh.unique_voxels(:,5));
-                    obj.Trkland.cingulum.data.rh_clean_AxD = mean(obj.Trkland.Trks.cingulum_cleantrimmed_rh.unique_voxels(:,6));
-                    obj.Trkland.cingulum.data.rh_clean_MD = mean(obj.Trkland.Trks.cingulum_cleantrimmed_rh.unique_voxels(:,7));
+                    obj.Trkland.cingulum.data.rh_clean_vol = [];
+                    obj.Trkland.cingulum.data.rh_clean_FA = [];
+                    obj.Trkland.cingulum.data.rh_clean_RD = [];
+                    obj.Trkland.cingulum.data.rh_clean_AxD = [];
+                    obj.Trkland.cingulum.data.rh_clean_MD = [];
                 end
                 
                 %Cline_HighFA
@@ -3923,6 +4002,42 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         
         
         %%GET DATA Functions
+        function obj = getdata_FreeSurfer(obj)
+         
+            files = {[fsdir filesep sess filesep 'stats' filesep 'lh.aparc.stats'];
+                [fsdir filesep sess filesep 'stats' filesep 'rh.aparc.stats'];
+                [fsdir filesep sess filesep 'stats' filesep 'aseg.stats']};
+            labs = {'lh' 'rh' 'vol'};
+            
+            
+            for zz = 1:3
+                tmp = ReadInFile(files{zz},'\t',0); tmp = tmp(contains('^# ColHeaders',tmp):end);
+                
+                for ii = 1:50
+                    tmp = regexprep(tmp,'  ', ' ');
+                end
+                
+                tmp = regexp(tmp,' ','split');
+                T = {};
+                for ii = 1:numel(tmp);
+                    if isempty(tmp{ii}{end}); tmp{ii} = tmp{ii}(1:end-1); end
+                    if ii == 1
+                        T(ii,:) = tmp{ii}(3:end);
+                    else
+                        if isempty(str2num(tmp{ii}{1}))
+                            tmp{ii}([2:numel(tmp{ii})]) = num2cell(str2num(char(tmp{ii}([2:numel(tmp{ii})]))));
+                        else
+                            tmp{ii}([1:4 6:numel(tmp{ii})]) = num2cell(str2num(char(tmp{ii}([1:4 6:numel(tmp{ii})]))));
+                        end
+                        T(ii,:) = tmp{ii}(1:numel(tmp{ii}));
+                    end
+                end
+                
+                obj.FSdata.(labs{zz}) = cell2table(T(2:end,:),'VariableName',T(1,:));
+            end
+        end
+            vzcxvc
+        
         function obj = getdata_trkland_fx(obj)
             %Get volume data of unclean/cleaned tracts:
             %Volume:
