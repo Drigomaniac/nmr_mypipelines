@@ -396,6 +396,7 @@ classdef dwi_ADRC < dwiMRI_Session
                 trkland_cingulum(obj)
             end
             
+            obj.resave();
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %TRKLAND_ATR:
@@ -406,7 +407,7 @@ classdef dwi_ADRC < dwiMRI_Session
                 obj.Trkland.atr.in.thalamus_rh = strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc2009_aseg/dwi_fs_Right-Thalamus-Proper.nii.gz');
                 
               %Under DEVELOPMENT:
-              %I haven't found an optimal trimming technique
+              %I haven't found an optimal trimming technique...yet
               %trkland_atr(obj)
             end
             
@@ -429,11 +430,11 @@ classdef dwi_ADRC < dwiMRI_Session
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %TRACX THAL_2_CORTEX11:
             for tohide=1:1
-                obj.Params.tracx_thal2ctx11.in.bedp_dir = fileparts(obj.Params.Tracula.out.bedp_check);
-                obj.Params.tracx_thal2ctx11.in.FSaparc_dir = [ fileparts(obj.Params.FS2dwi.out.fn_aparc2009)  filesep 'aparc_aseg' filesep];
-                obj.Params.tracx_thal2ctx11.in.movefiles = ['..' filesep '..' filesep '..' filesep 'post_tracx' filesep 'thal2ctx11' ];
-                obj.Params.tracx_thal2ctx11.in.prep_segs_list = [ obj.dependencies_dir  'THALX_CTX11.txt' ];
-              
+%                 obj.Params.tracx_thal2ctx11.in.bedp_dir = fileparts(obj.Params.Tracula.out.bedp_check);
+%                 obj.Params.tracx_thal2ctx11.in.FSaparc_dir = [ fileparts(obj.Params.FS2dwi.out.fn_aparc2009)  filesep 'aparc_aseg' filesep];
+%                 obj.Params.tracx_thal2ctx11.in.movefiles = ['..' filesep '..' filesep '..' filesep 'post_tracx' filesep 'thal2ctx11' ];
+%                 obj.Params.tracx_thal2ctx11.in.prep_segs_list = [ obj.dependencies_dir  'THALX_CTX11.txt' ];
+%               
                %obj.proc_tracx2thal11();
             end
             
@@ -441,12 +442,12 @@ classdef dwi_ADRC < dwiMRI_Session
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %TRACX THAL_2_PAPEZ (2 frontals, 1 cingualte, 3 temporals):
             for tohide=1:1
-                obj.Params.tracx_thal2papez.in.bedp_dir = fileparts(obj.Params.Tracula.out.bedp_check);
-                obj.Params.tracx_thal2papez.in.FSaparc_dir = [ fileparts(obj.Params.FS2dwi.out.fn_aparc2009)  filesep 'aparc_aseg' filesep];
-                obj.Params.tracx_thal2papez.in.movefiles = ['..' filesep '..' filesep '..' filesep 'post_tracx' filesep 'thal2papez' ];
-                obj.Params.tracx_thal2papez.in.prep_segs_list = [ obj.dependencies_dir  'THALX_PAPEZ.txt' ];
-                
-                %obj.proc_tracx2papez();
+%                 obj.Params.tracx_thal2papez.in.bedp_dir = fileparts(obj.Params.Tracula.out.bedp_check);
+%                 obj.Params.tracx_thal2papez.in.FSaparc_dir = [ fileparts(obj.Params.FS2dwi.out.fn_aparc2009)  filesep 'aparc_aseg' filesep];
+%                 obj.Params.tracx_thal2papez.in.movefiles = ['..' filesep '..' filesep '..' filesep 'post_tracx' filesep 'thal2papez' ];
+%                 obj.Params.tracx_thal2papez.in.prep_segs_list = [ obj.dependencies_dir  'THALX_PAPEZ.txt' ];
+%                 
+%                 %obj.proc_tracx2papez();
             end
             
             
@@ -464,13 +465,13 @@ classdef dwi_ADRC < dwiMRI_Session
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %AFQ:
-            for tohide=1:1
-            obj.Params.AFQ.in.movefiles = ['..' filesep 'post_AFQ' ];
-            obj.Params.AFQ.in.dwi = obj.Params.CoRegMultiple.out.combined_fn ;
-            obj.Params.AFQ.in.T1 = obj.T1 ;
-            
-            %obj.proc_AFQ();
-            end
+%             for tohide=1:1
+%             obj.Params.AFQ.in.movefiles = ['..' filesep 'post_AFQ' ];
+%             obj.Params.AFQ.in.dwi = obj.Params.CoRegMultiple.out.combined_fn ;
+%             obj.Params.AFQ.in.T1 = obj.T1 ;
+%             
+%             %obj.proc_AFQ();
+%            end
         end
         function obj = ParticularProc(obj)
             
