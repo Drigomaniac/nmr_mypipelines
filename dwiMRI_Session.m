@@ -3215,17 +3215,17 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     obj.Trkland.cingulum.data.lh_clean_AxD = mean(obj.Trkland.Trks.cingulum_cleantrimmed_lh.unique_voxels(:,6));
                     obj.Trkland.cingulum.data.lh_clean_MD = mean(obj.Trkland.Trks.cingulum_cleantrimmed_lh.unique_voxels(:,7));
                 else
-                    obj.Trkland.cingulum.data.lh_clean_vol = obj.Trkland.Trks.cingulum_cleantrimmed_lh.num_uvox;
-                    obj.Trkland.cingulum.data.lh_clean_FA = mean(obj.Trkland.Trks.cingulum_cleantrimmed_lh.unique_voxels(:,4));
-                    obj.Trkland.cingulum.data.lh_clean_RD = mean(obj.Trkland.Trks.cingulum_cleantrimmed_lh.unique_voxels(:,5));
-                    obj.Trkland.cingulum.data.lh_clean_AxD = mean(obj.Trkland.Trks.cingulum_cleantrimmed_lh.unique_voxels(:,6));
-                    obj.Trkland.cingulum.data.lh_clean_MD = mean(obj.Trkland.Trks.cingulum_cleantrimmed_lh.unique_voxels(:,7));
+                    obj.Trkland.cingulum.data.lh_clean_vol = [];
+                    obj.Trkland.cingulum.data.lh_clean_FA = [];
+                    obj.Trkland.cingulum.data.lh_clean_RD = [];
+                    obj.Trkland.cingulum.data.lh_clean_AxD = [];
+                    obj.Trkland.cingulum.data.lh_clean_MD = [];
                 end
                 
                 %Cline_HighFA
                 if numel(obj.Trkland.Trks.cingulum_clinehighFA_lh.sstr) ~= 0
                     obj.Trkland.cingulum.data.lh_cline_HighFA_vol = obj.Trkland.Trks.cingulum_clinehighFA_lh.num_uvox;
-                    obj.Trkland.cingulum.data.lh_cline_length_highFA=obj.Trkland.Trks.cingulum_clinehighFA_lh.maxsstrlen;
+                    obj.Trkland.cingulum.data.lh_cline_length_highFA = obj.Trkland.Trks.cingulum_clinehighFA_lh.maxsstrlen;
                     obj.Trkland.cingulum.data.lh_cline_FA_highFA = mean(obj.Trkland.Trks.cingulum_clinehighFA_lh.unique_voxels(:,4));
                     obj.Trkland.cingulum.data.lh_cline_RD_highFA = mean(obj.Trkland.Trks.cingulum_clinehighFA_lh.unique_voxels(:,5));
                     obj.Trkland.cingulum.data.lh_cline_AxD_highFA = mean(obj.Trkland.Trks.cingulum_clinehighFA_lh.unique_voxels(:,6));
@@ -3242,7 +3242,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 %Cline_HDorff
                 if numel(obj.Trkland.Trks.cingulum_clineHDorff_lh.sstr) ~= 0
                     obj.Trkland.cingulum.data.lh_cline_HDorff_vol = obj.Trkland.Trks.cingulum_clineHDorff_lh.num_uvox;
-                    obj.Trkland.cingulum.data.lh_cline_length_HDorff=obj.Trkland.Trks.cingulum_clineHDorff_lh.maxsstrlen;
+                    obj.Trkland.cingulum.data.lh_cline_length_HDorff = obj.Trkland.Trks.cingulum_clineHDorff_lh.maxsstrlen;
                     obj.Trkland.cingulum.data.lh_cline_FA_HDorff = mean(obj.Trkland.Trks.cingulum_clineHDorff_lh.unique_voxels(:,4));
                     obj.Trkland.cingulum.data.lh_cline_RD_HDorff = mean(obj.Trkland.Trks.cingulum_clineHDorff_lh.unique_voxels(:,5));
                     obj.Trkland.cingulum.data.lh_cline_AxD_HDorff = mean(obj.Trkland.Trks.cingulum_clineHDorff_lh.unique_voxels(:,6));
