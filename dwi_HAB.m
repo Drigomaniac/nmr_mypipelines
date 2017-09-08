@@ -32,7 +32,7 @@ classdef dwi_HAB < dwiMRI_Session
         dependencies_dir='/cluster/hab/HAB/Project1/DWIs_30b700/DEPENDENCIES/';
         %Freesurfer Dependencies:
         init_FS = '/usr/local/freesurfer/stable6';
-
+        FS_location='/eris/bang/HAB_Project1/FreeSurferv6.0';
         %DataCentral (if false, we won't upload)
         dctl_flag = false;
         
@@ -267,8 +267,7 @@ classdef dwi_HAB < dwiMRI_Session
             %[~,  tmpshell , ~] = fileparts(tmpb);
             obj.Params.FreeSurfer.shell = strtrim(tmpb); %strtrim(tmpshell);
           
-            obj.Params.FreeSurfer.dir = [ filesep 'eris' filesep 'bang' filesep ...
-            'HAB_Project1' filesep 'FreeSurferv6.0' filesep ] ;
+            obj.Params.FreeSurfer.dir = obj.FS_location ;
             obj.Params.FreeSurfer.init_location = obj.init_FS; 
             %Retrieving a T1 scan:
             [sys_error, obj.Params.FreeSurfer.in.T1 ] = system(['ls ' obj.session_location 'MPRAGE' filesep '*.mgz | head -1' ]);
@@ -313,6 +312,15 @@ classdef dwi_HAB < dwiMRI_Session
                 strtrim(strrep(obj.Params.FreeSurfer.out.aparcaseg,'aparc+aseg','rh.hippoSfLabels-T1-T2.v10.FSvoxelSpace')); 
             
             obj.proc_FS2dwi();
+            
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %Extracting the value sfrom FreeSurfer:
+            obj.getdata_FreeSurfer();
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+            
             
         end
         

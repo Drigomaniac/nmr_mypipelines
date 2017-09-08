@@ -36,6 +36,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         %%% Change things so that these are the only version used.
         fsdir = '';
         fsubj = '';
+        FSdata='';
         objectHome = '';
         T1 = '' ;
         projectID = ''
@@ -4004,14 +4005,16 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         %%GET DATA Functions
         function obj = getdata_FreeSurfer(obj)
          
-            files = {[fsdir filesep sess filesep 'stats' filesep 'lh.aparc.stats'];
-                [fsdir filesep sess filesep 'stats' filesep 'rh.aparc.stats'];
-                [fsdir filesep sess filesep 'stats' filesep 'aseg.stats']};
+            files = {[obj.FS_location filesep obj.sessionname filesep 'stats' filesep 'lh.aparc.stats'];
+                [obj.FS_location filesep obj.sessionname filesep 'stats' filesep 'rh.aparc.stats'];
+                [obj.FS_location filesep obj.sessionname filesep 'stats' filesep 'aseg.stats']};
             labs = {'lh' 'rh' 'vol'};
             
             
             for zz = 1:3
-                tmp = ReadInFile(files{zz},'\t',0); tmp = tmp(contains('^# ColHeaders',tmp):end);
+                tmp_all = ReadInFile(files{zz},'\t',0); tmp = tmp_all(contains('^# ColHeaders',tmp_all):end);
+                
+                
                 
                 for ii = 1:50
                     tmp = regexprep(tmp,'  ', ' ');
@@ -4033,8 +4036,19 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     end
                 end
                 
+                %Getting estimated measures 
+                if zz == 3 %In aparc.stats
+                    col_estimatedMeas=tmp_all(contains('^# Measure',tmp_all));
+                    for jj=1:numel(col_estimatedMeas)
+                        spl_TICV{jj}=strsplit(col_estimatedMeas{jj},', ');
+                        T(end+1,4)=  num2cell(str2num(strrep(spl_TICV{jj}{end-1},',','')));
+                        T(end,5) = {(strrep(spl_TICV{jj}{2},'.',''))};
+                    end
+                end
+                
                 obj.FSdata.(labs{zz}) = cell2table(T(2:end,:),'VariableName',T(1,:));
             end
+            obj.resave;
         end
         
         function obj = getdata_trkland_fx(obj)
