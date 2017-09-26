@@ -932,6 +932,11 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             for ii=1:numel(obj.Params.EddyMotion.in.fn_eddy)
                 clear cur_fn;
                 %Dealing with INPUT:
+                %obj.Params.EddyMotion.in.fn_motion --> using restricted
+                %movement file instead of the non_restricted as it give us
+                %the actual movement disregarding the tranlation in the PE
+                %direction (double check:
+                %https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/eddy/UsersGuide )
                 obj.Params.EddyMotion.in.fn_motion{ii} = ...
                     strrep(obj.Params.EddyMotion.in.fn_eddy{ii},'.nii.gz','.eddy_restricted_movement_rms');
                 if exist(obj.Params.EddyMotion.in.fn_motion{ii} )
