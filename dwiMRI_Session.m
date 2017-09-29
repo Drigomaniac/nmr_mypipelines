@@ -691,7 +691,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         obj.UpdateHist(obj.Params.Eddy,'proc_eddy', obj.Params.Eddy.out.fn{ii},wasRun);
                     catch
                         errormsg=['PROC_EDDY: Cannnot run eddy in: ' ...
-                            obj.Params.Eddy.in.fn{ii} 'please double check parameters?'\n' ];
+                            obj.Params.Eddy.in.fn{ii} 'please double check parameters?\n' ];
                         obj.UpdateErrors(errormsg);
                     end
                 else
@@ -3300,8 +3300,8 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     %save trks:
                     rotrk_write(obj.Trkland.Trks.cingulum_cleantrimmed_rh.header,obj.Trkland.Trks.cingulum_cleantrimmed_rh.sstr,obj.Trkland.cingulum.out.clean_trks_rh )
                     rotrk_write(obj.Trkland.Trks.cingulum_trimmed_rh.header,obj.Trkland.Trks.cingulum_trimmed_rh.sstr,obj.Trkland.cingulum.out.clean_trkstrimmed_rh);
-                    rotrk_write(obj.Trkland.Trks.cingulum_clinehighFA_rh.header,obj.Trkland.Trks.cingulum_clinehighFA_rh.sstr,obj.Trkland.cingulum.out.clineFA_rh_highFA )
-                    rotrk_write(obj.Trkland.Trks.cingulum_clineHDorff_rh.header,obj.Trkland.Trks.cingulum_clineHDorff_rh.sstr,obj.Trkland.cingulum.out.clineFA_rh_HDorff)
+                    rotrk_write(obj.Trkland.Trks.cingulum_clinehighFA_rh.header,obj.Trkland.Trks.cingulum_clinehighFA_rh.sstr,obj.Trkland.cingulum.out.clineFA_rh_highFA );
+                    rotrk_write(obj.Trkland.Trks.cingulum_clineHDorff_rh.header,obj.Trkland.Trks.cingulum_clineHDorff_rh.sstr,obj.Trkland.cingulum.out.clineFA_rh_HDorff);
                     wasRun=true;
                     obj.UpdateHist(obj.Trkland.cingulum,'trkland_cingulum', obj.Trkland.cingulum.out.clineFA_rh_highFA,wasRun);
                 end
