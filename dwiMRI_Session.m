@@ -2354,6 +2354,9 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         obj.UpdateHist(obj.Trkland.fx,'trkland_fx', obj.Trkland.fx.out.clineFA_lh_highFA,wasRun);
                     end
                     
+                    %Adding improved projectivity FA for newer centerline
+                    %(and values)
+                    
                     %Get data of unclean trks:
                     if  exist(obj.Trkland.fx.out.trks_lh,'file') ~= 0
                         obj.Trkland.fx.data.lh_unclean_vol = obj.Trkland.Trks.fx_raw_lh.num_uvox;
@@ -2369,10 +2372,11 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         obj.Trkland.fx.data.lh_unclean_MD = [];
                         
                         %Fill dependency trks to []:
-                        obj.Trkland.Trks.fx_trimmed_lh.sstr=[];
-                        obj.Trkland.Trks.fx_cleantrimmed_lh.sstr=[];
-                        obj.Trkland.Trks.fx_clinehighFA_lh.sstr=[];
-                        obj.Trkland.Trks.fx_clineHDorff_lh.sstr=[];
+                        obj.remove_trkland_fields('fx_raw_lh')
+                        obj.remove_trkland_fields('fx_trimmed_lh')
+                        obj.remove_trkland_fields('fx_cleantrimmed_lh')
+                        obj.remove_trkland_fields('fx_clinehighFA_lh')
+                        obj.remove_trkland_fields('fx_clineHDorff_lh')
                     end
                     
                     %Get data of trimmed values
@@ -2475,6 +2479,8 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         obj.UpdateHist(obj.Trkland.fx,'trkland_fx', obj.Trkland.fx.out.clineFA_rh_highFA,wasRun);
                         
                     end
+                    
+                                
                     %Get data of unclean trks:
                     if  exist(obj.Trkland.fx.out.trks_rh,'file') ~= 0
                         obj.Trkland.fx.data.rh_unclean_vol = obj.Trkland.Trks.fx_raw_rh.num_uvox;
@@ -2490,10 +2496,11 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         obj.Trkland.fx.data.rh_unclean_MD = [];
                         
                         %Fill dependency trks to []:
-                        obj.Trkland.Trks.fx_trimmed_rh.sstr=[];
-                        obj.Trkland.Trks.fx_cleantrimmed_rh.sstr=[];
-                        obj.Trkland.Trks.fx_clinehighFA_rh.sstr=[];
-                        obj.Trkland.Trks.fx_clineHDorff_rh.sstr=[];
+                        obj.remove_trkland_fields('fx_raw_rh')
+                        obj.remove_trkland_fields('fx_trimmed_rh')
+                        obj.remove_trkland_fields('fx_cleantrimmed_rh')
+                        obj.remove_trkland_fields('fx_clinehighFA_rh')
+                        obj.remove_trkland_fields('fx_clineHDorff_rh')
                     end
                     
                     %Get data of trimmed values
@@ -2743,8 +2750,6 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 end
             end
             
-            
-            
             %LEFT SIDE:
             for tohide=1:1
                 if exist(obj.Trkland.hippocing.out.clean_trks_lh ,'file') == 0 && exist(obj.Trkland.hippocing.out.trk_lh,'file') ~= 0
@@ -2782,8 +2787,8 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     wasRun=true;
                     obj.UpdateHist(obj.Trkland.hippocing,'trkland_hippocing', obj.Trkland.hippocing.out.clineFA_lh_highFA,wasRun);
                 end
-                %GETTING DATA NOW:
                 
+                %GETTING DATA NOW:
                 %Unclean tracts:
                 if exist(obj.Trkland.hippocing.out.trk_lh,'file') ~= 0
                     obj.Trkland.hippocing.data.lh_unclean_vol = obj.Trkland.Trks.raw_hippocing_lh.num_uvox;
@@ -2799,10 +2804,11 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     obj.Trkland.hippocing.data.lh_unclean_MD = [];
                     
                     %Fill dependenc trks to[]:
-                    obj.Trkland.Trks.hippocing_trimmed_lh.sstr=[];
-                    obj.Trkland.Trks.hippocing_cleantrimmed_lh.sstr=[];
-                    obj.Trkland.Trks.hippocing_clinehighFA_lh.sstr=[];
-                    obj.Trkland.Trks.hippocing_clineHDorff_lh.sstr=[];
+                    obj.remove_trkland_fields('raw_hippocing_lh')
+                    obj.remove_trkland_fields('hippocing_trimmed_lh')
+                    obj.remove_trkland_fields('hippocing_cleantrimmed_lh')
+                    obj.remove_trkland_fields('hippocing_clinehighFA_lh')
+                    obj.remove_trkland_fields('hippocing_clineHDorff_lh')
                  end
                 
                 
@@ -2915,7 +2921,14 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     obj.UpdateHist(obj.Trkland.hippocing,'trkland_hippocing', obj.Trkland.hippocing.out.clineFA_rh_highFA,wasRun);
                     
                 end
+                 
                 
+                %Get info about raw data:
+                if exist(obj.Trkland.hippocing.out.trk_rh,'file') == 0 %Either failed
+                    obj.Trkland.Trks.raw_hippocing_rh.sstr = [];
+                    obj.Trkland.Trks.raw_hippocing_rh.unique_voxels = [];
+                    
+                end
                 %Get volume data of unclean/cleaned tracts:
                 %Unclean tracts:
                 if exist(obj.Trkland.hippocing.out.trk_rh,'file') ~= 0
@@ -2932,10 +2945,11 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     obj.Trkland.hippocing.data.rh_unclean_MD = [];
                     
                     %Fill dependenc trks to[]:
-                    obj.Trkland.Trks.hippocing_trimmed_rh.sstr=[];
-                    obj.Trkland.Trks.hippocing_cleantrimmed_rh.sstr=[];
-                    obj.Trkland.Trks.hippocing_clinehighFA_rh.sstr=[];
-                    obj.Trkland.Trks.hippocing_clineHDorff_rh.sstr=[];
+                    obj.remove_trkland_fields('raw_hippocing_rh')
+                    obj.remove_trkland_fields('hippocing_trimmed_rh')
+                    obj.remove_trkland_fields('hippocing_cleantrimmed_rh')
+                    obj.remove_trkland_fields('hippocing_clinehighFA_rh')
+                    obj.remove_trkland_fields('hippocing_clineHDorff_rh')
                 end
                 
                 %Trimmed_clean_hippocing:
@@ -3192,10 +3206,11 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     obj.Trkland.cingulum.data.lh_unclean_MD = [];
                     
                     %Fill dependency trks to []:
-                    obj.Trkland.Trks.cingulum_trimmed_lh.sstr=[];
-                    obj.Trkland.Trks.cingulum_cleantrimmed_lh.sstr=[];
-                    obj.Trkland.Trks.cingulum_clinehighFA_lh.sstr=[];
-                    obj.Trkland.Trks.cingulum_clineHDorff_lh.sstr=[];
+                    obj.remove_trkland_fields('raw_cingulum_lh')
+                    obj.remove_trkland_fields('cingulum_trimmed_lh')
+                    obj.remove_trkland_fields('cingulum_cleantrimmed_lh')
+                    obj.remove_trkland_fields('cingulum_clinehighFA_lh')
+                    obj.remove_trkland_fields('cingulum_clineHDorff_lh')
                 end
                 %Trimmed_clean_cingulum:
                 if numel(obj.Trkland.Trks.cingulum_trimmed_lh.sstr) ~= 0
@@ -3322,10 +3337,11 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     obj.Trkland.cingulum.data.rh_unclean_MD = [];
                     
                     %Fill dependency trks to []:
-                    obj.Trkland.Trks.cingulum_trimmed_rh.sstr=[];
-                    obj.Trkland.Trks.cingulum_cleantrimmed_rh.sstr=[];
-                    obj.Trkland.Trks.cingulum_clinehighFA_rh.sstr=[];
-                    obj.Trkland.Trks.cingulum_clineHDorff_rh.sstr=[];
+                    obj.remove_trkland_fields('raw_cingulum_rh')
+                    obj.remove_trkland_fields('cingulum_trimmed_rh')
+                    obj.remove_trkland_fields('cingulum_cleantrimmed_rh')
+                    obj.remove_trkland_fields('cingulum_clinehighFA_rh')
+                    obj.remove_trkland_fields('cingulum_clineHDorff_rh')
                 end
                 
                 %Trimmed_clean_cingulum:
@@ -4897,6 +4913,20 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             %                      disp('unknown coregistration style option');
             %                      return
             %            end
+        end
+        
+        
+        function obj = remove_trkland_fields(obj,curTRK)
+            temp_fields = fieldnames(obj.Trkland.Trks.(curTRK));
+            for ii=1:numel(temp_fields)
+                display(temp_fields{ii});
+                if ( strcmp(temp_fields{ii},'filename') || strcmp(temp_fields{ii},'trk_name') ) || strcmp(temp_fields{ii},'id')
+                    donothing=1;
+                else
+                    obj.Trkland.Trks.(curTRK).(temp_fields{ii}) = [];
+                end
+            end
+            clear donothing;
         end
         
         
