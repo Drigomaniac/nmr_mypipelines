@@ -375,7 +375,7 @@ classdef dwi_ADRC < dwiMRI_Session
                 obj.Trkland.fx.in.fib =strtrim(obj.Params.GQI.out.fibs_fn{end});
                 if exist(obj.Trkland.fx.in.fib) == 0 ; error('No fib found in variable: trkland.trks.fx.in.fib. Please check!') ; end
                 
-                obj.trkland_fx();
+                obj.trkland_fx(); obj.resave();
             end
             
             
@@ -387,7 +387,7 @@ classdef dwi_ADRC < dwiMRI_Session
                 obj.Trkland.hippocing.in.postcing_lh = strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc_aseg/dwi_ctx-lh-posteriorcingulate.nii.gz');
                 obj.Trkland.hippocing.in.postcing_rh = strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc_aseg/dwi_ctx-rh-posteriorcingulate.nii.gz');
                 
-                obj.trkland_hippocing();
+                obj.trkland_hippocing(); obj.resave();
             end
             
             
@@ -399,10 +399,8 @@ classdef dwi_ADRC < dwiMRI_Session
                 obj.Trkland.cingulum.in.postcing_lh = strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc_aseg/dwi_ctx-lh-posteriorcingulate.nii.gz');
                 obj.Trkland.cingulum.in.postcing_rh = strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc_aseg/dwi_ctx-rh-posteriorcingulate.nii.gz');
                 
-                trkland_cingulum(obj);
+                trkland_cingulum(obj); obj.resave();
             end
-            
-            obj.resave();
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %TRKLAND_ATR:

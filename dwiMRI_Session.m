@@ -2342,10 +2342,11 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         %saving trimmed and trimmed_clean trks:
                         rotrk_write(obj.Trkland.Trks.fx_trimmed_lh.header,obj.Trkland.Trks.fx_trimmed_lh.sstr,obj.Trkland.fx.out.clean_trkstrimmed_lh);
                         rotrk_write(obj.Trkland.Trks.fx_cleantrimmed_lh.header,obj.Trkland.Trks.fx_cleantrimmed_lh.sstr,obj.Trkland.fx.out.clean_trks_lh);
+                        
                     end
                     
                     %HighFA:
-                    if exist(obj.Trkland.fx.out.clineFA_lh_highFA,'file')==0
+                    if exist(obj.Trkland.fx.out.clineFA_lh_highFA,'file')==0 && exist(obj.Trkland.fx.out.clean_trks_lh,'file') ~= 0
                         %obj.Trkland.Trks.fx_cleantrimmed_lh = rotrk_rm_bylen(obj.Trkland.Trks.fx_clineinit_lh, obj.Trkland.Trks.fx_raw_lh,obj.Trkland.Trks.fx_raw_lh);
                         %Now that the TRK is clean, lets get the high_FA and get the centerline:
                         %Pick centerline based on high_sc and FA:
@@ -2359,10 +2360,11 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         obj.Trkland.Trks.fx_clinehighFA_lh = rotrk_add_sc(  obj.Trkland.Trks.fx_clinehighFA_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
                         obj.Trkland.Trks.fx_clinehighFA_lh = rotrk_add_sc(  obj.Trkland.Trks.fx_clinehighFA_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
                         rotrk_write(obj.Trkland.Trks.fx_clinehighFA_lh.header,obj.Trkland.Trks.fx_clinehighFA_lh.sstr,obj.Trkland.fx.out.clineFA_lh_highFA );
+                        
                     end
                     
                     %HDorff:
-                    if exist(obj.Trkland.fx.out.clineFA_lh_HDorff,'file')==0
+                    if exist(obj.Trkland.fx.out.clineFA_lh_HDorff,'file')==0 && exist(obj.Trkland.fx.out.clean_trks_lh,'file') ~= 0
                         display('executing centerline_lh for fx_hDorff ... ')
                         obj.Trkland.Trks.fx_clineHDorff_lh = rotrk_centerline(rotrk_read(obj.Trkland.fx.out.clean_trks_lh,obj.sessionname,obj.Params.Dtifit.out.FA{end},'fx_lh_cleantrimmed'), 'hausdorff');
                         %Add scalars:
@@ -2374,6 +2376,15 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         %save trks:
                         rotrk_write(obj.Trkland.Trks.fx_clineHDorff_lh.header,obj.Trkland.Trks.fx_clineHDorff_lh.sstr,obj.Trkland.fx.out.clineFA_lh_HDorff );
                     end
+                    %Create a blank cline_HDorff and cline_highFA
+                    if exist(obj.Trkland.fx.out.clean_trks_lh,'file') == 0 
+                        obj.Trkland.Trks.fx_clinehighFA_lh.sstr = [];
+                        obj.Trkland.Trks.fx_clinehighFA_lh.header = [] ;
+                        
+                        obj.Trkland.Trks.fx_clineHDorff_lh.sstr = [] ; 
+                        obj.Trkland.Trks.fx_clineHDorff_lh.header = [] ; 
+                    end
+                    
                     
                     %Adding improved projectivity FA for newer centerline
                     %(and values)
@@ -2492,7 +2503,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         rotrk_write(obj.Trkland.Trks.fx_cleantrimmed_rh.header,obj.Trkland.Trks.fx_cleantrimmed_rh.sstr,obj.Trkland.fx.out.clean_trks_rh)
                     end
                     %HighFA centerline:
-                    if exist(obj.Trkland.fx.out.clineFA_rh_highFA, 'file')==0
+                    if exist(obj.Trkland.fx.out.clineFA_rh_highFA, 'file')==0 && exist(obj.Trkland.fx.out.clean_trks_rh,'file') ~= 0
                         display('executing centerline_rh for fx_highFA ... ')
                         temp_clean_trk_rh = rotrk_read(obj.Trkland.fx.out.clean_trks_rh,obj.sessionname,obj.Params.Dtifit.out.FA{end},'fx_rh_cleantrimmed');
                         temp_clean_trk_rh = rotrk_add_sc(temp_clean_trk_rh ,obj.Params.Dtifit.out.FA{end} , 'FA');
@@ -2505,7 +2516,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         rotrk_write(obj.Trkland.Trks.fx_clinehighFA_rh.header,obj.Trkland.Trks.fx_clinehighFA_rh.sstr,obj.Trkland.fx.out.clineFA_rh_highFA )
                     end
                     %HDorff centerline:
-                    if exist(obj.Trkland.fx.out.clineFA_rh_HDorff , 'file' ) == 0
+                    if exist(obj.Trkland.fx.out.clineFA_rh_HDorff , 'file' ) == 0 && exist(obj.Trkland.fx.out.clean_trks_rh,'file') ~= 0
                         display('executing centerline_rh for fx_hDorff ... ')
                         obj.Trkland.Trks.fx_clineHDorff_rh = rotrk_centerline(rotrk_read(obj.Trkland.fx.out.clean_trks_rh,obj.sessionname,obj.Params.Dtifit.out.FA{end},'fx_rh_cleantrimmed'), 'hausdorff');
                         %Adding scalars:
@@ -2516,7 +2527,14 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         %save trks:
                         rotrk_write(obj.Trkland.Trks.fx_clineHDorff_rh.header,obj.Trkland.Trks.fx_clineHDorff_rh.sstr,obj.Trkland.fx.out.clineFA_rh_HDorff )
                     end
-                    
+                    %Create a blank cline_HDorff and cline_highFA
+                    if exist(obj.Trkland.fx.out.clean_trks_rh,'file') == 0
+                        obj.Trkland.Trks.fx_clinehighFA_rh.sstr = [];
+                        obj.Trkland.Trks.fx_clinehighFA_rh.header = [] ;
+                        
+                        obj.Trkland.Trks.fx_clineHDorff_rh.sstr = [] ;
+                        obj.Trkland.Trks.fx_clineHDorff_rh.header = [] ;
+                    end
                                 
                     %Get data of unclean trks:
                     if  exist(obj.Trkland.fx.out.trks_rh,'file') ~= 0
@@ -2809,7 +2827,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 end
                 
                 %HighFA_centerline: 
-                if exist(obj.Trkland.hippocing.out.clineFA_lh_highFA,'file')==0
+                if exist(obj.Trkland.hippocing.out.clineFA_lh_highFA,'file')==0 && exist(obj.Trkland.hippocing.out.clean_trks_lh,'file') ~=0 
                     display('Executing centerline_lh for hippocing_highFA...')
                     temp_clean_trk_lh=rotrk_read(obj.Trkland.hippocing.out.clean_trks_lh ,obj.sessionname,obj.Params.Dtifit.out.FA{end},'hippocing_lh_cleantrimmed');
                     temp_clean_trk_lh=rotrk_add_sc(temp_clean_trk_lh,obj.Params.Dtifit.out.FA{end},'FA');
@@ -2823,7 +2841,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     rotrk_write(obj.Trkland.Trks.hippocing_clinehighFA_lh.header,obj.Trkland.Trks.hippocing_clinehighFA_lh.sstr,obj.Trkland.hippocing.out.clineFA_lh_highFA );
                 end
                 %HDorff_centerline:
-                if exist(obj.Trkland.hippocing.out.clineFA_lh_HDorff,'file')==0
+                if exist(obj.Trkland.hippocing.out.clineFA_lh_HDorff,'file')==0 && exist(obj.Trkland.hippocing.out.clean_trks_lh,'file') ~=0 
                     obj.Trkland.Trks.hippocing_clineHDorff_lh = rotrk_centerline(rotrk_read(obj.Trkland.hippocing.out.clean_trks_lh ,obj.sessionname,obj.Params.Dtifit.out.FA{end},'hippocing_lh_cleantrimmed'), 'hausdorff');
                     %Adding scalars:
                     obj.Trkland.Trks.hippocing_clineHDorff_lh = rotrk_add_sc(  obj.Trkland.Trks.hippocing_clineHDorff_lh ,obj.Params.Dtifit.out.FA{end} , 'FA');
@@ -2832,6 +2850,14 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     obj.Trkland.Trks.hippocing_clineHDorff_lh = rotrk_add_sc(  obj.Trkland.Trks.hippocing_clineHDorff_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
                     %save trks:
                     rotrk_write(obj.Trkland.Trks.hippocing_clineHDorff_lh.header,obj.Trkland.Trks.hippocing_clineHDorff_lh.sstr,obj.Trkland.hippocing.out.clineFA_lh_HDorff);
+                end
+                %Create a blank cline_HDorff and cline_highFA
+                if exist(obj.Trkland.hippocing.out.clean_trks_lh,'file') == 0
+                    obj.Trkland.Trks.hippocing_clinehighFA_lh.sstr = [];
+                    obj.Trkland.Trks.hippocing_clinehighFA_lh.header = [] ;
+                    
+                    obj.Trkland.Trks.hippocing_clineHDorff_lh.sstr = [] ;
+                    obj.Trkland.Trks.hippocing_clineHDorff_lh.header = [] ;
                 end
                 
                 %GETTING DATA NOW:
@@ -2966,7 +2992,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 %Now that the TRK is clean, lets get the high_FA and get the centerline:
                 %Pick centerline based on high_sc and FA:
                 %HighFA
-                if exist(obj.Trkland.hippocing.out.clineFA_rh_highFA ,'file') == 0
+                if exist(obj.Trkland.hippocing.out.clineFA_rh_highFA ,'file') == 0 && exist(obj.Trkland.hippocing.out.clean_trks_rh,'file') ~= 0
                     display('Executing centerline_rh for hippocing_highFA...');
                     temp_clean_trk_rh=rotrk_read(obj.Trkland.hippocing.out.clean_trks_rh ,obj.sessionname,obj.Params.Dtifit.out.FA{end},'hippocing_rh_cleantrimmed');
                     temp_clean_trk_rh=rotrk_add_sc(temp_clean_trk_rh,obj.Params.Dtifit.out.FA{end},'FA');
@@ -2981,7 +3007,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     rotrk_write(obj.Trkland.Trks.hippocing_clinehighFA_rh.header,obj.Trkland.Trks.hippocing_clinehighFA_rh.sstr,obj.Trkland.hippocing.out.clineFA_rh_highFA )
                 end
                 %Hdorff
-                if exist(obj.Trkland.hippocing.out.clineFA_rh_HDorff, 'file') == 0
+                if exist(obj.Trkland.hippocing.out.clineFA_rh_HDorff, 'file') == 0 && exist(obj.Trkland.hippocing.out.clean_trks_rh,'file') ~= 0
                     obj.Trkland.Trks.hippocing_clineHDorff_rh = rotrk_centerline(rotrk_read(obj.Trkland.hippocing.out.clean_trks_rh ,obj.sessionname,obj.Params.Dtifit.out.FA{end},'hippocing_rh_cleantrimmed'), 'hausdorff');
                     %Adding scalars:
                     obj.Trkland.Trks.hippocing_clineHDorff_rh = rotrk_add_sc(  obj.Trkland.Trks.hippocing_clineHDorff_rh ,obj.Params.Dtifit.out.FA{end} , 'FA');
@@ -2991,6 +3017,16 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     %save trks:
                     rotrk_write(obj.Trkland.Trks.hippocing_clineHDorff_rh.header,obj.Trkland.Trks.hippocing_clineHDorff_rh.sstr,obj.Trkland.hippocing.out.clineFA_rh_HDorff)
                 end
+                %Create a blank cline_HDorff and cline_highFA
+                if exist(obj.Trkland.hippocing.out.clean_trks_rh,'file') == 0
+                    obj.Trkland.Trks.hippocing_clinehighFA_rh.sstr = [];
+                    obj.Trkland.Trks.hippocing_clinehighFA_rh.header = [] ;
+                    
+                    obj.Trkland.Trks.hippocing_clineHDorff_rh.sstr = [] ;
+                    obj.Trkland.Trks.hippocing_clineHDorff_rh.header = [] ;
+                end
+                
+                
                 
                 %Get info about raw data:
                 if exist(obj.Trkland.hippocing.out.trk_rh,'file') == 0 %Either failed
@@ -3253,7 +3289,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 %Pick centerline based on high_sc and FA:
                 
                 %centerline_HighFA:
-                if exist(obj.Trkland.cingulum.out.clineFA_lh_highFA,'file') == 0
+                if exist(obj.Trkland.cingulum.out.clineFA_lh_highFA,'file') == 0 && exist(obj.Trkland.cingulum.out.clean_trks_lh,'file') ~= 0
                     display('Executing centerline_lh for cingulum_highFA...');
                     temp_clean_trk_lh=rotrk_read(obj.Trkland.cingulum.out.clean_trks_lh ,obj.sessionname,obj.Params.Dtifit.out.FA{end},'cingulum_lh_cleantrimmed');
                     temp_clean_trk_lh=rotrk_add_sc(temp_clean_trk_lh,obj.Params.Dtifit.out.FA{end},'FA');
@@ -3268,7 +3304,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     rotrk_write(obj.Trkland.Trks.cingulum_clinehighFA_lh.header,obj.Trkland.Trks.cingulum_clinehighFA_lh.sstr,obj.Trkland.cingulum.out.clineFA_lh_highFA );
                 end
                 %centerline_HDorff:
-                if exist(obj.Trkland.cingulum.out.clineFA_lh_HDorff,'file') == 0
+                if exist(obj.Trkland.cingulum.out.clineFA_lh_HDorff,'file') == 0 && exist(obj.Trkland.cingulum.out.clean_trks_lh,'file') ~= 0
                     display('Executing centerline_lh for cingulum_hDorff...');
                     obj.Trkland.Trks.cingulum_clineHDorff_lh = rotrk_centerline(rotrk_read(obj.Trkland.cingulum.out.clean_trks_lh,obj.sessionname,obj.Params.Dtifit.out.FA{end},'cingulum_lh_cleantrimmed'), 'hausdorff');
                     %Adding scalars:
@@ -3279,6 +3315,15 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     %save trks:
                     rotrk_write(obj.Trkland.Trks.cingulum_clineHDorff_lh.header,obj.Trkland.Trks.cingulum_clineHDorff_lh.sstr,obj.Trkland.cingulum.out.clineFA_lh_HDorff);
                 end
+                %Create a blank cline_HDorff and cline_highFA
+                if exist(obj.Trkland.cingulum.out.clean_trks_lh,'file')
+                    obj.Trkland.Trks.cingulum_clinehighFA_lh.sstr = [];
+                    obj.Trkland.Trks.cingulum_clinehighFA_lh.header = [] ;
+                    
+                    obj.Trkland.Trks.cingulum_clineHDorff_lh.sstr = [] ;
+                    obj.Trkland.Trks.cingulum_clineHDorff_lh.header = [] ;
+                end
+                
                 
                 %GET THE DATA VALUES NOW:
                 %Unclean TRKS:
@@ -3405,7 +3450,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 %Now that the TRK is clean, lets get the high_FA and get the centerline:
                 %Pick centerline based on high_sc and FA:
                 %High_FA_centerline:
-                if exist(obj.Trkland.cingulum.out.clineFA_rh_highFA,'file')==0
+                if exist(obj.Trkland.cingulum.out.clineFA_rh_highFA,'file')==0 && exist(obj.Trkland.cingulum.out.clean_trks_rh,'file') ~= 0
                     display('Executing centerline_rh for cingulum_highFA...');
                     temp_clean_trk_rh=rotrk_read(obj.Trkland.cingulum.out.clean_trks_rh ,obj.sessionname,obj.Params.Dtifit.out.FA{end},'cingulum_rh_cleantrimmed');
                     temp_clean_trk_rh=rotrk_add_sc(temp_clean_trk_rh,obj.Params.Dtifit.out.FA{end},'FA');
@@ -3420,7 +3465,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     rotrk_write(obj.Trkland.Trks.cingulum_clinehighFA_rh.header,obj.Trkland.Trks.cingulum_clinehighFA_rh.sstr,obj.Trkland.cingulum.out.clineFA_rh_highFA );
                 end
                 %HDorff_centerline:
-                if exist(obj.Trkland.cingulum.out.clineFA_rh_HDorff,'file')==0
+                if exist(obj.Trkland.cingulum.out.clineFA_rh_HDorff,'file')==0 && exist(obj.Trkland.cingulum.out.clean_trks_rh,'file') ~= 0
                     display('Executing centerline_rh for cingulum_hDorff...');
                     obj.Trkland.Trks.cingulum_clineHDorff_rh = rotrk_centerline(rotrk_read(obj.Trkland.cingulum.out.clean_trks_rh,obj.sessionname,obj.Params.Dtifit.out.FA{end},'cingulum_rh_cleantrimmed'), 'hausdorff');
                     %Adding scalars:
@@ -3431,6 +3476,15 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     %save trks:
                     rotrk_write(obj.Trkland.Trks.cingulum_clineHDorff_rh.header,obj.Trkland.Trks.cingulum_clineHDorff_rh.sstr,obj.Trkland.cingulum.out.clineFA_rh_HDorff);
                 end
+                %Create a blank cline_HDorff and cline_highFA
+                if exist(obj.Trkland.cingulum.out.clean_trks_rh,'file') == 0
+                    obj.Trkland.Trks.cingulum_clinehighFA_rh.sstr = [];
+                    obj.Trkland.Trks.cingulum_clinehighFA_rh.header = [] ;
+                    
+                    obj.Trkland.Trks.cingulum_clineHDorff_rh.sstr = [] ;
+                    obj.Trkland.Trks.cingulum_clineHDorff_rh.header = [] ;
+                end
+                
                 
                 %GET THE DATA VALUES NOW:
                 if exist(obj.Trkland.cingulum.out.trk_rh,'file') ~= 0
@@ -5031,16 +5085,22 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         
         
         function obj = remove_trkland_fields(obj,curTRK)
-            temp_fields = fieldnames(obj.Trkland.Trks.(curTRK));
-            for ii=1:numel(temp_fields)
-                display(temp_fields{ii});
-                if ( strcmp(temp_fields{ii},'filename') || strcmp(temp_fields{ii},'trk_name') ) || strcmp(temp_fields{ii},'id')
-                    donothing=1;
-                else
-                    obj.Trkland.Trks.(curTRK).(temp_fields{ii}) = [];
+            if isfield(obj.Trkland.Trks,curTRK)
+                temp_fields = fieldnames(obj.Trkland.Trks.(curTRK));
+                for ii=1:numel(temp_fields)
+                    display(temp_fields{ii});
+                    if ( strcmp(temp_fields{ii},'filename') || strcmp(temp_fields{ii},'trk_name') ) || strcmp(temp_fields{ii},'id')
+                        donothing=1;
+                    else
+                        obj.Trkland.Trks.(curTRK).(temp_fields{ii}) = [];
+                    end
                 end
+                clear donothing;
+            else
+                obj.Trkland.Trks.(curTRK).sstr = [] ;
+                obj.Trkland.Trks.(curTRK).header = [] ;
+                
             end
-            clear donothing;
         end
         
         
