@@ -2718,6 +2718,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             %LEFT SIDE:
             for tohide=1:1
                 if exist(obj.Trkland.hippocing.out.trimmedclean_lh ,'file') == 0 && exist(obj.Trkland.hippocing.out.trk_lh,'file') ~= 0
+                    obj.Trkland.hippocing.data.done = 0; %Will force to rewrite data in the next section (after cleanup)
                     obj.Trkland.Trks.raw_hippocing_lh = rotrk_read(obj.Trkland.hippocing.out.trk_lh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'hippocing_lh');
                     %add Scalars:
                     obj.Trkland.Trks.raw_hippocing_lh = rotrk_add_sc(  obj.Trkland.Trks.raw_hippocing_lh ,obj.Params.Dtifit.out.FA{end} , 'FA');
@@ -2793,8 +2794,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             %RIGHT SIDE:
             for tohide=1:1
                 if exist(obj.Trkland.hippocing.out.trimmedclean_rh ,'file') == 0 && exist(obj.Trkland.hippocing.out.trk_rh,'file') ~= 0
-                    
-                    clear obj.Trkland.Trks.raw_hippocing_rh obj.Trkland.Trks.hippocing_trimmedclean_rh obj.Trkland.Trks.hippocing_clineinit_rh
+                    obj.Trkland.hippocing.data.done = 0; %Will force to rewrite data in the next section (after cleanup)
                     obj.Trkland.Trks.raw_hippocing_rh = rotrk_read(obj.Trkland.hippocing.out.trk_rh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'hippocing_rh');
                     %add Scalars
                     obj.Trkland.Trks.raw_hippocing_rh = rotrk_add_sc(  obj.Trkland.Trks.raw_hippocing_rh ,obj.Params.Dtifit.out.FA{end} , 'FA');
@@ -3054,33 +3054,34 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             %LEFT SIDE:
             for tohide=1:1
                 if exist(obj.Trkland.cingulum.out.trimmedclean_lh ,'file') == 0 && exist(obj.Trkland.cingulum.out.trk_lh,'file') ~= 0
-                        obj.Trkland.Trks.raw_cingulum_lh = rotrk_read(obj.Trkland.cingulum.out.trk_lh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'cingulum_lh_cleantrimmed');
-                        %add Scalars:
-                        obj.Trkland.Trks.raw_cingulum_lh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_lh ,obj.Params.Dtifit.out.FA{end} , 'FA');
-                        obj.Trkland.Trks.raw_cingulum_lh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
-                        obj.Trkland.Trks.raw_cingulum_lh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
-                        obj.Trkland.Trks.raw_cingulum_lh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
-                        
-                        %Trim tracts here (checking if trimming occurs, mainly for manual edits):
-                        if exist(obj.Trkland.cingulum.out.clean_trkstrimmed_lh,'file') == 0
-                            obj.Trkland.Trks.cingulum_trimmed_lh = rotrk_trimmedbyTOI(obj.Trkland.Trks.raw_cingulum_lh, ...
-                                [ {obj.Trkland.cingulum.in.seed_postcing_lh}  {obj.Trkland.cingulum.in.rostantcing_lh}  ], 'cingulum_lh');
-                        else
-                            obj.Trkland.Trks.cingulum_trimmed_lh = rotrk_read(obj.Trkland.cingulum.out.clean_trkstrimmed_lh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'cingulum_lh_cleantrimmed' );
-                            obj.Trkland.Trks.cingulum_trimmed_lh  = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_lh  ,obj.Params.Dtifit.out.FA{end} , 'FA');
-                            obj.Trkland.Trks.cingulum_trimmed_lh  = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
-                            obj.Trkland.Trks.cingulum_trimmed_lh = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_lh  ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
-                            obj.Trkland.Trks.cingulum_trimmed_lh  = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_lh  ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
-                        end
-                        
-                        
-                        %Select the HDorff centerline(first pass):
-                        obj.Trkland.Trks.cingulum_clineinit_lh= rotrk_centerline(obj.Trkland.Trks.cingulum_trimmed_lh,'hausdorff');
-                        %Clean up based on normality of hausdorff distance:
-                        obj.Trkland.Trks.cingulum_trimmedclean_lh = rotrk_rm_byHDorff(obj.Trkland.Trks.cingulum_clineinit_lh, obj.Trkland.Trks.cingulum_trimmed_lh,obj.Trkland.Trks.cingulum_trimmed_lh);
-                        %save trks:
-                        rotrk_write(obj.Trkland.Trks.cingulum_trimmed_lh.header,obj.Trkland.Trks.cingulum_trimmed_lh.sstr,obj.Trkland.cingulum.out.clean_trkstrimmed_lh);
-                        rotrk_write(obj.Trkland.Trks.cingulum_trimmedclean_lh.header,obj.Trkland.Trks.cingulum_trimmedclean_lh.sstr,obj.Trkland.cingulum.out.trimmedclean_lh );
+                    obj.Trkland.cingulum.data.done = 0; %Will force to rewrite data in the next section (after cleanup)
+                    obj.Trkland.Trks.raw_cingulum_lh = rotrk_read(obj.Trkland.cingulum.out.trk_lh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'cingulum_lh_cleantrimmed');
+                    %add Scalars:
+                    obj.Trkland.Trks.raw_cingulum_lh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_lh ,obj.Params.Dtifit.out.FA{end} , 'FA');
+                    obj.Trkland.Trks.raw_cingulum_lh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
+                    obj.Trkland.Trks.raw_cingulum_lh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
+                    obj.Trkland.Trks.raw_cingulum_lh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
+                    
+                    %Trim tracts here (checking if trimming occurs, mainly for manual edits):
+                    if exist(obj.Trkland.cingulum.out.clean_trkstrimmed_lh,'file') == 0
+                        obj.Trkland.Trks.cingulum_trimmed_lh = rotrk_trimmedbyTOI(obj.Trkland.Trks.raw_cingulum_lh, ...
+                            [ {obj.Trkland.cingulum.in.seed_postcing_lh}  {obj.Trkland.cingulum.in.rostantcing_lh}  ], 'cingulum_lh');
+                    else
+                        obj.Trkland.Trks.cingulum_trimmed_lh = rotrk_read(obj.Trkland.cingulum.out.clean_trkstrimmed_lh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'cingulum_lh_cleantrimmed' );
+                        obj.Trkland.Trks.cingulum_trimmed_lh  = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_lh  ,obj.Params.Dtifit.out.FA{end} , 'FA');
+                        obj.Trkland.Trks.cingulum_trimmed_lh  = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
+                        obj.Trkland.Trks.cingulum_trimmed_lh = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_lh  ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
+                        obj.Trkland.Trks.cingulum_trimmed_lh  = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_lh  ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
+                    end
+                    
+                    
+                    %Select the HDorff centerline(first pass):
+                    obj.Trkland.Trks.cingulum_clineinit_lh= rotrk_centerline(obj.Trkland.Trks.cingulum_trimmed_lh,'hausdorff');
+                    %Clean up based on normality of hausdorff distance:
+                    obj.Trkland.Trks.cingulum_trimmedclean_lh = rotrk_rm_byHDorff(obj.Trkland.Trks.cingulum_clineinit_lh, obj.Trkland.Trks.cingulum_trimmed_lh,obj.Trkland.Trks.cingulum_trimmed_lh);
+                    %save trks:
+                    rotrk_write(obj.Trkland.Trks.cingulum_trimmed_lh.header,obj.Trkland.Trks.cingulum_trimmed_lh.sstr,obj.Trkland.cingulum.out.clean_trkstrimmed_lh);
+                    rotrk_write(obj.Trkland.Trks.cingulum_trimmedclean_lh.header,obj.Trkland.Trks.cingulum_trimmedclean_lh.sstr,obj.Trkland.cingulum.out.trimmedclean_lh );
                 end
                 %Interpolate first before created a centerline schema
                 %otherwise values for centerline will be incorrectly
@@ -3142,7 +3143,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             %RIGHT SIDE:
             for tohide=1:1
                 if exist(obj.Trkland.cingulum.out.trimmedclean_rh ,'file') == 0 && exist(obj.Trkland.cingulum.out.trk_rh,'file') ~= 0
-                    clear obj.Trkland.Trks.raw_cingulum_rh obj.Trkland.Trks.cingulum_trimmedclean_rh obj.Trkland.Trks.cingulum_clineinit_rh
+                    obj.Trkland.cingulum.data.done = 0; %Will force to rewrite data in the next section (after cleanup)
                     obj.Trkland.Trks.raw_cingulum_rh = rotrk_read(obj.Trkland.cingulum.out.trk_rh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'cingulum_rh_cleantrimmed');
                     %add Scalars
                     obj.Trkland.Trks.raw_cingulum_rh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_rh ,obj.Params.Dtifit.out.FA{end} , 'FA');
@@ -3168,7 +3169,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     %save trks:
                     rotrk_write(obj.Trkland.Trks.cingulum_trimmed_rh.header,obj.Trkland.Trks.cingulum_trimmed_rh.sstr,obj.Trkland.cingulum.out.clean_trkstrimmed_rh);
                     rotrk_write(obj.Trkland.Trks.cingulum_trimmedclean_rh.header,obj.Trkland.Trks.cingulum_trimmedclean_rh.sstr,obj.Trkland.cingulum.out.trimmedclean_rh )
-                  end
+                end
                 
                 %Interpolate first before created a centerline schema
                 %otherwise values for centerline will be incorrectly
