@@ -96,6 +96,7 @@ classdef dwi_ADRC < dwiMRI_Session
                 obj.CommonPreProc();
                 %Start the CommonPostProc:
                 obj.CommonPostProc();
+                obj.resave();
             end
            
         end
@@ -259,11 +260,11 @@ classdef dwi_ADRC < dwiMRI_Session
             %diverge for linearity (2.5k is close to linearity than
             %non-linear signal drop at 7.5k)
             obj.Params.Dtifit.in.movefiles = [ '..' filesep '06_2k5DTIFIT' ];
-            obj.Params.Dtifit.in.fn ={obj.Params.Eddy.in.fn{1}}; %{obj.Params.CoRegMultiple.out.combined_fn};
+            obj.Params.Dtifit.in.fn ={obj.Params.CoRegMultiple.out.fn{1}}; %{obj.Params.CoRegMultiple.out.combined_fn};
             obj.Params.Dtifit.in.prefix = 'DTIFIT_FSLv509' ; %Double check this so you prefix the version of FSL!
-            obj.Params.Dtifit.in.bvecs = {obj.Params.Eddy.out.bvecs{1}};
-            obj.Params.Dtifit.in.bvals = {obj.Params.Eddy.in.bvals{1}};
-            obj.Params.Dtifit.in.mask = {obj.Params.Eddy.in.mask{1}};
+            obj.Params.Dtifit.in.bvecs = {obj.Params.CoRegMultiple.out.bvecs{1}};
+            obj.Params.Dtifit.in.bvals = {obj.Params.CoRegMultiple.out.bvals{1}};
+            obj.Params.Dtifit.in.mask = {obj.Params.CoRegMultiple.out.combined_mask};
             
             obj.proc_dtifit();
             
@@ -317,10 +318,7 @@ classdef dwi_ADRC < dwiMRI_Session
            %On the works.... 
            %obj.proc_FROIS2dwi();
         end
-        
-        
-        
-        
+  
         function obj = CommonPostProc(obj)
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -331,17 +329,35 @@ classdef dwi_ADRC < dwiMRI_Session
             for tohide=1:1
                 obj.Trkland.fx.in.movefiles = ['..' filesep 'post_TRKLAND' ];
                 %b0 params:
-                obj.Trkland.fx.in.b0 = obj.Params.CoRegMultiple.out.combined_bet; %this will not be used anymore for coreg as FA proves to do a more optimal job (below)
+                %obj.Trkland.fx.in.b0 = obj.Params.CoRegMultiple.out.combined_bet; %this will not be used anymore for coreg as FA proves to do a more optimal job (below)
                 obj.Trkland.fx.in.b0 = obj.Params.CoRegMultiple.out.combined_b0;
                 obj.Trkland.fx.in.FA = obj.Params.Dtifit.out.FA{1};
                 %Temobj.Params.CoRegMultiple.out.combined_b0plate parameters:
-                obj.Trkland.fx.tmp.b0 = [ obj.fx_template_dir '141210_8CS00178_b0.nii.gz' ] ;
-                obj.Trkland.fx.tmp.roa_solid_bil =[ obj.fx_template_dir 'TMP_178_bil_fx_dil11.nii.gz' ] ;
-                obj.Trkland.fx.tmp.roa_solid_lh = [ obj.fx_template_dir 'TMP_178_lh_fx_dil11.nii.gz' ] ;
-                obj.Trkland.fx.tmp.roa_solid_rh = [ obj.fx_template_dir 'TMP_178_rh_fx_dil11.nii.gz' ] ;
-                obj.Trkland.fx.tmp.roi_bil = [ obj.fx_template_dir 'TMP_178_bil_fx_dil.nii.gz' ] ;
-                obj.Trkland.fx.tmp.roi_lh = [ obj.fx_template_dir 'TMP_178_lh_fx_dil.nii.gz' ] ;
-                obj.Trkland.fx.tmp.roi_rh = [ obj.fx_template_dir 'TMP_178_rh_fx_dil.nii.gz' ] ;
+              
+                %Based on orientation, we will chooose a specific template
+                %(usually RAS) 
+                [~, Ori ] = system(['mri_info ' obj.Trkland.fx.in.b0 ' | grep Orientation | awk ''{print $3}'''] );
+                obj.Trkland.fx.tmp.ori = strtrim(Ori);
+                clear Ori
+                if strcmp(obj.Trkland.fx.tmp.ori,'LPS')
+                    obj.Trkland.fx.tmp.b0 = [ obj.fx_template_dir 'LPS_141210_8CS00178_b0.nii.gz' ] ;
+                    obj.Trkland.fx.tmp.roa_solid_bil =[ obj.fx_template_dir 'LPS_TMP_178_bil_fx_dil11.nii.gz' ] ;
+                    obj.Trkland.fx.tmp.roa_solid_lh = [ obj.fx_template_dir 'LPS_TMP_178_lh_fx_dil11.nii.gz' ] ;
+                    obj.Trkland.fx.tmp.roa_solid_rh = [ obj.fx_template_dir 'LPS_TMP_178_rh_fx_dil11.nii.gz' ] ;
+                    obj.Trkland.fx.tmp.roi_bil = [ obj.fx_template_dir 'LPS_TMP_178_bil_fx_dil.nii.gz' ] ;
+                    obj.Trkland.fx.tmp.roi_lh = [ obj.fx_template_dir 'LPS_TMP_178_lh_fx_dil.nii.gz' ] ;
+                    obj.Trkland.fx.tmp.roi_rh = [ obj.fx_template_dir 'LPS_TMP_178_rh_fx_dil.nii.gz' ] ;
+                elseif strcmp(obj.Trkland.fx.tmp.ori,'RAS')
+                    obj.Trkland.fx.tmp.b0 = [ obj.fx_template_dir 'RAS_141210_8CS00178_b0.nii.gz' ] ;
+                    obj.Trkland.fx.tmp.roa_solid_bil =[ obj.fx_template_dir 'RAS_TMP_178_bil_fx_dil11.nii.gz' ] ;
+                    obj.Trkland.fx.tmp.roa_solid_lh = [ obj.fx_template_dir 'RAS_TMP_178_lh_fx_dil11.nii.gz' ] ;
+                    obj.Trkland.fx.tmp.roa_solid_rh = [ obj.fx_template_dir 'RAS_TMP_178_rh_fx_dil11.nii.gz' ] ;
+                    obj.Trkland.fx.tmp.roi_bil = [ obj.fx_template_dir 'RAS_TMP_178_bil_fx_dil.nii.gz' ] ;
+                    obj.Trkland.fx.tmp.roi_lh = [ obj.fx_template_dir 'RAS_TMP_178_lh_fx_dil.nii.gz' ] ;
+                    obj.Trkland.fx.tmp.roi_rh = [ obj.fx_template_dir 'RAS_TMP_178_rh_fx_dil.nii.gz' ] ;
+                else
+                    error('In trkland_fx() Init: Cannot find the right fornix template orientation to use for co-registration. Quitting...');
+                end
                 %IN PARAMS:
                 %Hippocampi:
                 obj.Trkland.fx.in.hippo_lh =  strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc2009_aseg/dwi_fs_Left-Hippocampus.nii.gz');
@@ -375,6 +391,8 @@ classdef dwi_ADRC < dwiMRI_Session
                 obj.Trkland.fx.in.fib =strtrim(obj.Params.GQI.out.fibs_fn{end});
                 if exist(obj.Trkland.fx.in.fib) == 0 ; error('No fib found in variable: trkland.trks.fx.in.fib. Please check!') ; end
                 
+                %Interpolation n:
+                obj.Trkland.fx.in.n_interp=40; %According to average value on previous studies in connectome!
                 obj.trkland_fx(); obj.resave();
             end
             
@@ -387,6 +405,8 @@ classdef dwi_ADRC < dwiMRI_Session
                 obj.Trkland.hippocing.in.postcing_lh = strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc_aseg/dwi_ctx-lh-posteriorcingulate.nii.gz');
                 obj.Trkland.hippocing.in.postcing_rh = strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc_aseg/dwi_ctx-rh-posteriorcingulate.nii.gz');
                 
+                %Interpolation n (for cingulum):
+                obj.Trkland.hippocing.in.n_interp=33;
                 obj.trkland_hippocing(); obj.resave();
             end
             
@@ -399,6 +419,11 @@ classdef dwi_ADRC < dwiMRI_Session
                 obj.Trkland.cingulum.in.postcing_lh = strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc_aseg/dwi_ctx-lh-posteriorcingulate.nii.gz');
                 obj.Trkland.cingulum.in.postcing_rh = strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc_aseg/dwi_ctx-rh-posteriorcingulate.nii.gz');
                 
+                % BASE DON THESE VALUES:
+                %                 ninter_fx = 40;
+                % ninter_cing = 33;
+                % ninter_hippocing = 42;
+                obj.Trkland.cingulum.in.n_interp = 42;
                 trkland_cingulum(obj); obj.resave();
             end
             
