@@ -419,11 +419,11 @@ classdef dwi_ADRC < dwiMRI_Session
                 obj.Trkland.cingulum.in.postcing_lh = strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc_aseg/dwi_ctx-lh-posteriorcingulate.nii.gz');
                 obj.Trkland.cingulum.in.postcing_rh = strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc_aseg/dwi_ctx-rh-posteriorcingulate.nii.gz');
                 
-                % BASE DON THESE VALUES:
-                %                 ninter_fx = 40;
-                % ninter_cing = 33;
-                % ninter_hippocing = 42;
-                obj.Trkland.cingulum.in.n_interp = 42;
+                % BASE ON THESE VALUES (FROM EARLIER ADRC_PROCESSING W/O INTERP:
+                % ninter_fx = 40;
+                % ninter_cingulum = 32;
+                % ninter_hippocing = 33;
+                obj.Trkland.cingulum.in.n_interp = 32;
                 trkland_cingulum(obj); obj.resave();
             end
             
