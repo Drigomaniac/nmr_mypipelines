@@ -2351,7 +2351,6 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         obj.Trkland.Trks.fx_trimmedclean_lh = rotrk_rm_byHDorff(obj.Trkland.Trks.fx_clineinit_lh, obj.Trkland.Trks.fx_trimmed_lh,obj.Trkland.Trks.fx_trimmed_lh);
                         %saving trimmed and trimmed_clean trks:
                         rotrk_write(obj.Trkland.Trks.fx_trimmed_lh.header,obj.Trkland.Trks.fx_trimmed_lh.sstr,obj.Trkland.fx.out.clean_trkstrimmed_lh);
-                        obj.Trkland.fx.data.done.clean_trkstrimmed_lh = 0; 
                         rotrk_write(obj.Trkland.Trks.fx_trimmedclean_lh.header,obj.Trkland.Trks.fx_trimmedclean_lh.sstr,obj.Trkland.fx.out.trimmedclean_lh);
                     end
                     
@@ -2493,40 +2492,42 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     end
                end
                 
-                
+               obj.Trkland.fx.data.done =0;
                 %NOW GETTING THE DATA VALUES:
                 if  obj.Trkland.fx.data.done ~= 1
-                %Get data for all interesting values:
-                 data_trks= fields(obj.Trkland.fx.out);
-                 for ii=1:numel(data_trks)
-                    if exist(obj.Trkland.fx.out.(data_trks{ii}),'file') ~= 0
-                        fprintf(['\ntrkland_fx(): Getting fx_data for ' data_trks{ii} '...'] ) ;
-                        %Reading and adding scalars:
-                        temp_read = rotrk_read(obj.Trkland.fx.out.(data_trks{ii}),'no_warning',obj.Params.Dtifit.out.FA{end});
-                        temp_read = rotrk_add_sc(temp_read ,obj.Params.Dtifit.out.FA{end} , 'FA');
-                        temp_read = rotrk_add_sc(temp_read ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
-                        temp_read = rotrk_add_sc(temp_read ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
-                        temp_read = rotrk_add_sc(temp_read ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
-                        
-                            
-                        obj.Trkland.fx.data.([ (data_trks{ii}) '_vol' ])  = temp_read.num_uvox;
-                        obj.Trkland.fx.data.([ (data_trks{ii}) '_FA' ]) = mean(temp_read.unique_voxels(:,4));
-                        obj.Trkland.fx.data.([ (data_trks{ii}) '_RD' ]) = mean(temp_read.unique_voxels(:,5));
-                        obj.Trkland.fx.data.([ (data_trks{ii}) '_AxD' ]) = mean(temp_read.unique_voxels(:,6));
-                        obj.Trkland.fx.data.([ (data_trks{ii}) '_MD' ] ) = mean(temp_read.unique_voxels(:,7));
-                        fprintf('done\n');
-                    else
-                        fprintf(['\ntrkland_fx():  No filename found for ' data_trks{ii} '...'] ) ;
-                        obj.Trkland.fx.data.([ (data_trks{ii}) '_vol' ]) = [];
-                        obj.Trkland.fx.data.([ (data_trks{ii}) '_FA' ]) = [];
-                        obj.Trkland.fx.data.([ (data_trks{ii}) '_RD' ]) = [];
-                        obj.Trkland.fx.data.([ (data_trks{ii}) '_AxD' ]) = [];
-                        obj.Trkland.fx.data.([ (data_trks{ii}) '_MD' ] ) = [];
-                        
+                    %Get data for all interesting values:
+                    data_trks= fields(obj.Trkland.fx.out);
+                    for ii=1:numel(data_trks)
+                        if ~strcmp(data_trks{ii},'QC') %NOT SURE WHY THIS QC variable exists...easy fix for now. 
+                            if exist(obj.Trkland.fx.out.(data_trks{ii}),'file') ~= 0
+                                fprintf(['\ntrkland_fx(): Getting fx_data for ' data_trks{ii} '...'] ) ;
+                                %Reading and adding scalars:
+                                temp_read = rotrk_read(obj.Trkland.fx.out.(data_trks{ii}),'no_warning',obj.Params.Dtifit.out.FA{end});
+                                temp_read = rotrk_add_sc(temp_read ,obj.Params.Dtifit.out.FA{end} , 'FA');
+                                temp_read = rotrk_add_sc(temp_read ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
+                                temp_read = rotrk_add_sc(temp_read ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
+                                temp_read = rotrk_add_sc(temp_read ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
+                                
+                                
+                                obj.Trkland.fx.data.([ (data_trks{ii}) '_vol' ])  = temp_read.num_uvox;
+                                obj.Trkland.fx.data.([ (data_trks{ii}) '_FA' ]) = mean(temp_read.unique_voxels(:,4));
+                                obj.Trkland.fx.data.([ (data_trks{ii}) '_RD' ]) = mean(temp_read.unique_voxels(:,5));
+                                obj.Trkland.fx.data.([ (data_trks{ii}) '_AxD' ]) = mean(temp_read.unique_voxels(:,6));
+                                obj.Trkland.fx.data.([ (data_trks{ii}) '_MD' ] ) = mean(temp_read.unique_voxels(:,7));
+                                fprintf('done\n');
+                            else
+                                fprintf(['\ntrkland_fx():  No filename found for ' data_trks{ii} '...'] ) ;
+                                obj.Trkland.fx.data.([ (data_trks{ii}) '_vol' ]) = [];
+                                obj.Trkland.fx.data.([ (data_trks{ii}) '_FA' ]) = [];
+                                obj.Trkland.fx.data.([ (data_trks{ii}) '_RD' ]) = [];
+                                obj.Trkland.fx.data.([ (data_trks{ii}) '_AxD' ]) = [];
+                                obj.Trkland.fx.data.([ (data_trks{ii}) '_MD' ] ) = [];
+                                
+                            end
+                        end
                     end
-                 end
-                 clear data_trks;
-                 obj.Trkland.fx.data.done = 1; 
+                    clear data_trks;
+                    obj.Trkland.fx.data.done = 1;
                 end
             end
         end
