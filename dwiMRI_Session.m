@@ -958,7 +958,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 %Dealing with OUTPUT:
                 %Attempting to create the eddy_motion file:
                 outpath=obj.getPath(a,obj.Params.EddyMotion.in.movefiles);
-                obj.Params.EddyMotion.out.fn_motion{ii}= [ outpath 'motion_values.txt' ] ;
+                obj.Params.EddyMotion.out.fn_motion{ii}= [ outpath 'motion_' b '.txt' ] ;
                 if exist(obj.Params.EddyMotion.out.fn_motion{ii},'file')==0
                     fprintf(['\nGetting motion parameters from: ' obj.Params.EddyMotion.in.fn_motion{ii} ]);
                     %Break the command so I can denote the newline (\n
@@ -970,32 +970,81 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     cmd_3= sprintf(['\n }'' ' obj.Params.EddyMotion.in.fn_motion{ii}  ' > ' obj.Params.EddyMotion.out.fn_motion{ii} ]);
                     exec_cmd = [ cmd_1 cmd_2 cmd_3 ] ;
                     obj.RunBash(exec_cmd);
+                    %OUTPUT SHOULD LOOK LIKE THESE:
+                    % rdp20@kant 05_MotionFromEDDY] $ cat motion_eddy_moco_gnc_dv_ep2d_diff_2p5k_set4E60.txt
+                    % 0.919434 (A) 0.313574 (B)
+                    % 0.234648 (C) 0.297711 (D), where:
+                    %                     A: average root mean squared movement of each slice relative to first volume
+                    %                     B: standard deviation of A
+                    %                     C: average root meat squared movement of each slice relative to the previous one
+                    %                     D: standard deviation of C
+                    %                     SOME ADDITIONAL USEFUL INFORMATION FROM: https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/eddy
+                    %                     my_eddy_output.eddy_movement_rms:
+                    %                     A summary of the "total movement" in each volume is created by calculating
+                    %                     the displacement of each voxel and then averaging the squares of those
+                    %                     displacements across all intracerebral voxels (as determined by --mask
+                    %                     and finally taking the square root of that. The file has two columns where
+                    %                     the first contains the RMS movement relative the first volume and the second
+                    %                     column the RMS relative the previous volume.
+                    %
+                    %                     my_eddy_output.eddy_restricted_movement_rms:
+                    %                     There is an inherent ambiguity between any EC component that has
+                    %                     a non-zero mean across the FOV and subject movement (translation)
+                    %                     in the PE direction. They will affect the data in identical
+                    %                     (or close to identical if a susceptibility field is specified) ways.
+                    %                         That means that both these parameters are estimated by eddy with
+                    %                         large uncertainty.
+                    %                         This doesn't matter for the correction of the images, it makes
+                    %                         no difference if we estimate a large constant EC components and
+                    %                         small movement or if we estimate a small EC component and large
+                    %                         movement. The corrected images will be (close to) identical.
+                    %                         But it matters if one wants to know how much the subject moved.
+                    %                         We therefore supplies this file that estimates the movement RMS as
+                    %                         above, but which disregards translation in the PE direction.
                     fprintf('...done \n');
                     wasRun=true;
                 else
                     [~, bb, cc ] =  fileparts(obj.Params.EddyMotion.out.fn_motion{ii});
-                    fprintf(['File ' bb cc 'exists\n']) ;
+                    fprintf(['File ' bb cc ' exists\n']) ;
                 end
                 %Populating the variables needed:
-                if isempty(obj.Params.EddyMotion.out.vals.initb0_mean)
-                    [ ~, obj.Params.EddyMotion.out.vals.initb0_mean{ii} ]  = ...
-                        system([ 'cat ' obj.Params.EddyMotion.out.fn_motion{ii} ' | head -1 | awk '' {print $1} '' ' ]);
-                end
-                if isempty(obj.Params.EddyMotion.out.vals.initb0_std)
-                    [ ~, obj.Params.EddyMotion.out.vals.initb0_std{ii} ]  = ...
-                        system([ 'cat ' obj.Params.EddyMotion.out.fn_motion{ii} ' | head -1 | awk '' {print $2} '' ' ]);
-                end
-                if isempty(obj.Params.EddyMotion.out.vals.rel_mean)
-                    [ ~ , obj.Params.EddyMotion.out.vals.rel_mean{ii} ] = ...
-                        system([ 'cat ' obj.Params.EddyMotion.out.fn_motion{ii} ' | tail -1 | awk '' {print $1} '' ' ]);
-                end
-                if isempty( obj.Params.EddyMotion.out.vals.rel_std)
-                    [ ~ , obj.Params.EddyMotion.out.vals.rel_std{ii} ] = ...
-                        system([ 'cat ' obj.Params.EddyMotion.out.fn_motion{ii} ' | tail -1 | awk '' {print $2} '' ' ]);
-                end
-                
+                %Average RMS movememt in relation to first volume
+                [ ~, obj.Params.EddyMotion.out.vals.initb0_mean{ii} ]  = ...
+                    system([ 'cat ' obj.Params.EddyMotion.out.fn_motion{ii} ' | head -1 | awk '' {print $1} '' ' ]);
+                %STD RMS movememt in relation to first volume
+                [ ~, obj.Params.EddyMotion.out.vals.initb0_std{ii} ]  = ...
+                    system([ 'cat ' obj.Params.EddyMotion.out.fn_motion{ii} ' | head -1 | awk '' {print $2} '' ' ]);
+                %Average RMS movememt in relation to previous volume
+                [ ~ , obj.Params.EddyMotion.out.vals.rel_mean{ii} ] = ...
+                    system([ 'cat ' obj.Params.EddyMotion.out.fn_motion{ii} ' | tail -1 | awk '' {print $1} '' ' ]);
+                %STD RMS movememt in relation to previous volume
+                [ ~ , obj.Params.EddyMotion.out.vals.rel_std{ii} ] = ...
+                    system([ 'cat ' obj.Params.EddyMotion.out.fn_motion{ii} ' | tail -1 | awk '' {print $2} '' ' ]);
                 obj.UpdateHist(obj.Params.Eddy,'proc_eddy_motion', obj.Params.Eddy.out.fn{ii},wasRun);
             end
+            
+            %Average grand total movement
+            obj.Params.EddyMotion.out.vals.initb0_mean_grandtotal = 0; %Init variables
+            obj.Params.EddyMotion.out.vals.initb0_std_grandtotal = 0;
+            obj.Params.EddyMotion.out.vals.rel_mean_grandtotal = 0;
+            obj.Params.EddyMotion.out.vals.rel_std_grandtotal = 0;
+            for ii=1:numel(obj.Params.EddyMotion.in.fn_eddy)
+                obj.Params.EddyMotion.out.vals.initb0_mean_grandtotal = ...
+                    str2num(obj.Params.EddyMotion.out.vals.initb0_mean{ii}) + obj.Params.EddyMotion.out.vals.initb0_mean_grandtotal;
+                obj.Params.EddyMotion.out.vals.initb0_std_grandtotal = ...
+                    str2num(obj.Params.EddyMotion.out.vals.initb0_std{ii}) + obj.Params.EddyMotion.out.vals.initb0_std_grandtotal;
+                obj.Params.EddyMotion.out.vals.rel_mean_grandtotal = ...
+                    str2num(obj.Params.EddyMotion.out.vals.rel_mean{ii}) + obj.Params.EddyMotion.out.vals.rel_mean_grandtotal;
+                obj.Params.EddyMotion.out.vals.rel_std_grandtotal = ...
+                    str2num(obj.Params.EddyMotion.out.vals.rel_std{ii}) + obj.Params.EddyMotion.out.vals.rel_std_grandtotal;
+            end
+            %Dividing by n:
+            n_value=numel(obj.Params.EddyMotion.in.fn_eddy);
+            obj.Params.EddyMotion.out.vals.initb0_mean_grandtotal = obj.Params.EddyMotion.out.vals.initb0_mean_grandtotal/n_value;
+            obj.Params.EddyMotion.out.vals.initb0_std_grandtotal = obj.Params.EddyMotion.out.vals.initb0_std_grandtotal/n_value;
+            obj.Params.EddyMotion.out.vals.rel_mean_grandtotal = obj.Params.EddyMotion.out.vals.rel_mean_grandtotal/n_value;
+            obj.Params.EddyMotion.out.vals.rel_std_grandtotal = obj.Params.EddyMotion.out.vals.rel_std_grandtotal/n_value;
+            
         end
         
         function obj = proc_meanb0(obj)
@@ -2729,7 +2778,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             %LEFT SIDE:
             for tohide=1:1
                 if exist(obj.Trkland.hippocing.out.trk_lh,'file') ~= 0
-                    if exist(obj.Trkland.hippocing.out.trimmedclean_lh ,'file') == 0 || isfield(obj.Trkland,'Trks.hippocing_trimmed_lh') == 0 
+                    if exist(obj.Trkland.hippocing.out.trimmedclean_lh ,'file') == 0 || isfield(obj.Trkland.Trks,'hippocing_trimmed_lh') == 0 
                         obj.Trkland.hippocing.data.done = 0; %Will force to rewrite data in the next section (after cleanup)
                         obj.Trkland.Trks.raw_hippocing_lh = rotrk_read(obj.Trkland.hippocing.out.trk_lh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'hippocing_lh');
                         %add Scalars:
@@ -2812,34 +2861,26 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             %RIGHT SIDE:
             for tohide=1:1
                 if exist(obj.Trkland.hippocing.out.trk_rh,'file') ~= 0 
-                    obj.Trkland.hippocing.data.done = 0; %Will force to rewrite data in the next section (after cleanup)
-                    obj.Trkland.Trks.raw_hippocing_rh = rotrk_read(obj.Trkland.hippocing.out.trk_rh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'hippocing_rh');
-                    %add Scalars
-                    obj.Trkland.Trks.raw_hippocing_rh = rotrk_add_sc(  obj.Trkland.Trks.raw_hippocing_rh ,obj.Params.Dtifit.out.FA{end} , 'FA');
-                    obj.Trkland.Trks.raw_hippocing_rh = rotrk_add_sc(  obj.Trkland.Trks.raw_hippocing_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
-                    obj.Trkland.Trks.raw_hippocing_rh = rotrk_add_sc(  obj.Trkland.Trks.raw_hippocing_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
-                    obj.Trkland.Trks.raw_hippocing_rh = rotrk_add_sc(  obj.Trkland.Trks.raw_hippocing_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
-                    %Trim tracts here:
                     if exist(obj.Trkland.hippocing.out.clean_trkstrimmed_rh,'file') == 0  || isfield(obj.Trkland.Trks,'hippocing_trimmed_rh') == 0
+                        obj.Trkland.hippocing.data.done = 0; %Will force to rewrite data in the next section (after cleanup)
+                        obj.Trkland.Trks.raw_hippocing_rh = rotrk_read(obj.Trkland.hippocing.out.trk_rh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'hippocing_rh');
+                        %add Scalars
+                        obj.Trkland.Trks.raw_hippocing_rh = rotrk_add_sc(  obj.Trkland.Trks.raw_hippocing_rh ,obj.Params.Dtifit.out.FA{end} , 'FA');
+                        obj.Trkland.Trks.raw_hippocing_rh = rotrk_add_sc(  obj.Trkland.Trks.raw_hippocing_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
+                        obj.Trkland.Trks.raw_hippocing_rh = rotrk_add_sc(  obj.Trkland.Trks.raw_hippocing_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
+                        obj.Trkland.Trks.raw_hippocing_rh = rotrk_add_sc(  obj.Trkland.Trks.raw_hippocing_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
+                        %Trim tracts here:
                         obj.Trkland.Trks.hippocing_trimmed_rh = rotrk_trimmedbyTOI(obj.Trkland.Trks.raw_hippocing_rh, ...
                             [ {obj.Trkland.hippocing.in.hippo_rh}   {obj.Trkland.hippocing.in.roi_postcing_rh}   ], 'postcing_rh');
-                    else
-                        obj.Trkland.Trks.hippocing_trimmed_rh =    rotrk_read(obj.Trkland.hippocing.out.clean_trkstrimmed_rh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'hippocing_lh' );
-                        obj.Trkland.Trks.hippocing_trimmed_rh  = rotrk_add_sc(obj.Trkland.Trks.hippocing_trimmed_rh  ,obj.Params.Dtifit.out.FA{end} , 'FA');
-                        obj.Trkland.Trks.hippocing_trimmed_rh  = rotrk_add_sc(obj.Trkland.Trks.hippocing_trimmed_rh  ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
-                        obj.Trkland.Trks.hippocing_trimmed_rh = rotrk_add_sc(obj.Trkland.Trks.hippocing_trimmed_rh  ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
-                        obj.Trkland.Trks.hippocing_trimmed_rh  = rotrk_add_sc( obj.Trkland.Trks.hippocing_trimmed_rh  ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
-                        
+                        %Select the HDorff centerline(first pass)
+                        obj.Trkland.Trks.hippocing_clineinit_rh= rotrk_centerline(obj.Trkland.Trks.hippocing_trimmed_rh,'hausdorff');
+                        %Clean up based on normality of hausdorff distance
+                        obj.Trkland.Trks.hippocing_trimmedclean_rh = rotrk_rm_byHDorff(obj.Trkland.Trks.hippocing_clineinit_rh, obj.Trkland.Trks.hippocing_trimmed_rh,obj.Trkland.Trks.hippocing_trimmed_rh);
+                        %%%%obj.Trkland.Trks.hippocing_trimmedclean_rh = rotrk_rm_bylen(temp_fx_rh_cline, temp_fx_rh,temp_fx_rh);
+                        %save trks:
+                        rotrk_write(obj.Trkland.Trks.hippocing_trimmed_rh.header,obj.Trkland.Trks.hippocing_trimmed_rh.sstr,obj.Trkland.hippocing.out.clean_trkstrimmed_rh);
+                        rotrk_write(obj.Trkland.Trks.hippocing_trimmedclean_rh.header,obj.Trkland.Trks.hippocing_trimmedclean_rh.sstr,obj.Trkland.hippocing.out.trimmedclean_rh )
                     end
-                    %
-                    %Select the HDorff centerline(first pass)
-                    obj.Trkland.Trks.hippocing_clineinit_rh= rotrk_centerline(obj.Trkland.Trks.hippocing_trimmed_rh,'hausdorff');
-                    %Clean up based on normality of hausdorff distance
-                    obj.Trkland.Trks.hippocing_trimmedclean_rh = rotrk_rm_byHDorff(obj.Trkland.Trks.hippocing_clineinit_rh, obj.Trkland.Trks.hippocing_trimmed_rh,obj.Trkland.Trks.hippocing_trimmed_rh);
-                    %%%%obj.Trkland.Trks.hippocing_trimmedclean_rh = rotrk_rm_bylen(temp_fx_rh_cline, temp_fx_rh,temp_fx_rh);
-                    %save trks:
-                    rotrk_write(obj.Trkland.Trks.hippocing_trimmed_rh.header,obj.Trkland.Trks.hippocing_trimmed_rh.sstr,obj.Trkland.hippocing.out.clean_trkstrimmed_rh);
-                    rotrk_write(obj.Trkland.Trks.hippocing_trimmedclean_rh.header,obj.Trkland.Trks.hippocing_trimmedclean_rh.sstr,obj.Trkland.hippocing.out.trimmedclean_rh )
                 else
                     obj.Trkland.Trks.hippocing_trimmed_rh.header = []; 
                     obj.Trkland.Trks.hippocing_trimmed_rh.sstr = []; 
@@ -3078,39 +3119,33 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             %LEFT SIDE:
             for tohide=1:1
                 if  exist(obj.Trkland.cingulum.out.trk_lh,'file') ~= 0
-                    obj.Trkland.cingulum.data.done = 0; %Will force to rewrite data in the next section (after cleanup)
-                    obj.Trkland.Trks.raw_cingulum_lh = rotrk_read(obj.Trkland.cingulum.out.trk_lh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'cingulum_lh_cleantrimmed');
-                    %add Scalars:
-                    obj.Trkland.Trks.raw_cingulum_lh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_lh ,obj.Params.Dtifit.out.FA{end} , 'FA');
-                    obj.Trkland.Trks.raw_cingulum_lh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
-                    obj.Trkland.Trks.raw_cingulum_lh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
-                    obj.Trkland.Trks.raw_cingulum_lh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
-                    
-                    %Trim tracts here (checking if trimming occurs, mainly for manual edits):
                     if exist(obj.Trkland.cingulum.out.clean_trkstrimmed_lh,'file') == 0   || isfield(obj.Trkland.Trks,'cingulum_trimmed_lh') == 0
+                        obj.Trkland.cingulum.data.done = 0; %Will force to rewrite data in the next section (after cleanup)
+                        obj.Trkland.Trks.raw_cingulum_lh = rotrk_read(obj.Trkland.cingulum.out.trk_lh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'cingulum_lh_cleantrimmed');
+                        %add Scalars:
+                        obj.Trkland.Trks.raw_cingulum_lh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_lh ,obj.Params.Dtifit.out.FA{end} , 'FA');
+                        obj.Trkland.Trks.raw_cingulum_lh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
+                        obj.Trkland.Trks.raw_cingulum_lh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
+                        obj.Trkland.Trks.raw_cingulum_lh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
+                        
+                        %Trim tracts here (checking if trimming occurs, mainly for manual edits):
+                        
                         obj.Trkland.Trks.cingulum_trimmed_lh = rotrk_trimmedbyTOI(obj.Trkland.Trks.raw_cingulum_lh, ...
                             [ {obj.Trkland.cingulum.in.seed_postcing_lh}  {obj.Trkland.cingulum.in.rostantcing_lh}  ], 'cingulum_lh');
-                    else
-                        obj.Trkland.Trks.cingulum_trimmed_lh = rotrk_read(obj.Trkland.cingulum.out.clean_trkstrimmed_lh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'cingulum_lh_cleantrimmed' );
-                        obj.Trkland.Trks.cingulum_trimmed_lh  = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_lh  ,obj.Params.Dtifit.out.FA{end} , 'FA');
-                        obj.Trkland.Trks.cingulum_trimmed_lh  = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
-                        obj.Trkland.Trks.cingulum_trimmed_lh = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_lh  ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
-                        obj.Trkland.Trks.cingulum_trimmed_lh  = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_lh  ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
+                        
+                        %Select the HDorff centerline(first pass):
+                        obj.Trkland.Trks.cingulum_clineinit_lh= rotrk_centerline(obj.Trkland.Trks.cingulum_trimmed_lh,'hausdorff');
+                        %Clean up based on normality of hausdorff distance:
+                        obj.Trkland.Trks.cingulum_trimmedclean_lh = rotrk_rm_byHDorff(obj.Trkland.Trks.cingulum_clineinit_lh, obj.Trkland.Trks.cingulum_trimmed_lh,obj.Trkland.Trks.cingulum_trimmed_lh);
+                        %save trks:
+                        rotrk_write(obj.Trkland.Trks.cingulum_trimmed_lh.header,obj.Trkland.Trks.cingulum_trimmed_lh.sstr,obj.Trkland.cingulum.out.clean_trkstrimmed_lh);
+                        rotrk_write(obj.Trkland.Trks.cingulum_trimmedclean_lh.header,obj.Trkland.Trks.cingulum_trimmedclean_lh.sstr,obj.Trkland.cingulum.out.trimmedclean_lh );
                     end
-                    
-                    
-                    %Select the HDorff centerline(first pass):
-                    obj.Trkland.Trks.cingulum_clineinit_lh= rotrk_centerline(obj.Trkland.Trks.cingulum_trimmed_lh,'hausdorff');
-                    %Clean up based on normality of hausdorff distance:
-                    obj.Trkland.Trks.cingulum_trimmedclean_lh = rotrk_rm_byHDorff(obj.Trkland.Trks.cingulum_clineinit_lh, obj.Trkland.Trks.cingulum_trimmed_lh,obj.Trkland.Trks.cingulum_trimmed_lh);
-                    %save trks:
-                    rotrk_write(obj.Trkland.Trks.cingulum_trimmed_lh.header,obj.Trkland.Trks.cingulum_trimmed_lh.sstr,obj.Trkland.cingulum.out.clean_trkstrimmed_lh);
-                    rotrk_write(obj.Trkland.Trks.cingulum_trimmedclean_lh.header,obj.Trkland.Trks.cingulum_trimmedclean_lh.sstr,obj.Trkland.cingulum.out.trimmedclean_lh );
                 else
                     obj.Trkland.Trks.cingulum_trimmed_lh.header = [] ;
                     obj.Trkland.Trks.cingulum_trimmed_lh.sstr = [] ;
-                    obj.Trkland.Trks.cingulum_trimmedclean_lh.header = []; 
-                    obj.Trkland.Trks.cingulum_trimmedclean_lh.sstr = []; 
+                    obj.Trkland.Trks.cingulum_trimmedclean_lh.header = [];
+                    obj.Trkland.Trks.cingulum_trimmedclean_lh.sstr = [];
                 end
                 %Interpolate first before created a centerline schema
                 %otherwise values for centerline will be incorrectly
@@ -3172,32 +3207,27 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             %RIGHT SIDE:
             for tohide=1:1
                 if exist(obj.Trkland.cingulum.out.trk_rh,'file') ~= 0
-                    obj.Trkland.cingulum.data.done = 0; %Will force to rewrite data in the next section (after cleanup)
-                    obj.Trkland.Trks.raw_cingulum_rh = rotrk_read(obj.Trkland.cingulum.out.trk_rh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'cingulum_rh_cleantrimmed');
-                    %add Scalars
-                    obj.Trkland.Trks.raw_cingulum_rh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_rh ,obj.Params.Dtifit.out.FA{end} , 'FA');
-                    obj.Trkland.Trks.raw_cingulum_rh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
-                    obj.Trkland.Trks.raw_cingulum_rh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
-                    obj.Trkland.Trks.raw_cingulum_rh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
-                    
-                    %Trim tracts here (checking if trimming occurs, mainly for manual edits):
                     if exist(obj.Trkland.cingulum.out.clean_trkstrimmed_rh,'file') == 0 || isfield(obj.Trkland.Trks,'cingulum_trimmed_rh') == 0
+                        obj.Trkland.cingulum.data.done = 0; %Will force to rewrite data in the next section (after cleanup)
+                        obj.Trkland.Trks.raw_cingulum_rh = rotrk_read(obj.Trkland.cingulum.out.trk_rh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'cingulum_rh_cleantrimmed');
+                        %add Scalars
+                        obj.Trkland.Trks.raw_cingulum_rh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_rh ,obj.Params.Dtifit.out.FA{end} , 'FA');
+                        obj.Trkland.Trks.raw_cingulum_rh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
+                        obj.Trkland.Trks.raw_cingulum_rh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
+                        obj.Trkland.Trks.raw_cingulum_rh = rotrk_add_sc(  obj.Trkland.Trks.raw_cingulum_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
+                        
+                        %Trim tracts here (checking if trimming occurs, mainly for manual edits):
                         obj.Trkland.Trks.cingulum_trimmed_rh = rotrk_trimmedbyTOI(obj.Trkland.Trks.raw_cingulum_rh, ...
                             [ {obj.Trkland.cingulum.in.seed_postcing_rh}  {obj.Trkland.cingulum.in.rostantcing_rh}  ], 'cingulum_rh');
-                    else
-                        obj.Trkland.Trks.cingulum_trimmed_rh = rotrk_read(obj.Trkland.cingulum.out.clean_trkstrimmed_rh, obj.sessionname, obj.Params.Dtifit.out.FA{end}, 'cingulum_rh_cleantrimmed' );
-                        obj.Trkland.Trks.cingulum_trimmed_rh  = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_rh  ,obj.Params.Dtifit.out.FA{end} , 'FA');
-                        obj.Trkland.Trks.cingulum_trimmed_rh  = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_rh  ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
-                        obj.Trkland.Trks.cingulum_trimmed_rh = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_rh  ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
-                        obj.Trkland.Trks.cingulum_trimmed_rh  = rotrk_add_sc(obj.Trkland.Trks.cingulum_trimmed_rh  ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
+                        
+                        %Select the HDorff centerline(first pass)
+                        obj.Trkland.Trks.cingulum_clineinit_rh= rotrk_centerline(obj.Trkland.Trks.cingulum_trimmed_rh,'hausdorff');
+                        %Clean up based on normality of hausdorff distance
+                        obj.Trkland.Trks.cingulum_trimmedclean_rh = rotrk_rm_byHDorff(obj.Trkland.Trks.cingulum_clineinit_rh, obj.Trkland.Trks.cingulum_trimmed_rh,obj.Trkland.Trks.cingulum_trimmed_rh);
+                        %save trks:
+                        rotrk_write(obj.Trkland.Trks.cingulum_trimmed_rh.header,obj.Trkland.Trks.cingulum_trimmed_rh.sstr,obj.Trkland.cingulum.out.clean_trkstrimmed_rh);
+                        rotrk_write(obj.Trkland.Trks.cingulum_trimmedclean_rh.header,obj.Trkland.Trks.cingulum_trimmedclean_rh.sstr,obj.Trkland.cingulum.out.trimmedclean_rh )
                     end
-                    %Select the HDorff centerline(first pass)
-                    obj.Trkland.Trks.cingulum_clineinit_rh= rotrk_centerline(obj.Trkland.Trks.cingulum_trimmed_rh,'hausdorff');
-                    %Clean up based on normality of hausdorff distance
-                    obj.Trkland.Trks.cingulum_trimmedclean_rh = rotrk_rm_byHDorff(obj.Trkland.Trks.cingulum_clineinit_rh, obj.Trkland.Trks.cingulum_trimmed_rh,obj.Trkland.Trks.cingulum_trimmed_rh);
-                    %save trks:
-                    rotrk_write(obj.Trkland.Trks.cingulum_trimmed_rh.header,obj.Trkland.Trks.cingulum_trimmed_rh.sstr,obj.Trkland.cingulum.out.clean_trkstrimmed_rh);
-                    rotrk_write(obj.Trkland.Trks.cingulum_trimmedclean_rh.header,obj.Trkland.Trks.cingulum_trimmedclean_rh.sstr,obj.Trkland.cingulum.out.trimmedclean_rh )
                 else
                     obj.Trkland.Trks.cingulum_trimmed_rh.header = []; 
                     obj.Trkland.Trks.cingulum_trimmed_rh.sstr = []; 

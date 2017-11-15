@@ -221,8 +221,14 @@ classdef dwi_ADRC < dwiMRI_Session
             
             obj.proc_eddy();
             
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %DERIVED MOVEMENT FROM EDDY:
+            obj.Params.EddyMotion.in.movefiles = ['..' filesep '05_MotionFromEDDY'];
+            obj.Params.EddyMotion.in.fn_eddy = obj.Params.Eddy.out.fn ;
             
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            obj.proc_get_eddymotion(); obj.resave();
+                        
+             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %To generate a mask after Eddy:
             %This step will 1) define a better mask if eddy affected the
             %movement of the head and 2) remove issues known to happen at
