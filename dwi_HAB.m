@@ -346,7 +346,7 @@ classdef dwi_HAB < dwiMRI_Session
                 [~, Ori ] = system(['mri_info ' obj.Trkland.fx.in.b0 ' | grep Orientation | awk ''{print $3}'''] );
                 obj.Trkland.fx.tmp.ori = strtrim(Ori);
                 clear Ori
-                if strcmp(obj.Trkland.fx.tmp.ori,'LPS')
+                if strcmp(obj.Trkland.fx.tmp.ori,'LPS') || strcmp(obj.Trkland.fx.tmp.ori,'LAS')
                     obj.Trkland.fx.tmp.b0 = [ obj.fx_template_dir 'LPS_141210_8CS00178_b0.nii.gz' ] ;
                     obj.Trkland.fx.tmp.roa_solid_bil =[ obj.fx_template_dir 'LPS_TMP_178_bil_fx_dil11.nii.gz' ] ;
                     obj.Trkland.fx.tmp.roa_solid_lh = [ obj.fx_template_dir 'LPS_TMP_178_lh_fx_dil11.nii.gz' ] ;
@@ -365,7 +365,6 @@ classdef dwi_HAB < dwiMRI_Session
                 else
                     error('In trkland_fx() Init: Cannot find the right fornix template orientation to use for co-registration. Quitting...');
                 end
-             diw   
                 %IN PARAMS:
                 %Hippocampi:
                 obj.Trkland.fx.in.hippo_lh =  strrep(obj.Params.FS2dwi.out.fn_aparc,'dwi_aparc+aseg.nii.gz','aparc2009_aseg/dwi_fs_Left-Hippocampus.nii.gz');

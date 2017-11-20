@@ -32,6 +32,11 @@ classdef dwi_ADRC < dwiMRI_Session
         %frois dependencies
         FROIS_dir = '/eris/bang/ADRC/TEMPLATES/FROIS/'
         
+        
+        
+        %Related to T1
+        bb = [-78 -112 -70; 78 76 90];
+        T1_vox = [ 1 1 1 ] ; 
     end
     methods
         function obj = dwi_ADRC(sessionname,opt)

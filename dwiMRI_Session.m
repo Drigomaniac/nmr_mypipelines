@@ -53,8 +53,8 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         %
         %         bb = [-78 -112 -70; 78 76 90];
         %         bb = [];
-        vox = [];
-        lastFN = [];
+        %vox = [];
+        %lastFN = [];
         %
         Params = [];
         Trkland = [] ;
@@ -1776,6 +1776,27 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                 [~,bb,cc ] = fileparts(obj.Params.FreeSurfer.out.aparcaseg) ;
                 fprintf(['The aparc aseg file ' bb cc ' exists. \n' ]);
             end
+            
+            %Convert final brain.mgz into brain.nii so it can be used for
+            %normalization purposes
+            
+            %Brain into nii
+            obj.Params.FreeSurfer.out.brain_mgz = strrep(obj.Params.FreeSurfer.out.aparcaseg,'aparc+aseg.mgz','brain.mgz');
+            obj.Params.FreeSurfer.out.brain_nii = strrep(obj.Params.FreeSurfer.out.aparcaseg,'aparc+aseg.mgz','brain.nii');
+            if exist(obj.Params.FreeSurfer.out.brain_nii,'file') == 0
+                exec_cmd= ['mri_convert ' obj.Params.FreeSurfer.out.brain_mgz ' ' obj.Params.FreeSurfer.out.brain_nii ] ;
+                obj.RunBash(exec_cmd);
+            end
+            
+            %Orig into nii
+            obj.Params.FreeSurfer.out.orig_mgz = strrep(obj.Params.FreeSurfer.out.aparcaseg,'aparc+aseg.mgz','orig.mgz');
+            obj.Params.FreeSurfer.out.orig_nii = strrep(obj.Params.FreeSurfer.out.aparcaseg,'aparc+aseg.mgz','orig.nii');
+            if exist(obj.Params.FreeSurfer.out.orig_nii,'file') == 0
+                exec_cmd= ['mri_convert ' obj.Params.FreeSurfer.out.orig_mgz ' ' obj.Params.FreeSurfer.out.orig_nii ] ;
+                obj.RunBash(exec_cmd);
+            end
+            
+            
         end
         
         function obj = proc_FS2dwi(obj)
@@ -2313,7 +2334,8 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                                     ' --output=' obj.Trkland.fx.out.trks_lh ];
                             else
                                 exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
-                                    ' --seed_count=10000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
+                                    ' --seed_count=100000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
+                                    ' --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
                                     ' --seed=' obj.Trkland.fx.in.roi_lh ' --roa=' obj.Trkland.fx.in.roa_lh_hollow ...
                                     ' --step_size=1 --turning_angle=40 --min_length=80 --max_length=250 --fiber_count=500' ...
                                     ' --output=' obj.Trkland.fx.out.trks_lh ];
@@ -2346,9 +2368,9 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                                     ' --output=' obj.Trkland.fx.out.trks_rh ];
                             else
                                 exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
-                                    ' --seed_count=10000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
+                                    ' --seed_count=100000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
                                     ' --seed=' obj.Trkland.fx.in.roi_rh ' --roa=' obj.Trkland.fx.in.roa_rh_hollow ...
-                                    ' --step_size=1 --turning_angle=40 --min_length=80 --max_length=250 ' ...
+                                    ' --step_size=1 --turning_angle=40 --min_length=80 --max_length=250 --fiber_count=500' ...
                                     ' --output=' obj.Trkland.fx.out.trks_rh ];
                             end
                             %Trying 4 times to get a trk, if not....quit
@@ -4285,6 +4307,330 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
         %%%%%%%%%%%%%%%%%%% END Data Post-Processing Methods %%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
+        
+        %Trying Aaron Schultz methods
+        function obj = proc_normalize_new(obj,fn)
+            fprintf('\n%s\n', 'NORMALIZING IMAGES USING SPM12 METHOD:');
+            %%% MODULE IS COMPLETE
+            wasRun = false;
+            if nargin == 1
+                fn = obj.Params.NormNew.in.source;
+            else
+                obj.Params.NormNew.in.source=fn;
+            end
+            
+            if iscell(fn);
+                fn = char(fn);
+            end
+            
+            
+            [a b c] = fileparts(fn(1,:));
+            outpath =  obj.getPath(a,'spm12_newNorm') %obj.Params.NormNew.in.movefiles);
+            
+            if exist(outpath,'dir')==0
+                mkdir(outpath);
+            end
+            
+            
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%SPM PARAMETERS FOR NORMALIZATION%%%
+            obj.Params.NormNew.in.movefiles = '';
+            obj.Params.NormNew.in.source = '';
+            obj.Params.NormNew.in.tpm = [fileparts(which('spm')) '/tpm/TPM.nii'];
+            obj.Params.NormNew.in.nn.channel.vols = {};
+            obj.Params.NormNew.in.nn.channel.biasreg = 0;%0.0001;
+            obj.Params.NormNew.in.nn.channel.biasfwhm = 60;
+            obj.Params.NormNew.in.nn.channel.write = [0 0];
+            for ii = 1:6
+                obj.Params.NormNew.in.nn.tissue(ii).tpm = {[obj.Params.NormNew.in.tpm ',' num2str(ii)]};
+                obj.Params.NormNew.in.nn.tissue(ii).ngaus = Inf;
+                obj.Params.NormNew.in.nn.tissue(ii).native = [1 0];
+                obj.Params.NormNew.in.nn.tissue(ii).warped = [0 0];
+            end
+            
+            obj.Params.NormNew.in.nn.warp.mrf = 0;
+            obj.Params.NormNew.in.nn.warp.reg = [0 0.001 0.5000 0.0500 0.2000];
+            obj.Params.NormNew.in.nn.warp.affreg ='mni';
+            obj.Params.NormNew.in.nn.warp.fwhm = 0;
+            obj.Params.NormNew.in.nn.warp.samp = 3;
+            obj.Params.NormNew.in.nn.warp.write = [1 1];
+            obj.Params.NormNew.in.nn.savemat=1;
+            
+            obj.Params.NormNew.out.regfile = '';
+            obj.Params.NormNew.out.iregfile = '';
+            obj.Params.NormNew.out.estTPM = '';
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+            reg = regexprep([outpath 'y_' b c],[filesep filesep],filesep);
+            if exist(reg,'file')>0
+                disp('Deformation fields have already been computed');
+                obj.Params.NormNew.out.regfile = reg;
+                obj.Params.NormNew.out.iregfile = regexprep([outpath 'iy_' b c],[filesep filesep],filesep);
+                
+                obj.Params.NormNew.out.estTPM{1,1} = regexprep([outpath 'c1' b c],[filesep filesep],filesep);
+                obj.Params.NormNew.out.estTPM{2,1} = regexprep([outpath 'c2' b c],[filesep filesep],filesep);
+                obj.Params.NormNew.out.estTPM{3,1} = regexprep([outpath 'c3' b c],[filesep filesep],filesep);
+                obj.Params.NormNew.out.estTPM{4,1} = regexprep([outpath 'c4' b c],[filesep filesep],filesep);
+                obj.Params.NormNew.out.estTPM{5,1} = regexprep([outpath 'c5' b c],[filesep filesep],filesep);
+                obj.Params.NormNew.out.estTPM{6,1} = regexprep([outpath 'c6' b c],[filesep filesep],filesep);
+            else
+                wasRun = true;
+                obj.Params.NormNew.in.nn.channel.vols = {fn};
+                spm_preproc_run(obj.Params.NormNew.in.nn);
+                
+                
+                try
+                    movefile([a filesep 'c1*.nii'],outpath);
+                    movefile([a filesep 'c2*.nii'],outpath);
+                    movefile([a filesep 'c3*.nii'],outpath);
+                    movefile([a filesep 'c4*.nii'],outpath);
+                    movefile([a filesep 'c5*.nii'],outpath);
+                    movefile([a filesep 'c6*.nii'],outpath);
+                    movefile([a filesep 'iy*.nii'],outpath);
+                    movefile([a filesep 'y*.nii'],outpath);
+                    movefile([a filesep '*seg8.mat'],outpath);
+                end
+                
+                obj.Params.NormNew.out.regfile = reg;
+                obj.Params.NormNew.out.iregfile = regexprep([outpath 'iy_' b c],[filesep filesep],filesep);
+                
+                obj.Params.NormNew.out.estTPM{1,1} = regexprep([outpath 'c1' b c],[filesep filesep],filesep);
+                obj.Params.NormNew.out.estTPM{2,1} = regexprep([outpath 'c2' b c],[filesep filesep],filesep);
+                obj.Params.NormNew.out.estTPM{3,1} = regexprep([outpath 'c3' b c],[filesep filesep],filesep);
+                obj.Params.NormNew.out.estTPM{4,1} = regexprep([outpath 'c4' b c],[filesep filesep],filesep);
+                obj.Params.NormNew.out.estTPM{5,1} = regexprep([outpath 'c5' b c],[filesep filesep],filesep);
+                obj.Params.NormNew.out.estTPM{6,1} = regexprep([outpath 'c6' b c],[filesep filesep],filesep);
+            end
+            
+            obj.UpdateHist(obj.Params.NormNew,'proc_normalize_new',reg,wasRun);
+            
+        end
+            
+        function obj = proc_applynorm_new(obj,fn,regfile)
+            %How to run it:
+            %obj.proc_applynorm_new( obj.Params.NormNew.in.nn.channel.vols,  obj.Params.NormNew.out.regfile)
+            
+            %STARTS HERE:
+            
+            
+            fprintf('\n%s\n', 'APPLYING SPM12 STYLE NORMALIZATION:');
+            
+            %INIT PARAMS:
+            %%% Apply New Norm Params
+            obj.Params.ApplyNormNew.in.movefiles = '';
+            obj.Params.ApplyNormNew.in.fn = [];
+            obj.Params.ApplyNormNew.in.prefix = 'nn2_';
+            %obj.Params.ApplyNormNew.in.regfile = [];
+            obj.Params.ApplyNormNew.in.pars.comp{1}.def = []; % Normalization file in cell
+            obj.Params.ApplyNormNew.in.pars.comp{2}.idbbvox.vox = obj.T1_vox;
+            obj.Params.ApplyNormNew.in.pars.comp{2}.idbbvox.bb = obj.bb;
+            obj.Params.ApplyNormNew.in.pars.out{1}.pull.fnames  = []; % files to normalize
+            obj.Params.ApplyNormNew.in.pars.out{1}.pull.savedir.savesrc = 1;
+            %NOT SURE WHAt INTERPORDER IS! 
+            obj.Params.ApplyNormNew.in.pars.out{1}.pull.interp=5 %obj.interporder;
+            obj.Params.ApplyNormNew.in.pars.out{1}.pull.mask=1;
+            obj.Params.ApplyNormNew.in.pars.out{1}.pull.fwhm=[0 0 0];
+            obj.Params.ApplyNormNew.out.fn = [];
+            obj.Params.ApplyNormNew.out.normmean = [];
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+            
+            %%% MODULE IS COMPLETE
+            wasRun = false;
+
+            if nargin < 2
+                fn = obj.Params.ApplyNormNew.in.fn;
+            else
+                obj.Params.ApplyNormNew.in.fn=fn;
+            end
+            
+            if nargin < 3
+                regfile = obj.Params.ApplyNormNew.in.regfile;
+            else
+                obj.Params.ApplyNormNew.in.regfile=regfile;
+            end
+            
+            if ischar(fn)
+                fn = cellstr(fn);
+            end            
+            
+            [a b c] = fileparts(fn{1});
+            outpath = obj.getPath(a,obj.Params.ApplyNormNew.in.movefiles);
+            ff = [outpath obj.Params.ApplyNormNew.in.prefix b c];
+            
+            nfn = [];
+            for ii = 1:numel(fn);
+                [a b c] = fileparts(fn{ii});
+                outpath = obj.getPath(a,obj.Params.ApplyNormNew.in.movefiles);
+                if exist(outpath,'dir')==0; mkdir(outpath); end
+                
+                ff = regexprep([outpath obj.Params.ApplyNormNew.in.prefix b c],[filesep filesep],filesep);
+                nfn{end+1,1} = ff;
+            end
+                        
+            check = 0;
+            for ii = 1:numel(nfn)
+                if exist(nfn{ii},'file')>0
+                    check = check+1;
+                end
+            end
+            
+            if check ~= (numel(fn))
+                wasRun = true;
+                defs = obj.Params.ApplyNormNew.in.pars;
+                defs.comp{1}.def = {regfile};
+                defs.out{1}.pull.fnames  = fn(:)';
+                spm_deformations(defs);               
+                
+                nfn = [];
+                for ii = 1:numel(fn);
+                    [a b c] = fileparts(fn{ii});
+                    outpath = obj.getPath(a,obj.Params.ApplyNormNew.in.movefiles);
+                    ff = [outpath obj.Params.ApplyNormNew.in.prefix b c];
+                    movefile([a filesep 'w' b c], ff);
+                    nfn{end+1,1} = ff;
+                end
+                
+            end
+            
+            %[a b c] = fileparts(obj.Params.Reslice.out.meanimage);
+            %outpath = obj.getPath(a,obj.Params.ApplyNormNew.in.movefiles);
+            %if exist(outpath,'dir')==0; mkdir(outpath); end
+%             if ~exist([outpath obj.Params.ApplyNormNew.in.prefix b c])
+%                 defs = obj.Params.ApplyNormNew.in.pars;
+%                 defs.comp{1}.def = {regfile};
+%                 defs.out{1}.pull.fnames  = {obj.Params.Reslice.out.meanimage};
+%                 
+%                 spm_deformations(defs);  
+%                 
+%                 ff = [outpath obj.Params.ApplyNormNew.in.prefix b c];
+%                 movefile([a filesep 'w' b c], ff);
+%                 
+%                 obj.Params.ApplyNormNew.out.normmean = ff;
+%             else
+%                 ff = [outpath obj.Params.ApplyNormNew.in.prefix b c];
+%                 obj.Params.ApplyNormNew.out.normmean = ff;
+%             end
+            
+            disp('Applying Normalization is complete');
+            obj.Params.ApplyNormNew.out.fn = nfn;
+            
+            obj.UpdateHist(obj.Params.ApplyNormNew,'proc_applynorm_new',nfn{1},wasRun);
+            fprintf('\n');
+        end
+        
+        function obj = proc_apply_reservsenorm_new(obj,fn,regfile,targ)
+            %        obj.Params.ApplyReverseNormNew.in.movefiles = '/autofs/eris/bang/ADRC/Sessions/141015_8CS00118/restingState/';
+            % obj.Params.ApplyReverseNormNew.in.fn = '/cluster/brutha/MATLAB_Scripts/PET/FROIs/DMN_PCC.nii';
+            % obj.Params.ApplyReverseNormNew.in.targ = '/autofs/eris/bang/ADRC/FreeSurfer6.0/141015_8CS00118/mri/spm12/orig.nii';
+            % obj.Params.ApplyReverseNormNew.in.regfile = obj.Params.spmT1_Proc.out.iregfile;
+            %
+            %
+            % obj.proc_apply_reservsenorm_new;
+            fprintf('\n%s\n', 'APPLYING SPM12 STYLE REVERSE NORMALIZATION:');
+            wasRun = false;
+            
+            
+            %%%%%%%%INIT VALUES FOR ApplyReverseNormNew%%%%%%%%%%%%%%%%%%%%
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            obj.Params.ApplyReverseNormNew.in.movefiles = '';
+            obj.Params.ApplyReverseNormNew.in.fn = [];
+            obj.Params.ApplyReverseNormNew.in.prefix = 'in_';
+            obj.Params.ApplyReverseNormNew.in.targ = [];
+            obj.Params.ApplyReverseNormNew.in.regfile = [];
+            obj.Params.ApplyReverseNormNew.in.pars.comp{1}.def = []; % Normalization file in cell
+            obj.Params.ApplyReverseNormNew.in.pars.comp{2}.idbbvox.vox = [];
+            obj.Params.ApplyReverseNormNew.in.pars.comp{2}.idbbvox.bb = [];
+            obj.Params.ApplyReverseNormNew.in.pars.out{1}.pull.fnames  = []; % files to normalize
+            obj.Params.ApplyReverseNormNew.in.pars.out{1}.pull.savedir.savesrc = 1;
+            obj.Params.ApplyReverseNormNew.in.pars.out{1}.pull.interp=5 %obj.interporder;
+            obj.Params.ApplyReverseNormNew.in.pars.out{1}.pull.mask=1;
+            obj.Params.ApplyReverseNormNew.in.pars.out{1}.pull.fwhm=[0 0 0];
+            obj.Params.ApplyReverseNormNew.out.fn = [];
+            
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+            if nargin == 1
+                fn = obj.Params.ApplyReverseNormNew.in.fn;
+            else
+                obj.Params.ApplyReverseNormNew.in.fn=fn;
+            end
+            
+            if nargin <3
+                regfile = obj.Params.ApplyReverseNormNew.in.regfile;
+            else
+                obj.Params.ApplyReverseNormNew.in.regfile=regfile;
+            end
+            
+            if nargin <4
+                targ = obj.Params.ApplyReverseNormNew.in.targ;
+            else
+                obj.Params.ApplyReverseNormNew.in.targ=targ;
+            end
+            
+            if isempty(obj.Params.ApplyReverseNormNew.in.regfile)
+                regfile = ''
+            end
+            
+            if ischar(fn)
+                fn = cellstr(fn);
+            end
+            
+            
+      
+            
+            [a b c] = fileparts(obj.Params.ApplyReverseNormNew.in.regfile);
+            outpath = obj.getPath(a,'reverseNorm') %obj.Params.ApplyReverseNormNew.in.movefiles);
+            if exist(outpath,'dir')==0
+                mkdir(outpath);
+            end
+            
+            nfn = [];
+            for ii = 1:numel(fn);
+                [a1 b1 c1] = fileparts(fn{ii});
+                ff = regexprep([outpath obj.Params.ApplyReverseNormNew.in.prefix b1 c1],[filesep filesep],filesep);
+                nfn{end+1,1} = ff;
+            end
+            
+            check = 0;
+            for ii = 1:numel(nfn)
+                if exist(nfn{ii},'file')>0
+                    check = check+1;
+                end
+            end
+            
+            if check ~= (numel(fn))
+                wasRun = true;
+                h = spm_vol(targ);
+                x = spm_imatrix(h.mat);
+                
+                defs = obj.Params.ApplyNormNew.in.pars;
+                defs.comp{1}.def = {regfile};
+                defs.out{1}.pull.fnames  = fn(:)';
+                defs.comp{2}.idbbvox.vox = abs(x(7:9));
+                defs.comp{2}.idbbvox.bb = world_bb(h);
+                
+                spm_deformations(defs);
+                
+                nfn = [];
+                for ii = 1:numel(fn);
+                    [a1 b1 c1] = fileparts(fn{ii});
+                    ff = [outpath obj.Params.ApplyReverseNormNew.in.prefix b1 c1];
+                    movefile([a1 filesep 'w' b1 c1], ff);
+                    nfn{end+1,1} = ff;
+                end
+            end
+            disp('Applying Normalization is complete');
+            
+            obj.Params.ApplyReverseNormNew.in.fn=fn;
+            obj.Params.ApplyReverseNormNew.out.fn=nfn;
+            
+            obj.UpdateHist(obj.Params.ApplyReverseNormNew,'proc_apply_reservsenorm_new',nfn{end},wasRun);
+            fprintf('\n');
+        end
+      
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%% END of Post-Processing Methods %%%%%%%%%%%%%%%%%
@@ -4396,6 +4742,8 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             outpath = [pwd filesep];
             cd(hm);
         end
+      
+           
         
         function out = UserTime(obj)
             tmp = pwd;
@@ -4851,7 +5199,8 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             %            end
         end
         
-        
+       
+         
         function obj = remove_trkland_fields(obj,curTRK)
             if isfield(obj.Trkland.Trks,curTRK)
                 temp_fields = fieldnames(obj.Trkland.Trks.(curTRK));
@@ -4871,93 +5220,6 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
             end
         end
         
-        
-        function obj = proc_apply_reservsenorm_new(obj,fn,regfile,targ)
-            %        obj.Params.ApplyReverseNormNew.in.movefiles = '/autofs/eris/bang/ADRC/Sessions/141015_8CS00118/restingState/';
-            % obj.Params.ApplyReverseNormNew.in.fn = '/cluster/brutha/MATLAB_Scripts/PET/FROIs/DMN_PCC.nii';
-            % obj.Params.ApplyReverseNormNew.in.targ = '/autofs/eris/bang/ADRC/FreeSurfer6.0/141015_8CS00118/mri/spm12/orig.nii';
-            % obj.Params.ApplyReverseNormNew.in.regfile = obj.Params.spmT1_Proc.out.iregfile;
-            %
-            %
-            % obj.proc_apply_reservsenorm_new;
-            fprintf('\n%s\n', 'APPLYING SPM12 STYLE REVERSE NORMALIZATION:');
-            wasRun = false;
-            
-            if nargin == 1
-                fn = obj.Params.ApplyReverseNormNew.in.fn;
-            else
-                obj.Params.ApplyReverseNormNew.in.fn=fn;
-            end
-            
-            if nargin <3
-                regfile = obj.Params.ApplyReverseNormNew.in.regfile;
-            else
-                obj.Params.ApplyReverseNormNew.in.regfile=regfile;
-            end
-            
-            if nargin <4
-                targ = obj.Params.ApplyReverseNormNew.in.targ;
-            else
-                obj.Params.ApplyReverseNormNew.in.targ=targ;
-            end
-            
-            if isempty(obj.Params.ApplyReverseNormNew.in.regfile)
-                regfile = ''
-            end
-            
-            if ischar(fn)
-                fn = cellstr(fn);
-            end
-            
-            [a b c] = fileparts(obj.Params.ApplyReverseNormNew.in.regfile);
-            outpath = obj.getPath(a,obj.Params.ApplyReverseNormNew.in.movefiles);
-            if exist(outpath,'dir')==0
-                mkdir(outpath);
-            end
-            
-            nfn = [];
-            for ii = 1:numel(fn);
-                [a1 b1 c1] = fileparts(fn{ii});
-                ff = regexprep([outpath obj.Params.ApplyReverseNormNew.in.prefix b1 c1],[filesep filesep],filesep);
-                nfn{end+1,1} = ff;
-            end
-            
-            check = 0;
-            for ii = 1:numel(nfn)
-                if exist(nfn{ii},'file')>0
-                    check = check+1;
-                end
-            end
-            
-            if check ~= (numel(fn))
-                wasRun = true;
-                h = spm_vol(targ);
-                x = spm_imatrix(h.mat);
-                
-                defs = obj.Params.ApplyNormNew.in.pars;
-                defs.comp{1}.def = {regfile};
-                defs.out{1}.pull.fnames  = fn(:)';
-                defs.comp{2}.idbbvox.vox = abs(x(7:9));
-                defs.comp{2}.idbbvox.bb = world_bb(h);
-                
-                spm_deformations(defs);
-                
-                nfn = [];
-                for ii = 1:numel(fn);
-                    [a1 b1 c1] = fileparts(fn{ii});
-                    ff = [outpath obj.Params.ApplyReverseNormNew.in.prefix b1 c1];
-                    movefile([a1 filesep 'w' b1 c1], ff);
-                    nfn{end+1,1} = ff;
-                end
-            end
-            disp('Applying Normalization is complete');
-            
-            obj.Params.ApplyReverseNormNew.in.fn=fn;
-            obj.Params.ApplyReverseNormNew.out.fn=nfn;
-            
-            obj.UpdateHist(obj.Params.ApplyReverseNormNew,'proc_apply_reservsenorm_new',nfn{end},wasRun);
-            fprintf('\n');
-        end
         
         
     end
