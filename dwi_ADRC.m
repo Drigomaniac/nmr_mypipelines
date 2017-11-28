@@ -74,7 +74,8 @@ classdef dwi_ADRC < dwiMRI_Session
                 obj.wasLoaded = true;
                 obj.FS_location = tmp_FS_location;
             else
-                obj.setMyParams;
+              %  obj.setMyParams;
+              donothing=1;
             end
             
             %Init project ID
@@ -109,10 +110,10 @@ classdef dwi_ADRC < dwiMRI_Session
         function obj=setMyParams(obj)
             %%%%%%%%%%%%
             %Global parameters:
-            obj.vox = [1.8 1.8 1.8];
-            obj.setDefaultParams; %this will call the method in the superclass dwiMRI_Session.m 
-            obj.rawfiles = dir_wfp([obj.root 'Orig' filesep '*.nii.gz' ] );
-            
+%             obj.vox = [1.8 1.8 1.8];
+%             obj.setDefaultParams; %this will call the method in the superclass dwiMRI_Session.m 
+%             obj.rawfiles = dir_wfp([obj.root 'Orig' filesep '*.nii.gz' ] );
+%             
         end
         
          

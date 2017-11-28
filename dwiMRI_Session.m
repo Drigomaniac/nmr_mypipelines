@@ -1948,6 +1948,12 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     end
                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 else
+                    fprintf(['Need to run (or try): \n '  'export FREESURFER_HOME=' obj.Params.FreeSurfer.init_location ' ; '...
+                        ' source $FREESURFER_HOME/SetUpFreeSurfer.sh ;' ...
+                        ' export SUBJECTS_DIR=' obj.Params.FreeSurfer.dir ' ; ' ...
+                        ' recon-all -s ' obj.sessionname ' -hippocampal-subfields-T2 ' obj.Params.FreeSurfer.in.T2 ...
+                        ' T2' 
+                        ])
                     error([ 'in proc_FS2dwi(obj): FS hippofield_left (supposely) located in: ' obj.Params.FS2dwi.in.hippofield_left ' does not exist'])
                 end
                 fprintf('hippofield_lh extraction complete\n')
@@ -2460,6 +2466,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             obj.Trkland.Trks.fx_clinehighFA_lh = rotrk_add_sc(  obj.Trkland.Trks.fx_clinehighFA_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
                             obj.Trkland.Trks.fx_clinehighFA_lh = rotrk_add_sc(  obj.Trkland.Trks.fx_clinehighFA_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
                             obj.Trkland.Trks.fx_clinehighFA_lh = rotrk_add_sc(  obj.Trkland.Trks.fx_clinehighFA_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
+                            obj.Trkland.fx.data.done = 0 ; %Denoting we want the data to be extracted again!
                             rotrk_write(obj.Trkland.Trks.fx_clinehighFA_lh.header,obj.Trkland.Trks.fx_clinehighFA_lh.sstr,obj.Trkland.fx.out.clineFA_lh_highFA );
                         end
                     else
@@ -2548,6 +2555,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             obj.Trkland.Trks.fx_clinehighFA_rh = rotrk_add_sc(  obj.Trkland.Trks.fx_clinehighFA_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
                             obj.Trkland.Trks.fx_clinehighFA_rh = rotrk_add_sc(  obj.Trkland.Trks.fx_clinehighFA_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
                             obj.Trkland.Trks.fx_clinehighFA_rh = rotrk_add_sc(  obj.Trkland.Trks.fx_clinehighFA_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
+                            obj.Trkland.fx.data.done = 0 ; %Denoting we want the data to be extracted again!
                             %save trks:
                             rotrk_write(obj.Trkland.Trks.fx_clinehighFA_rh.header,obj.Trkland.Trks.fx_clinehighFA_rh.sstr,obj.Trkland.fx.out.clineFA_rh_highFA )
                         end
@@ -2573,7 +2581,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         obj.Trkland.Trks.fx_clineHDorff_rh.header = [] ;
                     end
                end
-                
+                obj.Trkland.fx.data.done =0;
                 %NOW GETTING THE DATA VALUES:
                 if  obj.Trkland.fx.data.done ~= 1
                     %Get data for all interesting values:
@@ -2725,7 +2733,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     end
                 end
             end
-            %INIT CLEANUP OF THE TRACTS
+            %INIT CLEANUP VARIABLES OF THE TRACTS
             for tohide=1:1
                 obj.Trkland.hippocing.out.trimmedclean_lh = [ obj.Trkland.root  'trkk_hippocing_trimmedclean_lh.trk.gz'];
                 obj.Trkland.hippocing.out.trimmedclean_rh = [ obj.Trkland.root  'trkk_hippocing_trimmedclean_rh.trk.gz'];
@@ -2758,7 +2766,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
                                 ' --seed_count=20000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
                                 ' --seed=' obj.Trkland.hippocing.in.seed_hippo_lh ' --roi=' obj.Trkland.hippocing.in.roi_postcing_lh ...
-                                ' --step_size=1 --turning_angle=40 --min_length=110 --max_length=250 ' ...
+                                ' --step_size=1 --turning_angle=40 --min_length=110 --max_length=250  --fiber_count=500 ' ...
                                 ' --output=' obj.Trkland.hippocing.out.trk_lh ];
                             for dd=1:4 %trying 4 times to get a trk. If not, quit!
                                 if exist(obj.Trkland.hippocing.out.trk_lh,'file') == 0
@@ -2778,7 +2786,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
                                 ' --seed_count=20000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
                                 ' --seed=' obj.Trkland.hippocing.in.seed_hippo_rh ' --roi=' obj.Trkland.hippocing.in.roi_postcing_rh ...
-                                ' --step_size=1 --turning_angle=40 --min_length=110 --max_length=250 ' ...
+                                ' --step_size=1 --turning_angle=40 --min_length=110 --max_length=250  --fiber_count=500 ' ...
                                 ' --output=' obj.Trkland.hippocing.out.trk_rh ];
                             for dd=1:4 %trying 4 times to get a trk. If not, quit!
                                 if exist(obj.Trkland.hippocing.out.trk_rh,'file') == 0
@@ -2855,6 +2863,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         obj.Trkland.Trks.hippocing_clinehighFA_lh = rotrk_add_sc(  obj.Trkland.Trks.hippocing_clinehighFA_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
                         obj.Trkland.Trks.hippocing_clinehighFA_lh = rotrk_add_sc(  obj.Trkland.Trks.hippocing_clinehighFA_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
                         obj.Trkland.Trks.hippocing_clinehighFA_lh = rotrk_add_sc(  obj.Trkland.Trks.hippocing_clinehighFA_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
+                        obj.Trkland.hippocing.data.done = 0; %Will force to rewrite data in the next section (after cleanup)
                         %save trks:
                         rotrk_write(obj.Trkland.Trks.hippocing_clinehighFA_lh.header,obj.Trkland.Trks.hippocing_clinehighFA_lh.sstr,obj.Trkland.hippocing.out.clineFA_lh_highFA );
                     end
@@ -2941,6 +2950,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         obj.Trkland.Trks.hippocing_clinehighFA_rh = rotrk_add_sc(  obj.Trkland.Trks.hippocing_clinehighFA_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
                         obj.Trkland.Trks.hippocing_clinehighFA_rh = rotrk_add_sc(  obj.Trkland.Trks.hippocing_clinehighFA_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
                         obj.Trkland.Trks.hippocing_clinehighFA_rh = rotrk_add_sc(  obj.Trkland.Trks.hippocing_clinehighFA_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
+                        obj.Trkland.hippocing.data.done = 0; %Will force to rewrite data in the next section (after cleanup)
                         %save trks:
                         rotrk_write(obj.Trkland.Trks.hippocing_clinehighFA_rh.header,obj.Trkland.Trks.hippocing_clinehighFA_rh.sstr,obj.Trkland.hippocing.out.clineFA_rh_highFA );
                     end
@@ -3098,7 +3108,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
                                 ' --seed_count=20000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
                                 ' --seed=' obj.Trkland.cingulum.in.seed_postcing_lh ' --roi=' obj.Trkland.cingulum.in.roi_antroscing_lh ...
-                                ' --step_size=1 --turning_angle=40 --min_length=110 --max_length=250 ' ...
+                                ' --step_size=1 --turning_angle=40 --min_length=110 --max_length=250  --fiber_count=500 ' ...
                                 ' --output=' obj.Trkland.cingulum.out.trk_lh ];
                             for dd=1:4 %trying 4 times to get a trk. If not, quit!
                                 if exist(obj.Trkland.cingulum.out.trk_lh,'file') == 0
@@ -3119,7 +3129,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                             exec_cmd = ['dsi_studio_run --action=trk --source=' obj.Trkland.fx.in.fib ...
                                 ' --seed_count=20000 --smoothing=0.01 --method=0 --interpolation=0 --thread_count=10' ...
                                 ' --seed=' obj.Trkland.cingulum.in.seed_postcing_rh ' --roi=' obj.Trkland.cingulum.in.roi_antroscing_rh ...
-                                ' --step_size=1 --turning_angle=40 --min_length=110 --max_length=250 ' ...
+                                ' --step_size=1 --turning_angle=40 --min_length=110 --max_length=250  --fiber_count=500 ' ...
                                 ' --output=' obj.Trkland.cingulum.out.trk_rh ];
                             
                             for dd=1:4 %trying 4 times to get a trk. If not, quit!
@@ -3200,6 +3210,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                         obj.Trkland.Trks.cingulum_clinehighFA_lh = rotrk_add_sc(  obj.Trkland.Trks.cingulum_clinehighFA_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
                         obj.Trkland.Trks.cingulum_clinehighFA_lh = rotrk_add_sc(  obj.Trkland.Trks.cingulum_clinehighFA_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
                         obj.Trkland.Trks.cingulum_clinehighFA_lh = rotrk_add_sc(  obj.Trkland.Trks.cingulum_clinehighFA_lh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
+                        obj.Trkland.cingulum.data.done = 0; %Will force to rewrite data in the next section (after cleanup)
                         %save trks:
                         rotrk_write(obj.Trkland.Trks.cingulum_clinehighFA_lh.header,obj.Trkland.Trks.cingulum_clinehighFA_lh.sstr,obj.Trkland.cingulum.out.clineFA_lh_highFA );
                     end
@@ -3288,6 +3299,7 @@ classdef dwiMRI_Session  < dynamicprops & matlab.mixin.SetGet
                     obj.Trkland.Trks.cingulum_clinehighFA_rh = rotrk_add_sc(  obj.Trkland.Trks.cingulum_clinehighFA_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','RD') , 'RD');
                     obj.Trkland.Trks.cingulum_clinehighFA_rh = rotrk_add_sc(  obj.Trkland.Trks.cingulum_clinehighFA_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','AxD') , 'AxD');
                     obj.Trkland.Trks.cingulum_clinehighFA_rh = rotrk_add_sc(  obj.Trkland.Trks.cingulum_clinehighFA_rh ,strrep(obj.Params.Dtifit.out.FA{end},'FA','MD') , 'MD');
+                    obj.Trkland.cingulum.data.done = 0; %Will force to rewrite data in the next section (after cleanup)
                     %save trks:
                     rotrk_write(obj.Trkland.Trks.cingulum_clinehighFA_rh.header,obj.Trkland.Trks.cingulum_clinehighFA_rh.sstr,obj.Trkland.cingulum.out.clineFA_rh_highFA );
                     end

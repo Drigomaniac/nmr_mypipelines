@@ -85,7 +85,8 @@ classdef dwi_HAB < dwiMRI_Session
                 oldroot = obj.root;
                 obj.wasLoaded = true;
             else
-                obj.setMyParams;
+                donothing='';
+                %obj.setMyParams;
             end
             
             %Assign Project ID:
